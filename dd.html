@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Group Evaluator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --bg: #f9fafb;
+      --card: #ffffff;
+      --text: #111827;
+      --accent: #0ea5e9;
+    }
+    [data-theme="dark"] {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #f1f5f9;
+      --accent: #38bdf8;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Inter", sans-serif;
+      transition: background 0.3s, color 0.3s;
+    }
+    .card {
+      background: var(--card);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    input, select, button, textarea {
+      outline: none;
+    }
+    input:focus, select:focus, textarea:focus {
+      box-shadow: 0 0 0 2px var(--accent);
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <header class="flex justify-between items-center p-4 card">
+    <h1 class="text-xl font-bold">Smart Group Evaluator</h1>
+    <button id="themeToggle" class="px-3 py-1 rounded bg-slate-700 text-white dark:bg-slate-100 dark:text-black">
+      🌙 / ☀️
+    </button>
+  </header>
+
+  <main class="p-4 space-y-6">
+    <!-- Groups -->
+    <section class="card p-4 rounded-lg">
+      <h2 class="text-lg font-semibold mb-2">Groups</h2>
+      <div class="flex gap-2 mb-3">
+        <input id="groupName" class="border px-2 py-1 rounded w-full" placeholder="New group name">
+        <button id="addGroup" class="px-3 py-1 bg-blue-600 text-white rounded">Add</button>
+      </div>
+      <select id="groupSelect" class="border px-2 py-1 rounded w-full"></select>
+    </section>
+
+    <!-- Tasks -->
+    <section class="card p-4 rounded-lg">
+      <h2 class="text-lg font-semibold mb-2">Tasks</h2>
+      <div class="flex gap-2 mb-3">
+        <input id="taskName" class="border px-2 py-1 rounded w-full" placeholder="New task name">
+        <button id="addTask" class="px-3 py-1 bg-green-600 text-white rounded">Add</button>
+      </div>
+      <div id="taskList" class="space-y-3"></div>
+    </section>
+
+    <!-- Results -->
+    <section id="results" class="card p-4 rounded-lg hidden">
+      <h2 class="text-lg font-semibold mb-2">Results</h2>
+      <p><strong>Task Performance:</strong> <span id="taskPerf">0%</span></p>
+      <p><strong>Team Performance:</strong> <span id="teamPerf">0%</span></p>
+      <p><strong>Final Progress:</strong> <span id="finalPerf">0%</span></p>
+    </section>
+  </main>
+
+  <script>
+    // ---------- App State ----------
+    const state = { groups: [], tasks: [], scores: {} };
+
+    // ---------- Utils ----------
+    const saveState = () => localStorage.setItem('sge-state', JSON.stringify(state));
+    const loadState = () => {
+      try {
+        const data = JSON.parse(localStorage.getItem('sge-state'));
+        if (data) Object.assign(state, data);
+      } catch { /* ignore */ }
+    };
+
+    const qs = sel => document.querySelector(sel);
+
+    // ---------- Rendering ----------
+    function renderGroups() {
+      const sel = qs('#groupSelect');
+      sel.innerHTML = '';
+      state.groups.forEach((g,i)=>{
+        const opt = document.createElement('option');
+        opt.value = g;
+        opt.textContent = g;
+        sel.appendChild(opt);
+      });
+    }
+
+    function renderTasks() {
+      const list = qs('#taskList');
+      list.innerHTML = '';
+      const group = qs('#groupSelect').value;
+      if (!group) return;
+      state.tasks.forEach(task=>{
+        const box = document.createElement('div');
+        box.className = 'p-3 border rounded';
+        const h = document.createElement('h3');
+        h.className = 'font-semibold mb-2';
+        h.textContent = task;
+        box.appendChild(h);
+
+        const crit = [
+          ['মূল কাজের মান',10],
+          ['দলীয় সহযোগিতা',5],
+          ['সময়মত জমা',5],
+          ['উপস্থাপনা দক্ষতা',5],
+          ['নেতৃত্ব ও আচরণ',5]
+        ];
+        const teamCrit = [
+          ['আমি কী শিখলাম',5],
+          ['আমার টিম কেমন কাজ করেছে',5],
+          ['আমরা কী উন্নতি করতে পারি',5],
+          ['আমার সবচেয়ে ভালো লাগা মুহূর্ত / ঘাটতি',5]
+        ];
+
+        const key = gkey(group,task);
+        if (!state.scores[key]) state.scores[key]={task:{},team:{}};
+
+        crit.forEach(([lbl,max])=>{
+          const wrap=document.createElement('div');
+          wrap.className='flex items-center gap-2 mb-1';
+          wrap.innerHTML=`<label class="w-48">${lbl} (${max})</label>`;
+          const inp=document.createElement('input');
+          inp.type='number';
+          inp.min=0; inp.max=max; inp.step=1;
+          inp.value = state.scores[key].task[lbl] ?? '';
+          inp.className='border rounded px-2 py-1 w-20';
+          inp.addEventListener('input',()=>{
+            state.scores[key].task[lbl]=Number(inp.value);
+            calcResults();
+            saveState();
+          });
+          wrap.appendChild(inp);
+          box.appendChild(wrap);
+        });
+
+        const teamHeader = document.createElement('h4');
+        teamHeader.textContent='দল ভিত্তিক মূল্যায়ন';
+        teamHeader.className='font-medium mt-2';
+        box.appendChild(teamHeader);
+
+        teamCrit.forEach(([lbl,max])=>{
+          const wrap=document.createElement('div');
+          wrap.className='flex items-center gap-2 mb-1';
+          wrap.innerHTML=`<label class="w-60">${lbl} (${max})</label>`;
+          const inp=document.createElement('input');
+          inp.type='number';
+          inp.min=0; inp.max=max;
+          inp.value = state.scores[key].team[lbl] ?? '';
+          inp.className='border rounded px-2 py-1 w-20';
+          inp.addEventListener('input',()=>{
+            state.scores[key].team[lbl]=Number(inp.value);
+            calcResults();
+            saveState();
+          });
+          wrap.appendChild(inp);
+          box.appendChild(wrap);
+        });
+
+        list.appendChild(box);
+      });
+    }
+
+    function calcResults() {
+      const group = qs('#groupSelect').value;
+      if (!group) return;
+      let taskAvgs=[], teamAvgs=[];
+      state.tasks.forEach(t=>{
+        const key=gkey(group,t);
+        const sc=state.scores[key];
+        if (!sc) return;
+        // task
+        const vals=Object.values(sc.task||{});
+        const sum=vals.reduce((a,b)=>a+b,0);
+        const max=30;
+        if (vals.length) taskAvgs.push(sum/max);
+        // team
+        const tvals=Object.values(sc.team||{});
+        const tsum=tvals.reduce((a,b)=>a+b,0);
+        const tmax=20;
+        if (tvals.length) teamAvgs.push(tsum/tmax);
+      });
+      const taskPerf = taskAvgs.length? avg(taskAvgs)*100 : 0;
+      const teamPerf = teamAvgs.length? avg(teamAvgs)*100 : 0;
+      const finalPerf = (taskPerf && teamPerf)? (taskPerf+teamPerf)/2 : 0;
+      qs('#taskPerf').textContent = taskPerf.toFixed(1)+'%';
+      qs('#teamPerf').textContent = teamPerf.toFixed(1)+'%';
+      qs('#finalPerf').textContent = finalPerf.toFixed(1)+'%';
+      qs('#results').classList.remove('hidden');
+    }
+
+    const avg = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
+    const gkey = (g,t)=> `${g}::${t}`;
+
+    // ---------- Init ----------
+    function init(){
+      loadState();
+      renderGroups();
+      renderTasks();
+      calcResults();
+    }
+
+    // ---------- Event bindings ----------
+    qs('#addGroup').addEventListener('click',()=>{
+      const val=qs('#groupName').value.trim();
+      if(!val) return;
+      state.groups.push(val);
+      qs('#groupName').value='';
+      renderGroups();
+      saveState();
+    });
+
+    qs('#addTask').addEventListener('click',()=>{
+      const val=qs('#taskName').value.trim();
+      if(!val) return;
+      state.tasks.push(val);
+      qs('#taskName').value='';
+      renderTasks();
+      saveState();
+    });
+
+    qs('#groupSelect').addEventListener('change',()=>{
+      renderTasks();
+      calcResults();
+    });
+
+    qs('#themeToggle').addEventListener('click',()=>{
+      const cur = document.documentElement.getAttribute('data-theme');
+      const next = cur==='dark'?'light':'dark';
+      document.documentElement.setAttribute('data-theme',next);
+      localStorage.setItem('sge-theme',next);
+    });
+
+    // ---------- Theme Init ----------
+    const savedTheme = localStorage.getItem('sge-theme');
+    if(savedTheme) document.documentElement.setAttribute('data-theme',savedTheme);
+
+    // ---------- Start ----------
+    init();
+  </script>
+</body>
+</html>

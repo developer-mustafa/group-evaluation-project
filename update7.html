@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Group Evaluator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3b82f6',
+            secondary: '#10b981',
+            accent: '#f59e0b',
+            darkBg: '#0f172a',
+            darkCard: '#1e293b'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    * {
+      font-family: 'Inter', sans-serif;
+    }
+    
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    .app-container {
+      display: flex;
+      height: 100vh;
+    }
+    
+    .sidebar {
+      width: 250px;
+      flex-shrink: 0;
+      height: 100%;
+      overflow-y: auto;
+    }
+    
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+    
+    .page-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+    
+    .gradient-bg {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .card-hover {
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .card-hover:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    
+    .progress-bar {
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+      background-color: #e5e7eb;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.5s ease-in-out;
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .rank-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-weight: bold;
+      color: white;
+    }
+    
+    .rank-1 {
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      box-shadow: 0 4px 6px rgba(255, 165, 0, 0.3);
+    }
+    
+    .rank-2 {
+      background: linear-gradient(135deg, #C0C0C0, #A0A0A0);
+      box-shadow: 0 4px 6px rgba(160, 160, 160, 0.3);
+    }
+    
+    .rank-3 {
+      background: linear-gradient(135deg, #CD7F32, #A56A3A);
+      box-shadow: 0 4px 6px rgba(165, 106, 58, 0.3);
+    }
+    
+    .rank-other {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+    }
+    
+    .group-bar {
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .group-bar:hover {
+      transform: translateX(5px);
+      background-color: rgba(59, 130, 246, 0.05);
+    }
+    
+    .group-bar.active {
+      background-color: rgba(59, 130, 246, 0.1);
+      border-left: 4px solid #3b82f6;
+    }
+    
+    .loader {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3b82f6;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .modal-content {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .dark .modal-content {
+      background-color: #1e293b;
+      color: white;
+    }
+    
+    .modal-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    .task-details {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.5s ease;
+    }
+    
+    .task-details.open {
+      max-height: 1000px;
+    }
+    
+    .expand-icon {
+      transition: transform 0.3s ease;
+    }
+    
+    .expand-icon.rotated {
+      transform: rotate(180deg);
+    }
+    
+    @media (max-width: 768px) {
+      .app-container {
+        flex-direction: column;
+      }
+      
+      .sidebar {
+        width: 100%;
+        height: auto;
+        max-height: 200px;
+      }
+      
+      .main-content {
+        height: calc(100vh - 200px);
+      }
+      
+      .mobile-menu-btn {
+        display: block;
+      }
+      
+      .sidebar.hidden-mobile {
+        display: none;
+      }
+      
+      .sidebar.active-mobile {
+        display: block;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 dark:bg-darkBg text-gray-800 dark:text-gray-200 transition-colors duration-300">
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteModal" class="modal">
+    <div class="modal-content">
+      <h3 class="text-lg font-semibold mb-4">ডিলিট নিশ্চিতকরণ</h3>
+      <p id="deleteModalText">আপনি কি নিশ্চিত যে আপনি এই আইটেমটি ডিলিট করতে চান?</p>
+      <div class="modal-buttons">
+        <button id="cancelDelete" class="px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded-lg">বাতিল</button>
+        <button id="confirmDelete" class="px-4 py-2 bg-red-600 text-white rounded-lg">ডিলিট</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay" class="modal" style="display: none;">
+    <div class="modal-content flex flex-col items-center justify-center">
+      <div class="loader"></div>
+      <p class="mt-4">লোড হচ্ছে...</p>
+    </div>
+  </div>
+
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar bg-white dark:bg-darkCard border-r border-gray-200 dark:border-gray-700">
+      <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+        <h1 class="text-xl font-bold text-primary dark:text-blue-400 flex items-center">
+          <i class="fas fa-users mr-2"></i> Smart Evaluator
+        </h1>
+      </div>
+      
+      <nav class="p-4 space-y-2">
+        <button data-page="dashboard" class="nav-btn w-full text-left px-3 py-3 rounded-lg flex items-center transition-colors bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+          <i class="fas fa-tachometer-alt mr-3"></i> ড্যাশবোর্ড
+        </button>
+        <button data-page="groups" class="nav-btn w-full text-left px-3 py-3 rounded-lg flex items-center transition-colors hover:bg-gray-100 dark:hover:bg-gray-700">
+          <i class="fas fa-users mr-3"></i> গ্রুপ ব্যবস্থাপনা
+        </button>
+        <button data-page="tasks" class="nav-btn w-full text-left px-3 py-3 rounded-lg flex items-center transition-colors hover:bg-gray-100 dark:hover:bg-gray-700">
+          <i class="fas fa-tasks mr-3"></i> টাস্ক ব্যবস্থাপনা
+        </button>
+        <button data-page="evaluation" class="nav-btn w-full text-left px-3 py-3 rounded-lg flex items-center transition-colors hover:bg-gray-100 dark:hover:bg-gray-700">
+          <i class="fas fa-clipboard-check mr-3"></i> মূল্যায়ন
+        </button>
+        <button data-page="export" class="nav-btn w-full text-left px-3 py-3 rounded-lg flex items-center transition-colors hover:bg-gray-100 dark:hover:bg-gray-700">
+          <i class="fas fa-file-export mr-3"></i> এক্সপোর্ট
+        </button>
+      </nav>
+      
+      <div class="absolute bottom-0 w-full p-4 border-t border-gray-200 dark:border-gray-700">
+        <div class="flex justify-between items-center">
+          <button id="themeToggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700">
+            <i class="fas fa-moon"></i>
+          </button>
+          <span class="text-sm text-gray-500">v2.0</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Header -->
+      <header class="bg-white dark:bg-darkCard border-b border-gray-200 dark:border-gray-700 p-4 flex justify-between items-center">
+        <h2 id="pageTitle" class="text-xl font-bold">ড্যাশবোর্ড</h2>
+        <button id="mobileMenuBtn" class="mobile-menu-btn p-2 rounded-lg bg-gray-100 dark:bg-gray-800 lg:hidden">
+          <i class="fas fa-bars"></i>
+        </button>
+      </header>
+      
+      <!-- Page Content -->
+      <div class="page-content">
+        <!-- Dashboard Page -->
+        <section id="page-dashboard" class="page fade-in">
+          <div class="mb-6">
+            <h2 class="text-2xl font-bold mb-2">ড্যাশবোর্ড</h2>
+            <p class="text-gray-600 dark:text-gray-400">গ্রুপ মূল্যায়ন সিস্টেমের সংক্ষিপ্ত তথ্য</p>
+          </div>
+          
+          <!-- Top 3 Groups in Circular Progress -->
+          <div class="mb-8">
+            <h3 class="text-lg font-semibold mb-4">শীর্ষ গ্রুপসমূহ</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="topGroupsContainer">
+              <!-- Top groups will be dynamically added here -->
+            </div>
+          </div>
+          
+          <!-- All Groups Ranking List -->
+          <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5">
+            <h3 class="text-lg font-semibold mb-4">গ্রুপ র‌্যাঙ্কিং</h3>
+            <div id="groupsRankingList" class="space-y-3">
+              <!-- Groups ranking will be dynamically added here -->
+            </div>
+          </div>
+
+          <!-- Group Details Section -->
+          <div id="groupDetails" class="mt-8 hidden">
+            <!-- Group details will be dynamically added here -->
+          </div>
+        </section>
+        
+        <!-- Groups Page -->
+        <section id="page-groups" class="page hidden">
+          <div class="mb-6">
+            <h2 class="text-2xl font-bold mb-2">গ্রুপ ব্যবস্থাপনা</h2>
+            <p class="text-gray-600 dark:text-gray-400">গ্রুপ যোগ, সম্পাদনা এবং ব্যবস্থাপনা করুন</p>
+          </div>
+          
+          <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5 mb-6">
+            <h3 class="text-lg font-semibold mb-4">নতুন গ্রুপ যোগ করুন</h3>
+            <div class="flex gap-3">
+              <input id="groupNameInput" type="text" placeholder="গ্রুপের নাম লিখুন" class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              <button id="addGroupBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                <i class="fas fa-plus mr-2"></i> যোগ করুন
+              </button>
+            </div>
+          </div>
+          
+          <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5">
+            <h3 class="text-lg font-semibold mb-4">গ্রুপ তালিকা</h3>
+            <div id="groupsList" class="space-y-3">
+              <!-- Groups will be dynamically added here -->
+            </div>
+          </div>
+        </section>
+        
+        <!-- Tasks Page -->
+        <section id="page-tasks" class="page hidden">
+          <div class="mb-6">
+            <h2 class="text-2xl font-bold mb-2">টাস্ক ব্যবস্থাপনা</h2>
+            <p class="text-gray-600 dark:text-gray-400">টাস্ক যোগ, সম্পাদনা এবং ব্যবস্থাপনা করুন</p>
+          </div>
+          
+          <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5 mb-6">
+            <h3 class="text-lg font-semibold mb-4">নতুন টাস্ক যোগ করুন</h3>
+            <div class="flex gap-3">
+              <input id="taskNameInput" type="text" placeholder="টাস্কের নাম লিখুন" class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              <button id="addTaskBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                <i class="fas fa-plus mr-2"></i> যোগ করুন
+              </button>
+            </div>
+          </div>
+          
+          <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5">
+            <h3 class="text-lg font-semibold mb-4">টাস্ক তালিকা</h3>
+            <div id="tasksList" class="space-y-3">
+              <!-- Tasks will be dynamically added here -->
+            </div>
+          </div>
+        </section>
+        
+        <!-- Evaluation Page -->
+        <section id="page-evaluation" class="page hidden">
+          <div class="mb-6">
+            <h2 class="text-2xl font-bold mb-2">মূল্যায়ন</h2>
+            <p class="text-gray-600 dark:text-gray-400">গ্রুপ এবং টাস্ক নির্বাচন করে মূল্যায়ন করুন</p>
+          </div>
+          
+          <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="block text-sm font-medium mb-2">গ্রুপ নির্বাচন করুন</label>
+                <select id="evalGroupSelect" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                  <option value="">একটি গ্রুপ নির্বাচন করুন</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-2">টাস্ক নির্বাচন করুন</label>
+                <select id="evalTaskSelect" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                  <option value="">একটি টাস্ক নির্বাচন করুন</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div id="evaluationForm" class="hidden">
+            <!-- Evaluation form will be dynamically generated here -->
+          </div>
+        </section>
+        
+        <!-- Export Page -->
+        <section id="page-export" class="page hidden">
+          <div class="mb-6">
+            <h2 class="text-2xl font-bold mb-2">এক্সপোর্ট ও রিসেট</h2>
+            <p class="text-gray-600 dark:text-gray-400">ডেটা এক্সপোর্ট করুন অথবা সিস্টেম রিসেট করুন</p>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5">
+              <h3 class="text-lg font-semibold mb-4">ডেটা এক্সপোর্ট</h3>
+              <p class="text-gray-600 dark:text-gray-400 mb-4">সম্পূর্ণ মূল্যায়ন ডেটা CSV ফরম্যাটে ডাউনলোড করুন</p>
+              <button id="exportDataBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors flex items-center justify-center">
+                <i class="fas fa-file-export mr-2"></i> CSV এক্সপোর্ট করুন
+              </button>
+            </div>
+            
+            <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5">
+              <h3 class="text-lg font-semibold mb-4">সিস্টেম রিসেট</h3>
+              <p class="text-gray-600 dark:text-gray-400 mb-4">সকল ডেটা মুছে ফেলুন এবং সিস্টেম পুনরায় শুরু করুন</p>
+              <button id="resetDataBtn" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg transition-colors flex items-center justify-center">
+                <i class="fas fa-trash-alt mr-2"></i> সমস্ত ডেটা রিসেট করুন
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // App State
+    const state = {
+      groups: ['গ্রুপ এ', 'গ্রুপ বি', 'গ্রুপ সি', 'গ্রুপ ডি'],
+      tasks: ['টাস্ক ১', 'টাস্ক ২', 'টাস্ক ৩'],
+      scores: {
+        'গ্রুপ এ::টাস্ক ১': {
+          task: {
+            'মূল কাজের মান': 8,
+            'দলীয় সহযোগিতা': 4,
+            'সময়মত জমা': 5,
+            'উপস্থাপনা দক্ষতা': 4,
+            'নেতৃত্ব ও আচরণ': 4
+          },
+          team: {
+            'আমি কী শিখলাম': 4,
+            'আমার টিম কেমন কাজ করেছে': 4,
+            'আমরা কী উন্নতি করতে পারি': 3,
+            'আমার সবচেয়ে ভালো লাগা মুহূর্ত / ঘাটতি': 4
+          }
+        },
+        'গ্রুপ এ::টাস্ক ২': {
+          task: {
+            'মূল কাজের মান': 7,
+            'দলীয় সহযোগিতা': 4,
+            'সময়মত জমা': 4,
+            'উপস্থাপনা দক্ষতা': 3,
+            'নেতৃত্ব ও আচরণ': 4
+          },
+          team: {
+            'আমি কী শিখলাম': 3,
+            'আমার টিম কেমন কাজ করেছে': 4,
+            'আমরা কী উন্নতি করতে পারি': 4,
+            'আমার সবচেয়ে ভালো লাগা মুহূর্ত / ঘাটতি': 3
+          }
+        },
+        'গ্রুপ বি::টাস্ক ১': {
+          task: {
+            'মূল কাজের মান': 7,
+            'দলীয় সহযোগিতা': 3,
+            'সময়মত জমা': 4,
+            'উপস্থাপনা দক্ষতা': 3,
+            'নেতৃত্ব ও আচরণ': 3
+          },
+          team: {
+            'আমি কী শিখলাম': 3,
+            'আমার টিম কেমন কাজ করেছে': 3,
+            'আমরা কী উন্নতি করতে পারি': 4,
+            'আমার সবচেয়ে ভালো লাগা মুহূর্ত / ঘাটতি': 3
+          }
+        },
+        'গ্রুপ সি::টাস্ক ১': {
+          task: {
+            'মূল কাজের মান': 9,
+            'দলীয় সহযোগিতা': 5,
+            'সময়মত জমা': 5,
+            'উপস্থাপনা দক্ষতা': 5,
+            'নেতৃত্ব ও আচরণ': 4
+          },
+          team: {
+            'আমি কী শিখলাম': 5,
+            'আমার টিম কেমন কাজ করেছে': 4,
+            'আমরা কী উন্নতি করতে পারি': 4,
+            'আমার সবচেয়ে ভালো লাগা মুহূর্ত / ঘাটতি': 5
+          }
+        }
+      },
+      currentPage: 'dashboard',
+      selectedGroup: null,
+      deletePending: { type: null, index: null, name: null }
+    };
+
+    // DOM Elements
+    const elements = {
+      // Pages
+      pages: document.querySelectorAll('.page'),
+      pageTitle: document.getElementById('pageTitle'),
+      
+      // Dashboard
+      topGroupsContainer: document.getElementById('topGroupsContainer'),
+      groupsRankingList: document.getElementById('groupsRankingList'),
+      groupDetails: document.getElementById('groupDetails'),
+      
+      // Groups
+      groupNameInput: document.getElementById('groupNameInput'),
+      addGroupBtn: document.getElementById('addGroupBtn'),
+      groupsList: document.getElementById('groupsList'),
+      
+      // Tasks
+      taskNameInput: document.getElementById('taskNameInput'),
+      addTaskBtn: document.getElementById('addTaskBtn'),
+      tasksList: document.getElementById('tasksList'),
+      
+      // Evaluation
+      evalGroupSelect: document.getElementById('evalGroupSelect'),
+      evalTaskSelect: document.getElementById('evalTaskSelect'),
+      evaluationForm: document.getElementById('evaluationForm'),
+      
+      // Export
+      exportDataBtn: document.getElementById('exportDataBtn'),
+      resetDataBtn: document.getElementById('resetDataBtn'),
+      
+      // Theme
+      themeToggle: document.getElementById('themeToggle'),
+      
+      // Mobile Menu
+      mobileMenuBtn: document.getElementById('mobileMenuBtn'),
+      sidebar: document.querySelector('.sidebar'),
+      
+      // Modals
+      deleteModal: document.getElementById('deleteModal'),
+      deleteModalText: document.getElementById('deleteModalText'),
+      cancelDelete: document.getElementById('cancelDelete'),
+      confirmDelete: document.getElementById('confirmDelete'),
+      loadingOverlay: document.getElementById('loadingOverlay')
+    };
+
+    // Utility Functions
+    const utils = {
+      // Show loading indicator
+      showLoading: () => {
+        elements.loadingOverlay.style.display = 'flex';
+      },
+      
+      // Hide loading indicator
+      hideLoading: () => {
+        setTimeout(() => {
+          elements.loadingOverlay.style.display = 'none';
+        }, 500);
+      },
+      
+      // Save state to localStorage
+      saveState: () => {
+        try {
+          localStorage.setItem('smartEvaluatorState', JSON.stringify(state));
+        } catch (error) {
+          console.error('Error saving state:', error);
+        }
+      },
+      
+      // Load state from localStorage
+      loadState: () => {
+        try {
+          const savedState = localStorage.getItem('smartEvaluatorState');
+          if (savedState) {
+            const parsedState = JSON.parse(savedState);
+            Object.assign(state, parsedState);
+          }
+        } catch (error) {
+          console.error('Error loading state:', error);
+        }
+      },
+      
+      // Generate unique key for group-task combination
+      generateKey: (group, task) => `${group}::${task}`,
+      
+      // Calculate average of array
+      average: (arr) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0,
+      
+      // Update circular progress indicator
+      updateCircleProgress: (circle, percentage) => {
+        if (!circle) return;
+        
+        const circumference = 2 * Math.PI * 15.9155;
+        const offset = circumference - (percentage / 100) * circumference;
+        circle.setAttribute('stroke-dasharray', `${circumference} ${circumference}`);
+        circle.setAttribute('stroke-dashoffset', offset);
+        
+        // Update text
+        const text = circle.parentElement.querySelector('text');
+        if (text) {
+          text.textContent = `${percentage.toFixed(1)}%`;
+        }
+      },
+      
+      // Calculate group performance based on average of all tasks
+      calculateGroupPerformance: (groupName) => {
+        let taskScores = [];
+        let teamScores = [];
+        let taskDetails = [];
+        
+        state.tasks.forEach(task => {
+          const key = utils.generateKey(groupName, task);
+          if (state.scores[key]) {
+            const taskScore = Object.values(state.scores[key].task || {}).reduce((a, b) => a + b, 0);
+            const teamScore = Object.values(state.scores[key].team || {}).reduce((a, b) => a + b, 0);
+            
+            taskScores.push(taskScore);
+            teamScores.push(teamScore);
+            
+            // Store detailed scores for each task
+            taskDetails.push({
+              taskName: task,
+              taskScore: taskScore,
+              teamScore: teamScore,
+              totalScore: taskScore + teamScore,
+              taskDetails: state.scores[key].task || {},
+              teamDetails: state.scores[key].team || {}
+            });
+          }
+        });
+        
+        const taskAvg = taskScores.length ? utils.average(taskScores) : 0;
+        const teamAvg = teamScores.length ? utils.average(teamScores) : 0;
+        const finalAvg = (taskAvg + teamAvg) / 2;
+        
+        return {
+          taskPerformance: (taskAvg / 30) * 100,
+          teamPerformance: (teamAvg / 20) * 100,
+          finalPerformance: (finalAvg / 25) * 100,
+          totalScore: taskAvg + teamAvg,
+          taskDetails: taskDetails
+        };
+      },
+      
+      // Get all groups with their performance data
+      getAllGroupsPerformance: () => {
+        const groupsPerformance = [];
+        
+        state.groups.forEach(group => {
+          const performance = utils.calculateGroupPerformance(group);
+          groupsPerformance.push({
+            name: group,
+            ...performance
+          });
+        });
+        
+        // Sort by total score (descending)
+        return groupsPerformance.sort((a, b) => b.totalScore - a.totalScore);
+      },
+      
+      // Show modal with message
+      showModal: (modal) => {
+        modal.style.display = 'flex';
+      },
+      
+      // Hide modal
+      hideModal: (modal) => {
+        modal.style.display = 'none';
+      }
+    };
+
+    // Render Functions
+    const render = {
+      // Show specific page
+      showPage: (pageId) => {
+        // Show loading
+        utils.showLoading();
+        
+        // Hide all pages
+        elements.pages.forEach(page => page.classList.add('hidden'));
+        
+        // Show selected page
+        const targetPage = document.getElementById(`page-${pageId}`);
+        if (targetPage) {
+          targetPage.classList.remove('hidden');
+          targetPage.classList.add('fade-in');
+          
+          // Update page title
+          const pageTitles = {
+            'dashboard': 'ড্যাশবোর্ড',
+            'groups': 'গ্রুপ ব্যবস্থাপনা',
+            'tasks': 'টাস্ক ব্যবস্থাপনা',
+            'evaluation': 'মূল্যায়ন',
+            'export': 'এক্সপোর্ট ও রিসেট'
+          };
+          elements.pageTitle.textContent = pageTitles[pageId] || 'ড্যাশবোর্ড';
+          
+          // Update active nav button
+          document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.classList.remove('bg-blue-50', 'dark:bg-blue-900/30', 'text-blue-600', 'dark:text-blue-400');
+            btn.classList.add('hover:bg-gray-100', 'dark:hover:bg-gray-700');
+          });
+          
+          const activeBtn = document.querySelector(`[data-page="${pageId}"]`);
+          if (activeBtn) {
+            activeBtn.classList.add('bg-blue-50', 'dark:bg-blue-900/30', 'text-blue-600', 'dark:text-blue-400');
+            activeBtn.classList.remove('hover:bg-gray-100', 'dark:hover:bg-gray-700');
+          }
+          
+          // Update current page
+          state.currentPage = pageId;
+          
+          // Render specific content for the page
+          if (pageId === 'dashboard') {
+            render.renderDashboard();
+          } else if (pageId === 'groups') {
+            render.renderGroups();
+          } else if (pageId === 'tasks') {
+            render.renderTasks();
+          } else if (pageId === 'evaluation') {
+            render.updateGroupSelect();
+            render.updateTaskSelect();
+            render.renderEvaluationForm();
+          }
+        }
+        
+        // Close mobile menu if open
+        if (window.innerWidth < 768) {
+          elements.sidebar.classList.add('hidden-mobile');
+        }
+        
+        // Scroll to top of page content
+        document.querySelector('.page-content').scrollTop = 0;
+        
+        // Hide loading after a short delay
+        utils.hideLoading();
+      },
+      
+      // Render dashboard with top groups and ranking
+      renderDashboard: () => {
+        const groupsPerformance = utils.getAllGroupsPerformance();
+        
+        // Render top 3 groups
+        render.renderTopGroups(groupsPerformance);
+        
+        // Render all groups ranking
+        render.renderGroupsRanking(groupsPerformance);
+        
+        // Render group details if a group is selected
+        if (state.selectedGroup) {
+          render.renderGroupDetails(state.selectedGroup);
+        } else {
+          elements.groupDetails.classList.add('hidden');
+        }
+      },
+      
+      // Render top 3 groups with circular progress indicators
+      renderTopGroups: (groupsPerformance) => {
+        elements.topGroupsContainer.innerHTML = '';
+        
+        if (groupsPerformance.length === 0) {
+          elements.topGroupsContainer.innerHTML = `
+            <div class="col-span-3 text-center py-8 text-gray-500 dark:text-gray-400">
+              <i class="fas fa-users text-4xl mb-3"></i>
+              <p>কোন গ্রুপ বা মূল্যায়ন ডেটা পাওয়া যায়নি</p>
+            </div>
+          `;
+          return;
+        }
+        
+        // Show top 3 groups or all if less than 3
+        const topGroups = groupsPerformance.slice(0, 3);
+        
+        topGroups.forEach((group, index) => {
+          const rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : 'rank-3';
+          const groupElement = document.createElement('div');
+          groupElement.className = 'bg-white dark:bg-darkCard rounded-xl shadow-md p-5 card-hover';
+          groupElement.innerHTML = `
+            <div class="flex justify-between items-center mb-4">
+              <h4 class="font-semibold text-lg">${group.name}</h4>
+              <div class="rank-badge ${rankClass}">${index + 1}</div>
+            </div>
+            <div class="text-center">
+              <div class="inline-block relative">
+                <svg class="w-32 h-32" viewBox="0 0 36 36">
+                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#eee" stroke-width="3"/>
+                  <path class="progress-circle" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#3b82f6" stroke-width="3" stroke-dasharray="0, 100"/>
+                  <text x="18" y="20.5" text-anchor="middle" fill="#3b82f6" font-size="8" font-weight="bold">0%</text>
+                </svg>
+              </div>
+              <p class="mt-2 text-gray-600 dark:text-gray-400">মোট স্কোর: ${group.totalScore.toFixed(1)}/50</p>
+              <p class="text-sm text-gray-500 dark:text-gray-400">${group.taskDetails.length} টি টাস্ক</p>
+            </div>
+          `;
+          
+          elements.topGroupsContainer.appendChild(groupElement);
+          
+          // Animate the progress circle after a short delay
+          setTimeout(() => {
+            const circle = groupElement.querySelector('.progress-circle');
+            utils.updateCircleProgress(circle, group.finalPerformance);
+          }, 100 * index);
+          
+          // Add click event to show this group's details
+          groupElement.addEventListener('click', () => {
+            state.selectedGroup = group.name;
+            render.renderDashboard();
+          });
+        });
+      },
+      
+      // Render all groups ranking list
+      renderGroupsRanking: (groupsPerformance) => {
+        elements.groupsRankingList.innerHTML = '';
+        
+        if (groupsPerformance.length === 0) {
+          elements.groupsRankingList.innerHTML = `
+            <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+              <i class="fas fa-users text-4xl mb-3"></i>
+              <p>কোন গ্রুপ বা মূল্যায়ন ডেটা পাওয়া যায়নি</p>
+            </div>
+          `;
+          return;
+        }
+        
+        groupsPerformance.forEach((group, index) => {
+          const rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : 'rank-other';
+          const isActive = state.selectedGroup === group.name;
+          
+          const groupElement = document.createElement('div');
+          groupElement.className = `group-bar p-4 border border-gray-200 dark:border-gray-700 rounded-lg flex items-center justify-between ${isActive ? 'active' : ''}`;
+          groupElement.innerHTML = `
+            <div class="flex items-center">
+              <div class="rank-badge ${rankClass} mr-3">${index + 1}</div>
+              <div>
+                <h4 class="font-medium">${group.name}</h4>
+                <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  <span class="mr-3">টাস্ক: ${group.taskPerformance.toFixed(1)}%</span>
+                  <span>টিম: ${group.teamPerformance.toFixed(1)}%</span>
+                </div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="font-bold text-lg">${group.totalScore.toFixed(1)}/50</div>
+              <div class="text-sm text-gray-500 dark:text-gray-400">${group.finalPerformance.toFixed(1)}%</div>
+            </div>
+          `;
+          
+          elements.groupsRankingList.appendChild(groupElement);
+          
+          // Add click event to show this group's details
+          groupElement.addEventListener('click', () => {
+            state.selectedGroup = group.name;
+            render.renderDashboard();
+          });
+        });
+      },
+      
+      // Render detailed group information
+      renderGroupDetails: (groupName) => {
+        elements.groupDetails.classList.remove('hidden');
+        
+        const groupPerformance = utils.calculateGroupPerformance(groupName);
+        
+        let detailsHTML = `
+          <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-xl font-bold">${groupName} - বিস্তারিত ফলাফল</h3>
+              <button id="closeDetails" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div class="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">${groupPerformance.taskPerformance.toFixed(1)}%</div>
+                <div class="text-sm text-gray-600 dark:text-gray-300">টাস্ক পারফরম্যান্স</div>
+              </div>
+              <div class="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <div class="text-2xl font-bold text-green-600 dark:text-green-400">${groupPerformance.teamPerformance.toFixed(1)}%</div>
+                <div class="text-sm text-gray-600 dark:text-gray-300">টিম পারফরম্যান্স</div>
+              </div>
+              <div class="text-center p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                <div class="text-2xl font-bold text-amber-600 dark:text-amber-400">${groupPerformance.finalPerformance.toFixed(1)}%</div>
+                <div class="text-sm text-gray-600 dark:text-gray-300">চূড়ান্ত ফলাফল</div>
+              </div>
+            </div>
+        `;
+        
+        // Add task details
+        if (groupPerformance.taskDetails.length > 0) {
+          detailsHTML += `<h4 class="text-lg font-semibold mb-4">টাস্ক ভিত্তিক ফলাফল</h4>`;
+          
+          groupPerformance.taskDetails.forEach((task, taskIndex) => {
+            detailsHTML += `
+              <div class="mb-4 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <div class="bg-gray-50 dark:bg-gray-800 p-3 flex justify-between items-center cursor-pointer task-header">
+                  <h5 class="font-medium">${task.taskName} - মোট স্কোর: ${task.totalScore}/50</h5>
+                  <i class="fas fa-chevron-down expand-icon"></i>
+                </div>
+                <div class="task-details">
+                  <div class="p-4">
+                    <h6 class="font-medium text-blue-600 dark:text-blue-400 mb-2">টাস্ক ভিত্তিক মূল্যায়ন</h6>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
+            `;
+            
+            // Task evaluation details
+            Object.entries(task.taskDetails).forEach(([criteria, score]) => {
+              const maxScore = criteria === 'মূল কাজের মান' ? 10 : 5;
+              detailsHTML += `
+                <div class="flex justify-between">
+                  <span>${criteria}</span>
+                  <span>${score}/${maxScore}</span>
+                </div>
+              `;
+            });
+            
+            detailsHTML += `
+                    </div>
+                    <h6 class="font-medium text-green-600 dark:text-green-400 mb-2">দল ভিত্তিক মূল্যায়ন</h6>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            `;
+            
+            // Team evaluation details
+            Object.entries(task.teamDetails).forEach(([criteria, score]) => {
+              detailsHTML += `
+                <div class="flex justify-between">
+                  <span>${criteria}</span>
+                  <span>${score}/5</span>
+                </div>
+              `;
+            });
+            
+            detailsHTML += `
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+        } else {
+          detailsHTML += `<p class="text-gray-500 dark:text-gray-400 text-center py-4">এই গ্রুপের জন্য কোন মূল্যায়ন ডেটা পাওয়া যায়নি</p>`;
+        }
+        
+        detailsHTML += `</div>`;
+        
+        elements.groupDetails.innerHTML = detailsHTML;
+        
+        // Add event listeners for expandable task details
+        document.querySelectorAll('.task-header').forEach(header => {
+          header.addEventListener('click', () => {
+            const details = header.nextElementSibling;
+            const icon = header.querySelector('.expand-icon');
+            
+            details.classList.toggle('open');
+            icon.classList.toggle('rotated');
+          });
+        });
+        
+        // Add event listener for close button
+        document.getElementById('closeDetails').addEventListener('click', () => {
+          state.selectedGroup = null;
+          render.renderDashboard();
+        });
+      },
+      
+      // Render groups list in groups page
+      renderGroups: () => {
+        elements.groupsList.innerHTML = '';
+        
+        if (state.groups.length === 0) {
+          elements.groupsList.innerHTML = `
+            <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+              <i class="fas fa-users text-4xl mb-3"></i>
+              <p>কোন গ্রুপ যোগ করা হয়নি</p>
+            </div>
+          `;
+          return;
+        }
+        
+        state.groups.forEach((group, index) => {
+          const groupElement = document.createElement('div');
+          groupElement.className = 'flex justify-between items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg';
+          groupElement.innerHTML = `
+            <div class="flex items-center">
+              <i class="fas fa-users text-blue-500 mr-3"></i>
+              <span>${group}</span>
+            </div>
+            <div class="flex space-x-2">
+              <button class="edit-group text-blue-500 hover:text-blue-700 p-1 rounded" data-index="${index}">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="delete-group text-red-500 hover:text-red-700 p-1 rounded" data-index="${index}">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          `;
+          
+          elements.groupsList.appendChild(groupElement);
+        });
+        
+        // Update group select in evaluation page
+        render.updateGroupSelect();
+      },
+      
+      // Render tasks list in tasks page
+      renderTasks: () => {
+        elements.tasksList.innerHTML = '';
+        
+        if (state.tasks.length === 0) {
+          elements.tasksList.innerHTML = `
+            <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+              <i class="fas fa-tasks text-4xl mb-3"></i>
+              <p>কোন টাস্ক যোগ করা হয়নি</p>
+            </div>
+          `;
+          return;
+        }
+        
+        state.tasks.forEach((task, index) => {
+          const taskElement = document.createElement('div');
+          taskElement.className = 'flex justify-between items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg';
+          taskElement.innerHTML = `
+            <div class="flex items-center">
+              <i class="fas fa-tasks text-green-500 mr-3"></i>
+              <span>${task}</span>
+            </div>
+            <div class="flex space-x-2">
+              <button class="edit-task text-blue-500 hover:text-blue-700 p-1 rounded" data-index="${index}">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="delete-task text-red-500 hover:text-red-700 p-1 rounded" data-index="${index}">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          `;
+          
+          elements.tasksList.appendChild(taskElement);
+        });
+        
+        // Update task select in evaluation page
+        render.updateTaskSelect();
+      },
+      
+      // Update group select in evaluation page
+      updateGroupSelect: () => {
+        if (!elements.evalGroupSelect) return;
+        
+        elements.evalGroupSelect.innerHTML = '<option value="">একটি গ্রুপ নির্বাচন করুন</option>';
+        
+        state.groups.forEach(group => {
+          const option = document.createElement('option');
+          option.value = group;
+          option.textContent = group;
+          elements.evalGroupSelect.appendChild(option);
+        });
+      },
+      
+      // Update task select in evaluation page
+      updateTaskSelect: () => {
+        if (!elements.evalTaskSelect) return;
+        
+        elements.evalTaskSelect.innerHTML = '<option value="">একটি টাস্ক নির্বাচন করুন</option>';
+        
+        state.tasks.forEach(task => {
+          const option = document.createElement('option');
+          option.value = task;
+          option.textContent = task;
+          elements.evalTaskSelect.appendChild(option);
+        });
+      },
+      
+      // Render evaluation form
+      renderEvaluationForm: () => {
+        const group = elements.evalGroupSelect.value;
+        const task = elements.evalTaskSelect.value;
+        
+        if (!group || !task) {
+          elements.evaluationForm.classList.add('hidden');
+          return;
+        }
+        
+        elements.evaluationForm.classList.remove('hidden');
+        
+        const key = utils.generateKey(group, task);
+        
+        // Initialize scores if not exists
+        if (!state.scores[key]) {
+          state.scores[key] = {
+            task: {},
+            team: {}
+          };
+        }
+        
+        // Task evaluation criteria
+        const taskCriteria = [
+          ['মূল কাজের মান', 10],
+          ['দলীয় সহযোগিতা', 5],
+          ['সময়মত জমা', 5],
+          ['উপস্থাপনা দক্ষতা', 5],
+          ['নেতৃত্ব ও আচরণ', 5]
+        ];
+        
+        // Team evaluation criteria
+        const teamCriteria = [
+          ['আমি কী শিখলাম', 5],
+          ['আমার টিম কেমন কাজ করেছে', 5],
+          ['আমরা কী উন্নতি করতে পারি', 5],
+          ['আমার সবচেয়ে ভালো লাগা মুহূর্ত / ঘাটতি', 5]
+        ];
+        
+        let formHTML = `
+          <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5 mb-6">
+            <h3 class="text-lg font-semibold mb-4">${group} - ${task}</h3>
+            <h4 class="font-medium mb-3 text-blue-600 dark:text-blue-400">টাস্ক মূল্যায়ন</h4>
+        `;
+        
+        // Task criteria inputs
+        taskCriteria.forEach(([label, maxScore]) => {
+          const currentValue = state.scores[key].task[label] || '';
+          formHTML += `
+            <div class="mb-4">
+              <label class="block text-sm font-medium mb-1">${label} (${maxScore})</label>
+              <input type="number" min="0" max="${maxScore}" step="0.5" 
+                     value="${currentValue}" 
+                     data-type="task" data-criteria="${label}"
+                     class="score-input w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+          `;
+        });
+        
+        formHTML += `
+            <h4 class="font-medium mb-3 mt-6 text-green-600 dark:text-green-400">দল ভিত্তিক মূল্যায়ন</h4>
+        `;
+        
+        // Team criteria inputs
+        teamCriteria.forEach(([label, maxScore]) => {
+          const currentValue = state.scores[key].team[label] || '';
+          formHTML += `
+            <div class="mb-4">
+              <label class="block text-sm font-medium mb-1">${label} (${maxScore})</label>
+              <input type="number" min="0" max="${maxScore}" step="0.5" 
+                     value="${currentValue}" 
+                     data-type="team" data-criteria="${label}"
+                     class="score-input w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+          `;
+        });
+        
+        formHTML += `
+            <div class="mt-6">
+              <button id="saveEvaluationBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                <i class="fas fa-save mr-2"></i> মূল্যায়ন সংরক্ষণ করুন
+              </button>
+            </div>
+          </div>
+        `;
+        
+        elements.evaluationForm.innerHTML = formHTML;
+        
+        // Add event listener to save button
+        const saveBtn = document.getElementById('saveEvaluationBtn');
+        if (saveBtn) {
+          saveBtn.addEventListener('click', () => {
+            // Collect all scores
+            document.querySelectorAll('.score-input').forEach(input => {
+              const type = input.getAttribute('data-type');
+              const criteria = input.getAttribute('data-criteria');
+              const value = parseFloat(input.value) || 0;
+              
+              if (!state.scores[key][type]) {
+                state.scores[key][type] = {};
+              }
+              
+              state.scores[key][type][criteria] = value;
+            });
+            
+            // Save and update UI
+            utils.saveState();
+            render.renderDashboard();
+            
+            // Show success message
+            alert('মূল্যায়ন সফলভাবে সংরক্ষণ করা হয়েছে!');
+          });
+        }
+        
+        // Add input validation
+        document.querySelectorAll('.score-input').forEach(input => {
+          input.addEventListener('input', (e) => {
+            const max = parseFloat(e.target.getAttribute('max'));
+            const value = parseFloat(e.target.value) || 0;
+            
+            if (value > max) {
+              e.target.value = max;
+            }
+          });
+        });
+      }
+    };
+
+    // Event Handlers
+    const handlers = {
+      // Initialize the application
+      init: () => {
+        // Load state from localStorage
+        utils.loadState();
+        
+        // Render initial data
+        render.renderGroups();
+        render.renderTasks();
+        render.renderDashboard();
+        
+        // Show current page
+        render.showPage(state.currentPage);
+        
+        // Set up event listeners
+        handlers.setupEventListeners();
+      },
+      
+      // Set up all event listeners
+      setupEventListeners: () => {
+        // Navigation buttons
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const page = btn.getAttribute('data-page');
+            render.showPage(page);
+          });
+        });
+        
+        // Add group
+        elements.addGroupBtn.addEventListener('click', () => {
+          const groupName = elements.groupNameInput.value.trim();
+          if (groupName && !state.groups.includes(groupName)) {
+            state.groups.push(groupName);
+            elements.groupNameInput.value = '';
+            render.renderGroups();
+            render.renderDashboard();
+            utils.saveState();
+          } else if (state.groups.includes(groupName)) {
+            alert('এই নামে একটি গ্রুপ ইতিমধ্যে বিদ্যমান!');
+          }
+        });
+        
+        // Add task
+        elements.addTaskBtn.addEventListener('click', () => {
+          const taskName = elements.taskNameInput.value.trim();
+          if (taskName && !state.tasks.includes(taskName)) {
+            state.tasks.push(taskName);
+            elements.taskNameInput.value = '';
+            render.renderTasks();
+            render.renderDashboard();
+            utils.saveState();
+          } else if (state.tasks.includes(taskName)) {
+            alert('এই নামে একটি টাস্ক ইতিমধ্যে বিদ্যমান!');
+          }
+        });
+        
+        // Delete group
+        elements.groupsList.addEventListener('click', (e) => {
+          if (e.target.closest('.delete-group')) {
+            const index = e.target.closest('.delete-group').getAttribute('data-index');
+            const groupName = state.groups[index];
+            
+            state.deletePending = { type: 'group', index: index, name: groupName };
+            elements.deleteModalText.textContent = `আপনি কি নিশ্চিত যে আপনি "${groupName}" গ্রুপটি ডিলিট করতে চান?`;
+            utils.showModal(elements.deleteModal);
+          }
+          
+          // Edit group
+          if (e.target.closest('.edit-group')) {
+            const index = e.target.closest('.edit-group').getAttribute('data-index');
+            const newName = prompt('নতুন গ্রুপের নাম লিখুন:', state.groups[index]);
+            
+            if (newName && newName.trim() !== '') {
+              if (state.groups.includes(newName)) {
+                alert('এই নামে একটি গ্রুপ ইতিমধ্যে বিদ্যমান!');
+              } else {
+                state.groups[index] = newName;
+                render.renderGroups();
+                render.renderDashboard();
+                utils.saveState();
+              }
+            }
+          }
+        });
+        
+        // Delete task
+        elements.tasksList.addEventListener('click', (e) => {
+          if (e.target.closest('.delete-task')) {
+            const index = e.target.closest('.delete-task').getAttribute('data-index');
+            const taskName = state.tasks[index];
+            
+            state.deletePending = { type: 'task', index: index, name: taskName };
+            elements.deleteModalText.textContent = `আপনি কি নিশ্চিত যে আপনি "${taskName}" টাস্কটি ডিলিট করতে চান?`;
+            utils.showModal(elements.deleteModal);
+          }
+          
+          // Edit task
+          if (e.target.closest('.edit-task')) {
+            const index = e.target.closest('.edit-task').getAttribute('data-index');
+            const newName = prompt('নতুন টাস্কের নাম লিখুন:', state.tasks[index]);
+            
+            if (newName && newName.trim() !== '') {
+              if (state.tasks.includes(newName)) {
+                alert('এই নামে একটি টাস্ক ইতিমধ্যে বিদ্যমান!');
+              } else {
+                state.tasks[index] = newName;
+                render.renderTasks();
+                render.renderDashboard();
+                utils.saveState();
+              }
+            }
+          }
+        });
+        
+        // Evaluation form changes
+        elements.evalGroupSelect.addEventListener('change', render.renderEvaluationForm);
+        elements.evalTaskSelect.addEventListener('change', render.renderEvaluationForm);
+        
+        // Export data
+        elements.exportDataBtn.addEventListener('click', () => {
+          // Create CSV content
+          let csvContent = "Group,Task,Task Performance,Team Performance,Total Score,Percentage\n";
+          
+          Object.keys(state.scores).forEach(key => {
+            const [group, task] = key.split('::');
+            const taskScore = Object.values(state.scores[key].task || {}).reduce((a, b) => a + b, 0);
+            const teamScore = Object.values(state.scores[key].team || {}).reduce((a, b) => a + b, 0);
+            const totalScore = taskScore + teamScore;
+            const percentage = (totalScore / 50) * 100;
+            
+            csvContent += `"${group}","${task}",${taskScore},${teamScore},${totalScore},${percentage.toFixed(2)}\n`;
+          });
+          
+          // Create download link
+          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.setAttribute('href', url);
+          link.setAttribute('download', 'smart_evaluator_data.csv');
+          link.style.visibility = 'hidden';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        });
+        
+        // Reset data
+        elements.resetDataBtn.addEventListener('click', () => {
+          if (confirm('আপনি কি নিশ্চিত যে আপনি সমস্ত ডেটা রিসেট করতে চান? এটি পূর্বের সমস্ত ডেটা মুছে ফেলবে।')) {
+            // Reset state
+            state.groups = [];
+            state.tasks = [];
+            state.scores = {};
+            state.selectedGroup = null;
+            
+            // Save and update UI
+            utils.saveState();
+            render.renderGroups();
+            render.renderTasks();
+            render.renderDashboard();
+            render.renderEvaluationForm();
+            
+            alert('সিস্টেম সফলভাবে রিসেট করা হয়েছে!');
+          }
+        });
+        
+        // Theme toggle
+        elements.themeToggle.addEventListener('click', () => {
+          if (document.documentElement.classList.contains('dark')) {
+            document.documentElement.classList.remove('dark');
+            elements.themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            localStorage.setItem('theme', 'light');
+          } else {
+            document.documentElement.classList.add('dark');
+            elements.themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            localStorage.setItem('theme', 'dark');
+          }
+        });
+        
+        // Mobile menu toggle
+        elements.mobileMenuBtn.addEventListener('click', () => {
+          elements.sidebar.classList.toggle('hidden-mobile');
+        });
+        
+        // Delete modal handlers
+        elements.cancelDelete.addEventListener('click', () => {
+          utils.hideModal(elements.deleteModal);
+          state.deletePending = { type: null, index: null, name: null };
+        });
+        
+        elements.confirmDelete.addEventListener('click', () => {
+          if (state.deletePending.type === 'group') {
+            state.groups.splice(state.deletePending.index, 1);
+            render.renderGroups();
+            render.renderDashboard();
+          } else if (state.deletePending.type === 'task') {
+            state.tasks.splice(state.deletePending.index, 1);
+            render.renderTasks();
+            render.renderDashboard();
+          }
+          
+          utils.saveState();
+          utils.hideModal(elements.deleteModal);
+          state.deletePending = { type: null, index: null, name: null };
+        });
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', (e) => {
+          if (e.target === elements.deleteModal) {
+            utils.hideModal(elements.deleteModal);
+            state.deletePending = { type: null, index: null, name: null };
+          }
+        });
+      }
+    };
+
+    // Initialize the application when DOM is loaded
+    document.addEventListener('DOMContentLoaded', handlers.init);
+    
+    // Check for saved theme preference
+    if (localStorage.getItem('theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+      elements.themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+    }
+  </script>
+</body>
+</html>
