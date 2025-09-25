@@ -1,0 +1,4694 @@
+<!DOCTYPE html>
+<html lang="bn">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Group Evaluator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <!-- Firebase Authentication -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <!-- Firebase Firestore -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#3b82f6",
+              secondary: "#10b981",
+              accent: "#f59e0b",
+              darkBg: "#0f172a",
+              darkCard: "#1e293b",
+              gold: "#FFD700",
+              silver: "#C0C0C0",
+              bronze: "#CD7F32",
+            },
+            animation: {
+              "pulse-slow": "pulse 3s linear infinite",
+              "bounce-slow": "bounce 2s infinite",
+              "spin-slow": "spin 3s linear infinite",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+
+      * {
+        font-family: "Inter", sans-serif;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .app-container {
+        display: flex;
+        height: 100vh;
+      }
+
+      .sidebar {
+        width: 250px;
+        flex-shrink: 0;
+        height: 100%;
+        overflow-y: auto;
+      }
+
+      .main-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .page-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+      }
+
+      .gradient-bg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+
+      .card-hover {
+        transition: transform 0.3s, box-shadow 0.3s;
+      }
+
+      .card-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      }
+
+      .progress-bar {
+        height: 8px;
+        border-radius: 4px;
+        overflow: hidden;
+        background-color: #e5e7eb;
+      }
+
+      .progress-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.5s ease-in-out;
+      }
+
+      .fade-in {
+        animation: fadeIn 0.5s ease-in-out;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .rank-badge {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        font-weight: bold;
+        color: white;
+      }
+
+      .rank-1 {
+        background: linear-gradient(135deg, #ffd700, #ffa500);
+        box-shadow: 0 4px 6px rgba(255, 165, 0, 0.3);
+      }
+
+      .rank-2 {
+        background: linear-gradient(135deg, #c0c0c0, #a0a0a0);
+        box-shadow: 0 4px 6px rgba(160, 160, 160, 0.3);
+      }
+
+      .rank-3 {
+        background: linear-gradient(135deg, #cd7f32, #a56a3a);
+        box-shadow: 0 4px 6px rgba(165, 106, 58, 0.3);
+      }
+
+      .rank-other {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+      }
+
+      .group-bar {
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+
+      .group-bar:hover {
+        transform: translateX(5px);
+        background-color: rgba(59, 130, 246, 0.05);
+      }
+
+      .group-bar.active {
+        background-color: rgba(59, 130, 246, 0.1);
+        border-left: 4px solid #3b82f6;
+      }
+
+      .loader {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3b82f6;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 20px auto;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .modal-content {
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .dark .modal-content {
+        background-color: #1e293b;
+        color: white;
+      }
+
+      .modal-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .task-details {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.5s ease;
+      }
+
+      .task-details.open {
+        max-height: 1000px;
+      }
+
+      .expand-icon {
+        transition: transform 0.3s ease;
+      }
+
+      .expand-icon.rotated {
+        transform: rotate(180deg);
+      }
+
+      .crown-icon {
+        font-size: 24px;
+        margin-bottom: 10px;
+      }
+
+      .rank-card {
+        position: relative;
+        overflow: hidden;
+        border-radius: 16px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+      }
+
+      .rank-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+      }
+
+      .rank-1-card::before {
+        background: linear-gradient(90deg, #ffd700, #ffa500);
+      }
+
+      .rank-2-card::before {
+        background: linear-gradient(90deg, #c0c0c0, #a0a0a0);
+      }
+
+      .rank-3-card::before {
+        background: linear-gradient(90deg, #cd7f32, #a56a3a);
+      }
+
+      .rank-card-glow {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      }
+
+      .rank-1-card {
+        background: linear-gradient(135deg, #fff9e6, #fff0cc);
+        border: 2px solid #ffd700;
+      }
+
+      .rank-2-card {
+        background: linear-gradient(135deg, #f5f5f5, #e8e8e8);
+        border: 2px solid #c0c0c0;
+      }
+
+      .rank-3-card {
+        background: linear-gradient(135deg, #f8f0e6, #f0e0cc);
+        border: 2px solid #cd7f32;
+      }
+
+      .dark .rank-1-card {
+        background: linear-gradient(135deg, #332900, #4d3d00);
+        border: 2px solid #ffd700;
+      }
+
+      .dark .rank-2-card {
+        background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
+        border: 2px solid #c0c0c0;
+      }
+
+      .dark .rank-3-card {
+        background: linear-gradient(135deg, #332200, #4d3300);
+        border: 2px solid #cd7f32;
+      }
+
+      .rank-title {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .rank-1-title {
+        color: #d4af37;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
+
+      .rank-2-title {
+        color: #c0c0c0;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
+
+      .rank-3-title {
+        color: #cd7f32;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
+
+      .member-role-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+        margin-left: 5px;
+      }
+
+      .team-leader {
+        background-color: #3b82f6;
+        color: white;
+      }
+
+      .time-keeper {
+        background-color: #10b981;
+        color: white;
+      }
+
+      .reporter {
+        background-color: #f59e0b;
+        color: white;
+      }
+
+      .resource-manager {
+        background-color: #8b5cf6;
+        color: white;
+      }
+
+      .peace-maker {
+        background-color: #ec4899;
+        color: white;
+      }
+
+      .score-calculation-info {
+        background: #f0f9ff;
+        border-left: 4px solid #3b82f6;
+        padding: 10px 15px;
+        margin: 15px 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .dark .score-calculation-info {
+        background: #1e3a5f;
+        border-left: 4px solid #60a5fa;
+      }
+
+      /* Advanced Loading Spinner */
+      .advanced-loader {
+        display: inline-block;
+        position: relative;
+        width: 80px;
+        height: 80px;
+      }
+
+      .advanced-loader div {
+        position: absolute;
+        border: 4px solid #3b82f6;
+        opacity: 1;
+        border-radius: 50%;
+        animation: advanced-loader 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+      }
+
+      .advanced-loader div:nth-child(2) {
+        animation-delay: -0.5s;
+      }
+
+      @keyframes advanced-loader {
+        0% {
+          top: 36px;
+          left: 36px;
+          width: 0;
+          height: 0;
+          opacity: 1;
+        }
+        100% {
+          top: 0px;
+          left: 0px;
+          width: 72px;
+          height: 72px;
+          opacity: 0;
+        }
+      }
+
+      /* Group Card Colors */
+      .group-card-1 {
+        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+      }
+      .group-card-2 {
+        background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+      }
+      .group-card-3 {
+        background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
+      }
+      .group-card-4 {
+        background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
+      }
+      .group-card-5 {
+        background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+      }
+      .group-card-6 {
+        background: linear-gradient(135deg, #a3bded 0%, #6991c7 100%);
+      }
+      .group-card-7 {
+        background: linear-gradient(135deg, #fad0c4 0%, #ffd1ff 100%);
+      }
+      .group-card-8 {
+        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+      }
+
+      .dark .group-card-1 {
+        background: linear-gradient(135deg, #4a2c00 0%, #7a3c1f 100%);
+      }
+      .dark .group-card-2 {
+        background: linear-gradient(135deg, #1a3c7d 0%, #1c5d7a 100%);
+      }
+      .dark .group-card-3 {
+        background: linear-gradient(135deg, #3a5a00 0%, #2a6a35 100%);
+      }
+      .dark .group-card-4 {
+        background: linear-gradient(135deg, #7a2c6b 0%, #3a4a8a 100%);
+      }
+      .dark .group-card-5 {
+        background: linear-gradient(135deg, #1a7a45 0%, #1a5a7a 100%);
+      }
+      .dark .group-card-6 {
+        background: linear-gradient(135deg, #2a3c7a 0%, #1a3560 100%);
+      }
+      .dark .group-card-7 {
+        background: linear-gradient(135deg, #7a3c2a 0%, #7a3a7a 100%);
+      }
+      .dark .group-card-8 {
+        background: linear-gradient(135deg, #7a2a2a 0%, #7a3a6a 100%);
+      }
+
+      /* Typography for Group Serial */
+      .group-serial {
+        font-size: 4rem;
+        font-weight: 900;
+        opacity: 0.2;
+        position: absolute;
+        top: 10px;
+        right: 20px;
+        line-height: 1;
+      }
+
+      /* Search Bar */
+      .search-container {
+        position: relative;
+      }
+
+      .search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6b7280;
+      }
+
+      .search-input {
+        padding-left: 40px;
+      }
+
+      /* Tab Styles */
+      .tab-container {
+        display: flex;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 1rem;
+      }
+
+      .tab {
+        padding: 0.75rem 1.5rem;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.3s;
+      }
+
+      .tab.active {
+        border-bottom-color: #3b82f6;
+        color: #3b82f6;
+        font-weight: 600;
+      }
+
+      /* Comment Section */
+      .comment-section {
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px dashed #d1d5db;
+      }
+
+      /* Student Card Styles */
+      .student-card {
+        transition: all 0.3s ease;
+        border-radius: 12px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .student-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      }
+
+      .student-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: bold;
+        color: white;
+        margin-right: 15px;
+      }
+
+      /* Policy Section Styles */
+      .policy-section {
+        margin-bottom: 20px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .policy-header {
+        background-color: #f9fafb;
+        padding: 15px 20px;
+        cursor: pointer;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        transition: background-color 0.3s;
+      }
+
+      .policy-header:hover {
+        background-color: #f3f4f6;
+      }
+
+      .policy-content {
+        padding: 0;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.5s ease, padding 0.5s ease;
+      }
+
+      .policy-content.open {
+        padding: 20px;
+        max-height: 1000px;
+      }
+
+      .dark .policy-header {
+        background-color: #374151;
+        color: white;
+      }
+
+      .dark .policy-header:hover {
+        background-color: #4b5563;
+      }
+
+      /* Enhanced Logout Button */
+      .logout-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        transition: all 0.3s;
+        background-color: #fef2f2;
+        color: #dc2626;
+        font-weight: 500;
+      }
+
+      .logout-btn:hover {
+        background-color: #fee2e2;
+        transform: translateY(-1px);
+      }
+
+      .dark .logout-btn {
+        background-color: #7f1d1d;
+        color: #fca5a5;
+      }
+
+      .dark .logout-btn:hover {
+        background-color: #991b1b;
+      }
+
+      /* CSV Import/Export Styles */
+      .csv-actions {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      .csv-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s;
+      }
+
+      .import-btn {
+        background-color: #dbeafe;
+        color: #1e40af;
+      }
+
+      .import-btn:hover {
+        background-color: #bfdbfe;
+      }
+
+      .export-btn {
+        background-color: #dcfce7;
+        color: #166534;
+      }
+
+      .export-btn:hover {
+        background-color: #bbf7d0;
+      }
+
+      .dark .import-btn {
+        background-color: #1e3a8a;
+        color: #93c5fd;
+      }
+
+      .dark .import-btn:hover {
+        background-color: #1e40af;
+      }
+
+      .dark .export-btn {
+        background-color: #14532d;
+        color: #86efac;
+      }
+
+      .dark .export-btn:hover {
+        background-color: #166534;
+      }
+
+      @media (max-width: 768px) {
+        .app-container {
+          flex-direction: column;
+        }
+
+        .sidebar {
+          width: 100%;
+          height: auto;
+          max-height: 200px;
+        }
+
+        .main-content {
+          height: calc(100vh - 200px);
+        }
+
+        .mobile-menu-btn {
+          display: block;
+        }
+
+        .sidebar.hidden-mobile {
+          display: none;
+        }
+
+        .sidebar.active-mobile {
+          display: block;
+        }
+
+        .group-serial {
+          font-size: 3rem;
+          top: 5px;
+          right: 15px;
+        }
+
+        .csv-actions {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body
+    class="bg-gray-50 dark:bg-darkBg text-gray-800 dark:text-gray-200 transition-colors duration-300"
+  >
+    <!-- Authentication Modal -->
+    <div id="authModal" class="modal">
+      <div class="modal-content">
+        <h3 class="text-lg font-semibold mb-4 text-center">লগইন করুন</h3>
+        <div id="loginForm">
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-2">ইমেইল</label>
+            <input
+              id="loginEmail"
+              type="email"
+              class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="আপনার ইমেইল লিখুন"
+            />
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-2">পাসওয়ার্ড</label>
+            <input
+              id="loginPassword"
+              type="password"
+              class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="আপনার পাসওয়ার্ড লিখুন"
+            />
+          </div>
+          <button
+            id="loginBtn"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors"
+          >
+            লগইন
+          </button>
+          <div class="my-4 text-center relative">
+            <div class="absolute inset-0 flex items-center">
+              <div class="w-full border-t border-gray-300"></div>
+            </div>
+            <div class="relative flex justify-center text-sm">
+              <span class="px-2 bg-white dark:bg-darkCard text-gray-500"
+                >অথবা</span
+              >
+            </div>
+          </div>
+          <button
+            id="googleSignInBtn"
+            class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg transition-colors flex items-center justify-center"
+          >
+            <i class="fab fa-google mr-2"></i> Google দিয়ে লগইন করুন
+          </button>
+          <p class="text-center mt-4 text-sm text-gray-600 dark:text-gray-400">
+            অ্যাডমিন অ্যাকাউন্ট নেই?
+            <button id="showRegister" class="text-blue-600 hover:underline">
+              রেজিস্টার করুন
+            </button>
+          </p>
+        </div>
+
+        <div id="registerForm" class="hidden">
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-2">ইমেইল</label>
+            <input
+              id="registerEmail"
+              type="email"
+              class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="আপনার ইমেইল লিখুন"
+            />
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-2">পাসওয়ার্ড</label>
+            <input
+              id="registerPassword"
+              type="password"
+              class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="পাসওয়ার্ড লিখুন (ন্যূনতম ৬ অক্ষর)"
+            />
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-2">অ্যাডমিন টাইপ</label>
+            <select
+              id="adminType"
+              class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="admin">সাধারণ অ্যাডমিন</option>
+              <option value="super-admin">সুপার অ্যাডমিন</option>
+            </select>
+          </div>
+          <button
+            id="registerBtn"
+            class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition-colors"
+          >
+            রেজিস্টার
+          </button>
+          <p class="text-center mt-4 text-sm text-gray-600 dark:text-gray-400">
+            ইতিমধ্যে অ্যাকাউন্ট আছে?
+            <button id="showLogin" class="text-blue-600 hover:underline">
+              লগইন করুন
+            </button>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal">
+      <div class="modal-content">
+        <h3 class="text-lg font-semibold mb-4">ডিলিট নিশ্চিতকরণ</h3>
+        <p id="deleteModalText">
+          আপনি কি নিশ্চিত যে আপনি এই আইটেমটি ডিলিট করতে চান?
+        </p>
+        <div class="modal-buttons">
+          <button
+            id="cancelDelete"
+            class="px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded-lg"
+          >
+            বাতিল
+          </button>
+          <button
+            id="confirmDelete"
+            class="px-4 py-2 bg-red-600 text-white rounded-lg"
+          >
+            ডিলিট
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+      <div class="modal-content">
+        <h3 id="editModalTitle" class="text-lg font-semibold mb-4">
+          সম্পাদনা করুন
+        </h3>
+        <div id="editModalContent">
+          <!-- Content will be dynamically added here -->
+        </div>
+        <div class="modal-buttons">
+          <button
+            id="cancelEdit"
+            class="px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded-lg"
+          >
+            বাতিল
+          </button>
+          <button
+            id="saveEdit"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg"
+          >
+            সংরক্ষণ করুন
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="modal" style="display: none">
+      <div class="modal-content flex flex-col items-center justify-center">
+        <div class="advanced-loader">
+          <div></div>
+          <div></div>
+        </div>
+        <p class="mt-4">লোড হচ্ছে...</p>
+      </div>
+    </div>
+
+    <!-- Main App (hidden until authenticated) -->
+    <div id="appContainer" class="app-container hidden">
+      <!-- Sidebar -->
+      <aside
+        class="sidebar bg-white dark:bg-darkCard border-r border-gray-200 dark:border-gray-700"
+      >
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+          <h1
+            class="text-xl font-bold text-primary dark:text-blue-400 flex items-center"
+          >
+            <i class="fas fa-users mr-2"></i> Smart Evaluator
+          </h1>
+          <div
+            id="userInfo"
+            class="mt-2 text-sm text-gray-600 dark:text-gray-400"
+          ></div>
+        </div>
+
+        <nav class="p-4 space-y-2">
+          <button
+            data-page="dashboard"
+            class="nav-btn w-full text-left px-3 py-3 rounded-lg flex items-center transition-colors bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+          >
+            <i class="fas fa-tachometer-alt mr-3"></i> ড্যাশবোর্ড
+          </button>
+          <button
+            data-page="groups"
+            class="nav-btn w-full text-left px-3 py-3 rounded-lg flex items-center transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <i class="fas fa-users mr-3"></i> গ্রুপ ব্যবস্থাপনা
+          </button>
+          <button
+            data-page="members"
+            class="nav-btn w-full text-left px-3 py-3 rounded-lg flex items-center transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <i class="fas fa-user-graduate mr-3"></i> শিক্ষার্থী ব্যবস্থাপনা
+          </button>
+          <button
+            data-page="group-members"
+            class="nav-btn w-full text-left px-3 py-3 rounded-lg flex items-center transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <i class="fas fa-user-friends mr-3"></i> গ্রুপ সদস্য ব্যবস্থাপনা
+          </button>
+          <button
+            data-page="all-students"
+            class="nav-btn w-full text-left px-3 py-3 rounded-lg flex items-center transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <i class="fas fa-id-card mr-3"></i> সকল গ্রুপ কার্ড
+          </button>
+          <button
+            data-page="tasks"
+            class="nav-btn w-full text-left px-3 py-3 rounded-lg flex items-center transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <i class="fas fa-tasks mr-3"></i> টাস্ক ব্যবস্থাপনা
+          </button>
+          <button
+            data-page="evaluation"
+            class="nav-btn w-full text-left px-3 py-3 rounded-lg flex items-center transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <i class="fas fa-clipboard-check mr-3"></i> মূল্যায়ন
+          </button>
+          <button
+            data-page="group-policy"
+            class="nav-btn w-full text-left px-3 py-3 rounded-lg flex items-center transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <i class="fas fa-file-contract mr-3"></i> গ্রুপ পলিসি
+          </button>
+          <button
+            data-page="export"
+            class="nav-btn w-full text-left px-3 py-3 rounded-lg flex items-center transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <i class="fas fa-file-export mr-3"></i> এক্সপোর্ট
+          </button>
+
+          <!-- Admin Management (Only for Super Admin) -->
+          <div id="adminManagementSection" class="hidden">
+            <button
+              data-page="admin-management"
+              class="nav-btn w-full text-left px-3 py-3 rounded-lg flex items-center transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <i class="fas fa-user-shield mr-3"></i> অ্যাডমিন ব্যবস্থাপনা
+            </button>
+          </div>
+        </nav>
+
+        <div
+          class="absolute top-0 w-full p-4 border-t border-gray-200 dark:border-gray-700"
+        >
+          <div class="flex justify-between items-center">
+            <button
+              id="themeToggle"
+              class="p-2 rounded-full bg-gray-200 dark:bg-gray-700"
+            >
+              <i class="fas fa-moon"></i>
+            </button>
+            <button id="logoutBtn" class="logout-btn">
+              <i class="fas fa-sign-out-alt"></i> লগআউট
+            </button>
+            <span class="text-sm text-gray-500">v2.4</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <!-- Header -->
+        <header
+          class="bg-white dark:bg-darkCard border-b border-gray-200 dark:border-gray-700 p-4 flex justify-between items-center"
+        >
+          <h2 id="pageTitle" class="text-xl font-bold">ড্যাশবোর্ড</h2>
+          <button
+            id="mobileMenuBtn"
+            class="mobile-menu-btn p-2 rounded-lg bg-gray-100 dark:bg-gray-800 lg:hidden"
+          >
+            <i class="fas fa-bars"></i>
+          </button>
+        </header>
+
+        <!-- Page Content -->
+        <div class="page-content">
+          <!-- Dashboard Page -->
+          <section id="page-dashboard" class="page fade-in">
+            <div class="mb-6">
+              <h2 class="text-2xl font-bold mb-2">ড্যাশবোর্ড</h2>
+              <p class="text-gray-600 dark:text-gray-400">
+                গ্রুপ মূল্যায়ন সিস্টেমের সংক্ষিপ্ত তথ্য
+              </p>
+
+              <!-- স্কোর ক্যালকুলেশন তথ্য -->
+              <div class="score-calculation-info mt-4">
+                <p class="text-sm flex items-center">
+                  <i class="fas fa-info-circle mr-2 text-blue-500"></i>
+                  <strong>স্কোর ক্যালকুলেশন পদ্ধতি:</strong> একাধিক টাস্কের
+                  ক্ষেত্রে মোট স্কোর = (মোট টাস্ক স্কোর/মোট সম্ভাব্য টাস্ক স্কোর
+                  + মোট টিম স্কোর/মোট সম্ভাব্য টিম স্কোর) ÷ 2 × 50
+                </p>
+              </div>
+            </div>
+
+            <!-- Top 3 Groups in Circular Progress -->
+            <div class="mb-8">
+              <h3 class="text-lg font-semibold mb-4">শীর্ষ গ্রুপসমূহ</h3>
+              <div
+                class="grid grid-cols-1 md:grid-cols-3 gap-6"
+                id="topGroupsContainer"
+              >
+                <!-- Top groups will be dynamically added here -->
+              </div>
+            </div>
+
+            <!-- All Groups Ranking List -->
+            <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5">
+              <h3 class="text-lg font-semibold mb-4">গ্রুপ র‌্যাঙ্কিং</h3>
+              <div id="groupsRankingList" class="space-y-3">
+                <!-- Groups ranking will be dynamically added here -->
+              </div>
+            </div>
+
+            <!-- Group Details Section -->
+            <div id="groupDetails" class="mt-8 hidden">
+              <!-- Group details will be dynamically added here -->
+            </div>
+          </section>
+
+          <!-- Groups Page -->
+          <section id="page-groups" class="page hidden">
+            <div class="mb-6">
+              <h2 class="text-2xl font-bold mb-2">গ্রুপ ব্যবস্থাপনা</h2>
+              <p class="text-gray-600 dark:text-gray-400">
+                গ্রুপ যোগ, সম্পাদনা এবং ব্যবস্থাপনা করুন
+              </p>
+            </div>
+
+            <div
+              class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5 mb-6"
+            >
+              <h3 class="text-lg font-semibold mb-4">নতুন গ্রুপ যোগ করুন</h3>
+              <div class="flex gap-3">
+                <input
+                  id="groupNameInput"
+                  type="text"
+                  placeholder="গ্রুপের নাম লিখুন"
+                  class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <button
+                  id="addGroupBtn"
+                  class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  গ্রুপ যোগ করুন
+                </button>
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5">
+              <h3 class="text-lg font-semibold mb-4">গ্রুপ তালিকা</h3>
+              <div class="search-container mb-4">
+                <div class="search-icon">
+                  <i class="fas fa-search"></i>
+                </div>
+                <input
+                  id="groupSearchInput"
+                  type="text"
+                  placeholder="গ্রুপ খুঁজুন..."
+                  class="search-input w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 pl-10 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div id="groupsList" class="space-y-3">
+                <!-- Groups will be dynamically added here -->
+              </div>
+            </div>
+          </section>
+
+          <!-- Members Page -->
+          <section id="page-members" class="page hidden">
+            <div class="mb-6">
+              <h2 class="text-2xl font-bold mb-2">শিক্ষার্থী ব্যবস্থাপনা</h2>
+              <p class="text-gray-600 dark:text-gray-400">
+                শিক্ষার্থী যোগ, সম্পাদনা এবং ব্যবস্থাপনা করুন
+              </p>
+            </div>
+
+            <!-- CSV Import/Export Section -->
+            <div class="csv-actions">
+              <button id="importCsvBtn" class="csv-btn import-btn">
+                <i class="fas fa-file-import"></i> CSV ইম্পোর্ট
+              </button>
+              <button id="exportCsvBtn" class="csv-btn export-btn">
+                <i class="fas fa-file-export"></i> CSV এক্সপোর্ট
+              </button>
+            </div>
+
+            <!-- CSV Import Form -->
+            <div
+              id="csvImportSection"
+              class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5 mb-6 hidden"
+            >
+              <h3 class="text-lg font-semibold mb-4">CSV ফাইল ইম্পোর্ট করুন</h3>
+              <div class="mb-4">
+                <label class="block text-sm font-medium mb-2"
+                  >CSV ফাইল নির্বাচন করুন</label
+                >
+                <input
+                  id="csvFileInput"
+                  type="file"
+                  accept=".csv"
+                  class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700"
+                />
+              </div>
+              <div class="flex gap-3">
+                <button
+                  id="cancelImportBtn"
+                  class="px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded-lg"
+                >
+                  বাতিল
+                </button>
+                <button
+                  id="confirmImportBtn"
+                  class="px-4 py-2 bg-blue-600 text-white rounded-lg"
+                >
+                  ইম্পোর্ট করুন
+                </button>
+              </div>
+            </div>
+
+            <!-- Add New Student Form -->
+            <div
+              class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5 mb-6"
+            >
+              <!-- Title -->
+              <h3 class="text-lg font-semibold mb-4">
+                নতুন শিক্ষার্থী যোগ করুন
+              </h3>
+
+              <!-- Form Grid -->
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- নাম -->
+                <div>
+                  <label
+                    for="studentNameInput"
+                    class="block text-sm font-medium mb-2"
+                    >নাম</label
+                  >
+                  <input
+                    id="studentNameInput"
+                    type="text"
+                    class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="শিক্ষার্থীর নাম"
+                  />
+                </div>
+
+                <!-- রোল -->
+                <div>
+                  <label
+                    for="studentRollInput"
+                    class="block text-sm font-medium mb-2"
+                    >রোল</label
+                  >
+                  <input
+                    id="studentRollInput"
+                    type="text"
+                    class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="রোল নম্বর"
+                  />
+                </div>
+
+                <!-- লিঙ্গ -->
+                <div>
+                  <label
+                    for="studentGenderInput"
+                    class="block text-sm font-medium mb-2"
+                    >লিঙ্গ</label
+                  >
+                  <select
+                    id="studentGenderInput"
+                    class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">নির্বাচন করুন</option>
+                    <option value="ছেলে">ছেলে</option>
+                    <option value="মেয়ে">মেয়ে</option>
+                    <option value="অন্যান্য">অন্যান্য</option>
+                  </select>
+                </div>
+
+                <!-- গ্রুপ -->
+                <div>
+                  <label
+                    for="studentGroupInput"
+                    class="block text-sm font-medium mb-2"
+                    >গ্রুপ</label
+                  >
+                  <select
+                    id="studentGroupInput"
+                    class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">নির্বাচন করুন</option>
+                    <!-- Groups will be dynamically added here -->
+                  </select>
+                </div>
+
+                <!-- ইমেইল/ফোন -->
+                <div>
+                  <label
+                    for="studentContactInput"
+                    class="block text-sm font-medium mb-2"
+                    >ইমেইল/ফোন</label
+                  >
+                  <input
+                    id="studentContactInput"
+                    type="text"
+                    class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="ইমেইল বা ফোন নম্বর"
+                  />
+                </div>
+
+                <!-- একাডেমিক গ্রুপ -->
+                <div>
+                  <label
+                    for="studentAcademicGroupInput"
+                    class="block text-sm font-medium mb-2"
+                    >একাডেমিক গ্রুপ</label
+                  >
+                  <input
+                    id="studentAcademicGroupInput"
+                    type="text"
+                    class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="যেমন: CSE, EEE"
+                  />
+                </div>
+
+                <!-- সেশন -->
+                <div>
+                  <label
+                    for="studentSessionInput"
+                    class="block text-sm font-medium mb-2"
+                    >সেশন</label
+                  >
+                  <input
+                    id="studentSessionInput"
+                    type="text"
+                    class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="যেমন: ২০২১-২২"
+                  />
+                </div>
+              </div>
+
+              <!-- Submit Button -->
+              <div class="mt-4">
+                <button
+                  id="addStudentBtn"
+                  class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  শিক্ষার্থী যোগ করুন
+                </button>
+              </div>
+            </div>
+
+            <!-- Students List -->
+            <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5">
+              <h3 class="text-lg font-semibold mb-4">শিক্ষার্থী তালিকা</h3>
+              <div class="search-container mb-4">
+                <div class="search-icon">
+                  <i class="fas fa-search"></i>
+                </div>
+                <input
+                  id="studentSearchInput"
+                  type="text"
+                  placeholder="শিক্ষার্থী খুঁজুন..."
+                  class="search-input w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 pl-10 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div class="flex flex-wrap gap-2 mb-4">
+                <button
+                  class="filter-btn px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-sm"
+                  data-group=""
+                >
+                  সকল
+                </button>
+                <!-- Group filters will be dynamically added here -->
+              </div>
+              <div id="studentsList" class="space-y-3">
+                <!-- Students will be dynamically added here -->
+              </div>
+            </div>
+          </section>
+
+          <!-- Group Members Page -->
+          <section id="page-group-members" class="page hidden">
+            <div class="mb-6">
+              <h2 class="text-2xl font-bold mb-2">গ্রুপ সদস্য ব্যবস্থাপনা</h2>
+              <p class="text-gray-600 dark:text-gray-400">
+                গ্রুপে সদস্য যোগ, সম্পাদনা এবং ব্যবস্থাপনা করুন
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <!-- Group Selection -->
+              <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5">
+                <h3 class="text-lg font-semibold mb-4">গ্রুপ নির্বাচন করুন</h3>
+                <div class="search-container mb-4">
+                  <div class="search-icon">
+                    <i class="fas fa-search"></i>
+                  </div>
+                  <input
+                    id="groupMemberSearchInput"
+                    type="text"
+                    placeholder="গ্রুপ খুঁজুন..."
+                    class="search-input w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 pl-10 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <div
+                  id="groupSelectionList"
+                  class="space-y-2 max-h-80 overflow-y-auto"
+                >
+                  <!-- Groups will be dynamically added here -->
+                </div>
+              </div>
+
+              <!-- Group Members -->
+              <div
+                class="lg:col-span-2 bg-white dark:bg-darkCard rounded-xl shadow-md p-5"
+              >
+                <h3 id="selectedGroupTitle" class="text-lg font-semibold mb-4">
+                  গ্রুপ সদস্য
+                </h3>
+                <div class="search-container mb-4">
+                  <div class="search-icon">
+                    <i class="fas fa-search"></i>
+                  </div>
+                  <input
+                    id="memberSearchInput"
+                    type="text"
+                    placeholder="সদস্য খুঁজুন..."
+                    class="search-input w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 pl-10 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <div id="groupMembersList" class="space-y-3">
+                  <p class="text-center text-gray-500 py-8">
+                    একটি গ্রুপ নির্বাচন করুন
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- All Students Cards Page -->
+          <section id="page-all-students" class="page hidden">
+            <div class="mb-6">
+              <h2 class="text-2xl font-bold mb-2">সকল গ্রুপ কার্ড</h2>
+              <p class="text-gray-600 dark:text-gray-400">
+                সকল গ্রুপের শিক্ষার্থীদের কার্ড আকারে দেখুন
+              </p>
+            </div>
+
+            <div class="search-container mb-6">
+              <div class="search-icon">
+                <i class="fas fa-search"></i>
+              </div>
+              <input
+                id="allStudentsSearchInput"
+                type="text"
+                placeholder="শিক্ষার্থী খুঁজুন..."
+                class="search-input w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 pl-10 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div class="flex flex-wrap gap-2 mb-4">
+              <button
+                class="filter-btn px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-sm"
+                data-group=""
+              >
+                সকল
+              </button>
+              <!-- Group filters will be dynamically added here -->
+            </div>
+
+            <div
+              id="allStudentsCards"
+              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+            >
+              <!-- Student cards will be dynamically added here -->
+            </div>
+          </section>
+
+          <!-- Tasks Page -->
+          <section id="page-tasks" class="page hidden">
+            <div class="mb-6">
+              <h2 class="text-2xl font-bold mb-2">টাস্ক ব্যবস্থাপনা</h2>
+              <p class="text-gray-600 dark:text-gray-400">
+                টাস্ক যোগ, সম্পাদনা এবং ব্যবস্থাপনা করুন
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <!-- Add Task Form -->
+              <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5">
+                <h3 class="text-lg font-semibold mb-4">নতুন টাস্ক যোগ করুন</h3>
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-sm font-medium mb-2"
+                      >টাস্কের নাম</label
+                    >
+                    <input
+                      id="taskNameInput"
+                      type="text"
+                      class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="টাস্কের নাম লিখুন"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2"
+                      >টাস্কের বিবরণ</label
+                    >
+                    <textarea
+                      id="taskDescriptionInput"
+                      class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="টাস্কের বিবরণ লিখুন"
+                      rows="3"
+                    ></textarea>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2"
+                      >সর্বোচ্চ স্কোর</label
+                    >
+                    <input
+                      id="taskMaxScoreInput"
+                      type="number"
+                      min="1"
+                      max="100"
+                      class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="সর্বোচ্চ স্কোর"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2"
+                      >টাস্কের তারিখ</label
+                    >
+                    <input
+                      id="taskDateInput"
+                      type="date"
+                      class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  <button
+                    id="addTaskBtn"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors"
+                  >
+                    টাস্ক যোগ করুন
+                  </button>
+                </div>
+              </div>
+
+              <!-- Tasks List -->
+              <div
+                class="lg:col-span-2 bg-white dark:bg-darkCard rounded-xl shadow-md p-5"
+              >
+                <h3 class="text-lg font-semibold mb-4">টাস্ক তালিকা</h3>
+                <div id="tasksList" class="space-y-4">
+                  <!-- Tasks will be dynamically added here -->
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Evaluation Page -->
+          <section id="page-evaluation" class="page hidden">
+            <div class="mb-6">
+              <h2 class="text-2xl font-bold mb-2">মূল্যায়ন</h2>
+              <p class="text-gray-600 dark:text-gray-400">
+                গ্রুপ এবং সদস্যদের মূল্যায়ন করুন
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <!-- Task and Group Selection -->
+              <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5">
+                <h3 class="text-lg font-semibold mb-4">মূল্যায়ন সেটআপ</h3>
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-sm font-medium mb-2"
+                      >টাস্ক নির্বাচন করুন</label
+                    >
+                    <select
+                      id="evaluationTaskSelect"
+                      class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">একটি টাস্ক নির্বাচন করুন</option>
+                      <!-- Tasks will be dynamically added here -->
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2"
+                      >গ্রুপ নির্বাচন করুন</label
+                    >
+                    <select
+                      id="evaluationGroupSelect"
+                      class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">একটি গ্রুপ নির্বাচন করুন</option>
+                      <!-- Groups will be dynamically added here -->
+                    </select>
+                  </div>
+                  <button
+                    id="startEvaluationBtn"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors"
+                  >
+                    মূল্যায়ন শুরু করুন
+                  </button>
+                </div>
+              </div>
+
+              <!-- Evaluation Form -->
+              <div
+                class="lg:col-span-2 bg-white dark:bg-darkCard rounded-xl shadow-md p-5"
+              >
+                <h3 id="evaluationTitle" class="text-lg font-semibold mb-4">
+                  মূল্যায়ন ফর্ম
+                </h3>
+                <div id="evaluationForm" class="space-y-4">
+                  <p class="text-center text-gray-500 py-8">
+                    একটি টাস্ক এবং গ্রুপ নির্বাচন করুন
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Group Policy Page -->
+          <section id="page-group-policy" class="page hidden">
+            <div class="mb-6">
+              <h2 class="text-2xl font-bold mb-2">গ্রুপ পলিসি</h2>
+              <p class="text-gray-600 dark:text-gray-400">
+                গ্রুপের পলিসি এবং নিয়মাবলী দেখুন
+              </p>
+            </div>
+
+            <div class="space-y-4">
+              <!-- Marks Policy -->
+              <div class="policy-section">
+                <div class="policy-header">
+                  <h3 class="text-lg font-semibold">মার্ক্স পলিসি</h3>
+                  <i class="fas fa-chevron-down expand-icon"></i>
+                </div>
+                <div class="policy-content">
+                  <p>
+                    গ্রুপ মূল্যায়নের জন্য নিম্নলিখিত মার্ক্স পলিসি অনুসরণ করা
+                    হবে:
+                  </p>
+                  <ul class="list-disc pl-5 mt-2 space-y-1">
+                    <li>প্রতিটি টাস্কের জন্য সর্বোচ্চ স্কোর ১০০</li>
+                    <li>টাস্ক স্কোর = (প্রাপ্ত স্কোর / সর্বোচ্চ স্কোর) × ৫০</li>
+                    <li>
+                      টিমওয়ার্ক স্কোর = (প্রাপ্ত স্কোর / সর্বোচ্চ স্কোর) × ৫০
+                    </li>
+                    <li>মোট স্কোর = টাস্ক স্কোর + টিমওয়ার্ক স্কোর</li>
+                    <li>সময়মত জমাদানের জন্য বোনাস পয়েন্ট: ৫ পয়েন্ট</li>
+                    <li>
+                      বিলম্বে জমাদানের জন্য পেনাল্টি: প্রতিদিন ২ পয়েন্ট কাটা
+                      যাবে
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Evaluation Policy -->
+              <div class="policy-section">
+                <div class="policy-header">
+                  <h3 class="text-lg font-semibold">মূল্যায়ন পলিসি</h3>
+                  <i class="fas fa-chevron-down expand-icon"></i>
+                </div>
+                <div class="policy-content">
+                  <p>
+                    গ্রুপ সদস্যদের মূল্যায়নের জন্য নিম্নলিখিত পলিসি অনুসরণ করা
+                    হবে:
+                  </p>
+                  <ul class="list-disc pl-5 mt-2 space-y-1">
+                    <li>মূল্যায়ন হবে টাস্ক ভিত্তিক</li>
+                    <li>প্রতিটি টাস্কের জন্য আলাদাভাবে মূল্যায়ন করা হবে</li>
+                    <li>
+                      মূল্যায়ন করবেন কোর্স ইনস্ট্রাক্টর এবং সহকারী ইনস্ট্রাক্টর
+                    </li>
+                    <li>
+                      মূল্যায়নের критериা: কাজের মান, সময়ানুবর্তিতা,
+                      টিমওয়ার্ক, উদ্ভাবনীতা
+                    </li>
+                    <li>
+                      মূল্যায়নের ফলাফল ৩ কার্যদিবসের মধ্যে প্রকাশ করা হবে
+                    </li>
+                    <li>
+                      মূল্যায়ন নিয়ে আপিল করার সুযোগ থাকবে ২৪ ঘন্টার মধ্যে
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Group Member Policy -->
+              <div class="policy-section">
+                <div class="policy-header">
+                  <h3 class="text-lg font-semibold">গ্রুপ সদস্য পলিসি</h3>
+                  <i class="fas fa-chevron-down expand-icon"></i>
+                </div>
+                <div class="policy-content">
+                  <p>গ্রুপ সদস্যদের জন্য নিম্নলিখিত পলিসি অনুসরণ করা হবে:</p>
+                  <ul class="list-disc pl-5 mt-2 space-y-1">
+                    <li>
+                      প্রতিটি গ্রুপে সর্বনিম্ন ৩ এবং সর্বোচ্চ ৫ জন সদস্য থাকবে
+                    </li>
+                    <li>গ্রুপ সদস্যদের মধ্যে দায়িত্ব বন্টন করতে হবে</li>
+                    <li>গ্রুপ লিডার নির্বাচিত হবে গ্রুপ সদস্যদের ভোটে</li>
+                    <li>সাপ্তাহিক গ্রুপ মিটিং বাধ্যতামূলক</li>
+                    <li>মিটিং মিনিট জমা দিতে হবে প্রতি মিটিংয়ের পর</li>
+                    <li>
+                      কোন সদস্য ক্রমাগত ৩টি মিটিং এ অনুপস্থিত থাকলে তার বিরুদ্ধে
+                      ব্যবস্থা নেয়া হবে
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Task Submission Policy -->
+              <div class="policy-section">
+                <div class="policy-header">
+                  <h3 class="text-lg font-semibold">টাস্ক সাবমিশন পলিসি</h3>
+                  <i class="fas fa-chevron-down expand-icon"></i>
+                </div>
+                <div class="policy-content">
+                  <p>টাস্ক সাবমিশনের জন্য নিম্নলিখিত পলিসি অনুসরণ করা হবে:</p>
+                  <ul class="list-disc pl-5 mt-2 space-y-1">
+                    <li>সকল টাস্ক নির্ধারিত সময়ের মধ্যে জমা দিতে হবে</li>
+                    <li>টাস্ক জমা দিতে হবে অনলাইন প্ল্যাটফর্মে</li>
+                    <li>টাস্ক ফরম্যাট: PDF বা নির্ধারিত ফরম্যাটে</li>
+                    <li>টাস্কে সকল গ্রুপ সদস্যের নাম ও আইডি উল্লেখ করতে হবে</li>
+                    <li>রেফারেন্স সঠিকভাবে উল্লেখ করতে হবে</li>
+                    <li>কপি করা টাস্ক জমা দিলে তা বাতিল বলে গণ্য হবে</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Export Page -->
+          <section id="page-export" class="page hidden">
+            <div class="mb-6">
+              <h2 class="text-2xl font-bold mb-2">এক্সপোর্ট</h2>
+              <p class="text-gray-600 dark:text-gray-400">
+                তথ্য এক্সপোর্ট করুন
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Export Groups -->
+              <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5">
+                <h3 class="text-lg font-semibold mb-4">গ্রুপ তথ্য এক্সপোর্ট</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">
+                  সমস্ত গ্রুপের তথ্য CSV ফরম্যাটে এক্সপোর্ট করুন
+                </p>
+                <button
+                  id="exportGroupsBtn"
+                  class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors flex items-center justify-center"
+                >
+                  <i class="fas fa-file-export mr-2"></i> গ্রুপ এক্সপোর্ট করুন
+                </button>
+              </div>
+
+              <!-- Export Students -->
+              <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5">
+                <h3 class="text-lg font-semibold mb-4">
+                  শিক্ষার্থী তথ্য এক্সপোর্ট
+                </h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">
+                  সমস্ত শিক্ষার্থীর তথ্য CSV ফরম্যাটে এক্সপোর্ট করুন
+                </p>
+                <button
+                  id="exportStudentsBtn"
+                  class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition-colors flex items-center justify-center"
+                >
+                  <i class="fas fa-file-export mr-2"></i> শিক্ষার্থী এক্সপোর্ট
+                  করুন
+                </button>
+              </div>
+
+              <!-- Export Evaluations -->
+              <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5">
+                <h3 class="text-lg font-semibold mb-4">
+                  মূল্যায়ন তথ্য এক্সপোর্ট
+                </h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">
+                  সমস্ত মূল্যায়নের তথ্য CSV ফরম্যাটে এক্সপোর্ট করুন
+                </p>
+                <button
+                  id="exportEvaluationsBtn"
+                  class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg transition-colors flex items-center justify-center"
+                >
+                  <i class="fas fa-file-export mr-2"></i> মূল্যায়ন এক্সপোর্ট
+                  করুন
+                </button>
+              </div>
+
+              <!-- Export All Data -->
+              <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5">
+                <h3 class="text-lg font-semibold mb-4">
+                  সম্পূর্ণ ডেটাবেস এক্সপোর্ট
+                </h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">
+                  সমস্ত তথ্য একটি জিপ ফাইলে এক্সপোর্ট করুন
+                </p>
+                <button
+                  id="exportAllBtn"
+                  class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg transition-colors flex items-center justify-center"
+                >
+                  <i class="fas fa-download mr-2"></i> সম্পূর্ণ ডেটাবেস
+                  এক্সপোর্ট করুন
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- Admin Management Page -->
+          <section id="page-admin-management" class="page hidden">
+            <div class="mb-6">
+              <h2 class="text-2xl font-bold mb-2">অ্যাডমিন ব্যবস্থাপনা</h2>
+              <p class="text-gray-600 dark:text-gray-400">
+                অ্যাডমিন অ্যাকাউন্ট ব্যবস্থাপনা করুন
+              </p>
+            </div>
+
+            <div
+              class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5 mb-6"
+            >
+              <h3 class="text-lg font-semibold mb-4">নতুন অ্যাডমিন যোগ করুন</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium mb-2">ইমেইল</label>
+                  <input
+                    id="adminEmailInput"
+                    type="email"
+                    class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="অ্যাডমিনের ইমেইল"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-2"
+                    >অ্যাডমিন টাইপ</label
+                  >
+                  <select
+                    id="newAdminType"
+                    class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="admin">সাধারণ অ্যাডমিন</option>
+                    <option value="super-admin">সুপার অ্যাডমিন</option>
+                  </select>
+                </div>
+              </div>
+              <div class="mt-4">
+                <button
+                  id="addAdminBtn"
+                  class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  অ্যাডমিন যোগ করুন
+                </button>
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5">
+              <h3 class="text-lg font-semibold mb-4">অ্যাডমিন তালিকা</h3>
+              <div id="adminList" class="space-y-3">
+                <!-- Admins will be dynamically added here -->
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- Firebase Configuration -->
+    <script>
+      // Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyAkw1kL7AU73Y9FWrPZ-ERv5xFvXGGILBA",
+        authDomain: "claritybudget-6lnmd.firebaseapp.com",
+        projectId: "claritybudget-6lnmd",
+        storageBucket: "claritybudget-6lnmd.firebasestorage.app",
+        messagingSenderId: "40318182466",
+        appId: "1:40318182466:web:c2ce0637f8f23afa95b9db",
+      };
+
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+
+      // Google Auth Provider
+      const googleProvider = new firebase.auth.GoogleAuthProvider();
+    </script>
+
+    <!-- Application Script -->
+    <script>
+      // DOM Elements
+      const authModal = document.getElementById("authModal");
+      const appContainer = document.getElementById("appContainer");
+      const loginForm = document.getElementById("loginForm");
+      const registerForm = document.getElementById("registerForm");
+      const showRegister = document.getElementById("showRegister");
+      const showLogin = document.getElementById("showLogin");
+      const loginBtn = document.getElementById("loginBtn");
+      const registerBtn = document.getElementById("registerBtn");
+      const googleSignInBtn = document.getElementById("googleSignInBtn");
+      const logoutBtn = document.getElementById("logoutBtn");
+      const themeToggle = document.getElementById("themeToggle");
+      const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+      const sidebar = document.querySelector(".sidebar");
+      const pageTitle = document.getElementById("pageTitle");
+      const userInfo = document.getElementById("userInfo");
+      const adminManagementSection = document.getElementById(
+        "adminManagementSection"
+      );
+
+      // Page Elements
+      const pages = document.querySelectorAll(".page");
+      const navBtns = document.querySelectorAll(".nav-btn");
+
+      // Firebase Auth State Listener
+      auth.onAuthStateChanged((user) => {
+        if (user) {
+          // User is signed in
+          authModal.style.display = "none";
+          appContainer.classList.remove("hidden");
+
+          // Get user data from Firestore
+          db.collection("admins")
+            .doc(user.uid)
+            .get()
+            .then((doc) => {
+              if (doc.exists) {
+                const userData = doc.data();
+                userInfo.innerHTML = `
+              <div class="font-medium">${userData.email}</div>
+              <div class="text-xs ${
+                userData.type === "super-admin"
+                  ? "text-accent"
+                  : "text-gray-500"
+              }">${
+                  userData.type === "super-admin"
+                    ? "সুপার অ্যাডমিন"
+                    : "অ্যাডমিন"
+                }</div>
+            `;
+
+                // Show admin management section for super admin
+                if (userData.type === "super-admin") {
+                  adminManagementSection.classList.remove("hidden");
+                }
+              }
+            });
+
+          // Load initial data
+          loadGroups();
+          loadStudents();
+          loadTasks();
+          loadAdmins();
+        } else {
+          // User is signed out
+          authModal.style.display = "flex";
+          appContainer.classList.add("hidden");
+        }
+      });
+
+      // Authentication Functions
+      showRegister.addEventListener("click", () => {
+        loginForm.classList.add("hidden");
+        registerForm.classList.remove("hidden");
+      });
+
+      showLogin.addEventListener("click", () => {
+        registerForm.classList.add("hidden");
+        loginForm.classList.remove("hidden");
+      });
+
+      loginBtn.addEventListener("click", () => {
+        const email = document.getElementById("loginEmail").value;
+        const password = document.getElementById("loginPassword").value;
+
+        if (email && password) {
+          showLoading();
+          auth
+            .signInWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+              hideLoading();
+            })
+            .catch((error) => {
+              hideLoading();
+              alert("লগইন ব্যর্থ: " + error.message);
+            });
+        } else {
+          alert("ইমেইল এবং পাসওয়ার্ড লিখুন");
+        }
+      });
+
+      registerBtn.addEventListener("click", () => {
+        const email = document.getElementById("registerEmail").value;
+        const password = document.getElementById("registerPassword").value;
+        const adminType = document.getElementById("adminType").value;
+
+        if (email && password && password.length >= 6) {
+          showLoading();
+          auth
+            .createUserWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+              const user = userCredential.user;
+
+              // Save admin data to Firestore
+              return db.collection("admins").doc(user.uid).set({
+                email: email,
+                type: adminType,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+              });
+            })
+            .then(() => {
+              hideLoading();
+              alert("রেজিস্ট্রেশন সফল!");
+              registerForm.classList.add("hidden");
+              loginForm.classList.remove("hidden");
+            })
+            .catch((error) => {
+              hideLoading();
+              alert("রেজিস্ট্রেশন ব্যর্থ: " + error.message);
+            });
+        } else {
+          alert("সঠিক ইমেইল এবং ন্যূনতম ৬ অক্ষরের পাসওয়ার্ড লিখুন");
+        }
+      });
+
+      googleSignInBtn.addEventListener("click", () => {
+        showLoading();
+        auth
+          .signInWithPopup(googleProvider)
+          .then((result) => {
+            const user = result.user;
+
+            // Check if user exists in admins collection
+            return db
+              .collection("admins")
+              .doc(user.uid)
+              .get()
+              .then((doc) => {
+                if (!doc.exists) {
+                  // If not exists, create a new admin with default type
+                  return db.collection("admins").doc(user.uid).set({
+                    email: user.email,
+                    type: "admin",
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                  });
+                }
+              });
+          })
+          .then(() => {
+            hideLoading();
+          })
+          .catch((error) => {
+            hideLoading();
+            alert("Google লগইন ব্যর্থ: " + error.message);
+          });
+      });
+
+      logoutBtn.addEventListener("click", () => {
+        if (confirm("আপনি কি নিশ্চিত যে আপনি লগআউট করতে চান?")) {
+          auth.signOut();
+        }
+      });
+
+      // Theme Toggle
+      themeToggle.addEventListener("click", () => {
+        if (document.documentElement.classList.contains("dark")) {
+          document.documentElement.classList.remove("dark");
+          themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+          localStorage.setItem("theme", "light");
+        } else {
+          document.documentElement.classList.add("dark");
+          themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+          localStorage.setItem("theme", "dark");
+        }
+      });
+
+      // Check for saved theme preference
+      if (localStorage.getItem("theme") === "dark") {
+        document.documentElement.classList.add("dark");
+        themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+      }
+
+      // Mobile Menu Toggle
+      mobileMenuBtn.addEventListener("click", () => {
+        sidebar.classList.toggle("hidden-mobile");
+        sidebar.classList.toggle("active-mobile");
+      });
+
+      // Navigation
+      navBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const pageId = btn.getAttribute("data-page");
+
+          // Update active nav button
+          navBtns.forEach((navBtn) => {
+            navBtn.classList.remove(
+              "bg-blue-50",
+              "dark:bg-blue-900/30",
+              "text-blue-600",
+              "dark:text-blue-400"
+            );
+            navBtn.classList.add("hover:bg-gray-100", "dark:hover:bg-gray-700");
+          });
+
+          btn.classList.add(
+            "bg-blue-50",
+            "dark:bg-blue-900/30",
+            "text-blue-600",
+            "dark:text-blue-400"
+          );
+          btn.classList.remove("hover:bg-gray-100", "dark:hover:bg-gray-700");
+
+          // Hide all pages
+          pages.forEach((page) => {
+            page.classList.add("hidden");
+          });
+
+          // Show selected page
+          const selectedPage = document.getElementById(`page-${pageId}`);
+          if (selectedPage) {
+            selectedPage.classList.remove("hidden");
+            selectedPage.classList.add("fade-in");
+
+            // Update page title
+            pageTitle.textContent = btn.textContent.trim();
+
+            // Load page-specific data
+            if (pageId === "dashboard") {
+              loadDashboard();
+            } else if (pageId === "groups") {
+              loadGroups();
+            } else if (pageId === "members") {
+              loadStudents();
+            } else if (pageId === "group-members") {
+              loadGroupMembersPage();
+            } else if (pageId === "all-students") {
+              loadAllStudentsCards();
+            } else if (pageId === "tasks") {
+              loadTasks();
+            } else if (pageId === "evaluation") {
+              loadEvaluationPage();
+            } else if (pageId === "group-policy") {
+              // Policy page doesn't need additional loading
+            } else if (pageId === "export") {
+              // Export page doesn't need additional loading
+            } else if (pageId === "admin-management") {
+              loadAdmins();
+            }
+          }
+
+          // Close mobile menu after navigation
+          if (window.innerWidth < 1024) {
+            sidebar.classList.add("hidden-mobile");
+            sidebar.classList.remove("active-mobile");
+          }
+        });
+      });
+
+      // Set dashboard as default active page
+      document.querySelector('[data-page="dashboard"]').click();
+
+      // Loading Functions
+      function showLoading() {
+        document.getElementById("loadingOverlay").style.display = "flex";
+      }
+
+      function hideLoading() {
+        document.getElementById("loadingOverlay").style.display = "none";
+      }
+
+      // Data Management Functions
+      let groups = [];
+      let students = [];
+      let tasks = [];
+      let evaluations = [];
+      let admins = [];
+
+      // Load Groups
+      function loadGroups() {
+        showLoading();
+        db.collection("groups")
+          .orderBy("name")
+          .get()
+          .then((querySnapshot) => {
+            groups = [];
+            querySnapshot.forEach((doc) => {
+              groups.push({ id: doc.id, ...doc.data() });
+            });
+            renderGroups();
+            hideLoading();
+          })
+          .catch((error) => {
+            hideLoading();
+            console.error("Error loading groups: ", error);
+          });
+      }
+
+      // Render Groups
+      function renderGroups() {
+        const groupsList = document.getElementById("groupsList");
+        const groupSelectionList =
+          document.getElementById("groupSelectionList");
+        const studentGroupInput = document.getElementById("studentGroupInput");
+        const evaluationGroupSelect = document.getElementById(
+          "evaluationGroupSelect"
+        );
+
+        // Clear existing options
+        groupsList.innerHTML = "";
+        groupSelectionList.innerHTML = "";
+        studentGroupInput.innerHTML = '<option value="">নির্বাচন করুন</option>';
+        evaluationGroupSelect.innerHTML =
+          '<option value="">একটি গ্রুপ নির্বাচন করুন</option>';
+
+        // Add groups to lists
+        groups.forEach((group) => {
+          // Groups list for management page
+          const groupElement = document.createElement("div");
+          groupElement.className =
+            "flex justify-between items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg";
+          groupElement.innerHTML = `
+          <div>
+            <div class="font-medium">${group.name}</div>
+            <div class="text-sm text-gray-500">সদস্য: ${
+              group.memberCount || 0
+            } জন</div>
+          </div>
+          <div class="flex gap-2">
+            <button class="edit-group-btn px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm" data-id="${
+              group.id
+            }">সম্পাদনা</button>
+            <button class="delete-group-btn px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg text-sm" data-id="${
+              group.id
+            }">ডিলিট</button>
+          </div>
+        `;
+          groupsList.appendChild(groupElement);
+
+          // Group selection list for group members page
+          const groupSelectionElement = document.createElement("div");
+          groupSelectionElement.className =
+            "group-bar p-3 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer";
+          groupSelectionElement.setAttribute("data-id", group.id);
+          groupSelectionElement.innerHTML = `
+          <div class="font-medium">${group.name}</div>
+          <div class="text-sm text-gray-500">সদস্য: ${
+            group.memberCount || 0
+          } জন</div>
+        `;
+          groupSelectionList.appendChild(groupSelectionElement);
+
+          // Add to student group dropdown
+          const option = document.createElement("option");
+          option.value = group.id;
+          option.textContent = group.name;
+          studentGroupInput.appendChild(option);
+
+          // Add to evaluation group dropdown
+          const evalOption = document.createElement("option");
+          evalOption.value = group.id;
+          evalOption.textContent = group.name;
+          evaluationGroupSelect.appendChild(evalOption);
+        });
+
+        // Add event listeners for group selection
+        document.querySelectorAll(".group-bar").forEach((bar) => {
+          bar.addEventListener("click", () => {
+            document
+              .querySelectorAll(".group-bar")
+              .forEach((b) => b.classList.remove("active"));
+            bar.classList.add("active");
+            const groupId = bar.getAttribute("data-id");
+            loadGroupMembers(groupId);
+          });
+        });
+
+        // Add event listeners for edit and delete buttons
+        document.querySelectorAll(".edit-group-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const groupId = btn.getAttribute("data-id");
+            editGroup(groupId);
+          });
+        });
+
+        document.querySelectorAll(".delete-group-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const groupId = btn.getAttribute("data-id");
+            deleteGroup(groupId);
+          });
+        });
+
+        // Render group filters
+        renderGroupFilters();
+      }
+
+      // Add Group
+      document.getElementById("addGroupBtn").addEventListener("click", () => {
+        const groupName = document
+          .getElementById("groupNameInput")
+          .value.trim();
+
+        if (groupName) {
+          showLoading();
+          db.collection("groups")
+            .add({
+              name: groupName,
+              memberCount: 0,
+              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            })
+            .then(() => {
+              hideLoading();
+              document.getElementById("groupNameInput").value = "";
+              loadGroups();
+            })
+            .catch((error) => {
+              hideLoading();
+              alert("গ্রুপ যোগ করতে সমস্যা হয়েছে: " + error.message);
+            });
+        } else {
+          alert("গ্রুপের নাম লিখুন");
+        }
+      });
+
+      // Edit Group
+      function editGroup(groupId) {
+        const group = groups.find((g) => g.id === groupId);
+        if (!group) return;
+
+        document.getElementById("editModalTitle").textContent =
+          "গ্রুপ সম্পাদনা করুন";
+        document.getElementById("editModalContent").innerHTML = `
+        <div class="mb-4">
+          <label class="block text-sm font-medium mb-2">গ্রুপের নাম</label>
+          <input id="editGroupName" type="text" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="${group.name}">
+        </div>
+      `;
+
+        document.getElementById("editModal").style.display = "flex";
+
+        document.getElementById("saveEdit").onclick = () => {
+          const newName = document.getElementById("editGroupName").value.trim();
+
+          if (newName) {
+            showLoading();
+            db.collection("groups")
+              .doc(groupId)
+              .update({
+                name: newName,
+              })
+              .then(() => {
+                hideLoading();
+                document.getElementById("editModal").style.display = "none";
+                loadGroups();
+              })
+              .catch((error) => {
+                hideLoading();
+                alert("গ্রুপ সম্পাদনা করতে সমস্যা হয়েছে: " + error.message);
+              });
+          } else {
+            alert("গ্রুপের নাম লিখুন");
+          }
+        };
+      }
+
+      // Delete Group
+      function deleteGroup(groupId) {
+        const group = groups.find((g) => g.id === groupId);
+        if (!group) return;
+
+        document.getElementById(
+          "deleteModalText"
+        ).textContent = `আপনি কি নিশ্চিত যে আপনি "${group.name}" গ্রুপটি ডিলিট করতে চান?`;
+        document.getElementById("deleteModal").style.display = "flex";
+
+        document.getElementById("confirmDelete").onclick = () => {
+          showLoading();
+          db.collection("groups")
+            .doc(groupId)
+            .delete()
+            .then(() => {
+              hideLoading();
+              document.getElementById("deleteModal").style.display = "none";
+              loadGroups();
+            })
+            .catch((error) => {
+              hideLoading();
+              alert("গ্রুপ ডিলিট করতে সমস্যা হয়েছে: " + error.message);
+            });
+        };
+      }
+
+      // Cancel delete
+      document.getElementById("cancelDelete").addEventListener("click", () => {
+        document.getElementById("deleteModal").style.display = "none";
+      });
+
+      // Cancel edit
+      document.getElementById("cancelEdit").addEventListener("click", () => {
+        document.getElementById("editModal").style.display = "none";
+      });
+
+      // Load Students
+      function loadStudents() {
+        showLoading();
+        db.collection("students")
+          .orderBy("name")
+          .get()
+          .then((querySnapshot) => {
+            students = [];
+            querySnapshot.forEach((doc) => {
+              students.push({ id: doc.id, ...doc.data() });
+            });
+            renderStudents();
+            hideLoading();
+          })
+          .catch((error) => {
+            hideLoading();
+            console.error("Error loading students: ", error);
+          });
+      }
+
+      // Render Students
+      function renderStudents() {
+        const studentsList = document.getElementById("studentsList");
+        studentsList.innerHTML = "";
+
+        students.forEach((student) => {
+          const group = groups.find((g) => g.id === student.groupId);
+          const groupName = group ? group.name : "গ্রুপ নেই";
+
+          const studentElement = document.createElement("div");
+          studentElement.className =
+            "flex justify-between items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg";
+          studentElement.innerHTML = `
+          <div>
+            <div class="font-medium">${student.name}</div>
+            <div class="text-sm text-gray-500">রোল: ${student.roll} | লিঙ্গ: ${student.gender} | গ্রুপ: ${groupName} | সেশন: ${student.session}</div>
+            <div class="text-sm text-gray-500">একাডেমিক গ্রুপ: ${student.academicGroup || 'তথ্য নেই'}</div>
+            <div class="text-sm text-gray-500">যোগাযোগ: ${student.contact}</div>
+          </div>
+          <div class="flex gap-2">
+            <button class="edit-student-btn px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm" data-id="${student.id}">সম্পাদনা</button>
+            <button class="delete-student-btn px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg text-sm" data-id="${student.id}">ডিলিট</button>
+          </div>
+        `;
+          studentsList.appendChild(studentElement);
+        });
+
+        // Add event listeners for edit and delete buttons
+        document.querySelectorAll(".edit-student-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const studentId = btn.getAttribute("data-id");
+            editStudent(studentId);
+          });
+        });
+
+        document.querySelectorAll(".delete-student-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const studentId = btn.getAttribute("data-id");
+            deleteStudent(studentId);
+          });
+        });
+      }
+
+      // Add Student
+      document.getElementById("addStudentBtn").addEventListener("click", () => {
+        const name = document.getElementById("studentNameInput").value.trim();
+        const roll = document.getElementById("studentRollInput").value.trim();
+        const gender = document.getElementById("studentGenderInput").value;
+        const groupId = document.getElementById("studentGroupInput").value;
+        const academicGroup = document.getElementById(
+          "studentAcademicGroupInput"
+        ).value;
+        const contact = document
+          .getElementById("studentContactInput")
+          .value.trim();
+        const session = document
+          .getElementById("studentSessionInput")
+          .value.trim();
+
+        if (name && roll && gender && groupId && contact && session) {
+          showLoading();
+          db.collection("students")
+            .add({
+              name: name,
+              roll: roll,
+              gender: gender,
+              groupId: groupId,
+              academicGroup: academicGroup,
+              contact: contact,
+
+              session: session,
+              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            })
+            .then(() => {
+              hideLoading();
+              // Clear form
+              document.getElementById("studentNameInput").value = "";
+              document.getElementById("studentRollInput").value = "";
+              document.getElementById("studentGenderInput").value = "";
+              document.getElementById("studentGroupInput").value = "";
+              document.getElementById("studentContactInput").value = "";
+              document.getElementById("studentSessionInput").value = "";
+
+              loadStudents();
+              loadAllStudentsCards();
+            })
+            .catch((error) => {
+              hideLoading();
+              alert("শিক্ষার্থী যোগ করতে সমস্যা হয়েছে: " + error.message);
+            });
+        } else {
+          alert("সমস্ত তথ্য পূরণ করুন");
+        }
+      });
+
+      // Edit Student
+      function editStudent(studentId) {
+        const student = students.find((s) => s.id === studentId);
+        if (!student) return;
+
+        const groupOptions = groups
+          .map(
+            (group) =>
+              `<option value="${group.id}" ${
+                group.id === student.groupId ? "selected" : ""
+              }>${group.name}</option>`
+          )
+          .join("");
+
+        document.getElementById("editModalTitle").textContent =
+          "শিক্ষার্থী সম্পাদনা করুন";
+        document.getElementById("editModalContent").innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-2">নাম</label>
+            <input id="editStudentName" type="text" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="${
+              student.name
+            }">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-2">রোল</label>
+            <input id="editStudentRoll" type="text" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="${
+              student.roll
+            }">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-2">লিঙ্গ</label>
+            <select id="editStudentGender" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              <option value="ছেলে" ${
+                student.gender === "ছেলে" ? "selected" : ""
+              }>ছেলে</option>
+              <option value="মেয়ে" ${
+                student.gender === "মেয়ে" ? "selected" : ""
+              }>মেয়ে</option>
+              <option value="অন্যান্য" ${
+                student.gender === "অন্যান্য" ? "selected" : ""
+              }>অন্যান্য</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-2">গ্রুপ</label>
+            <select id="editStudentGroup" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              <option value="">নির্বাচন করুন</option>
+              ${groupOptions}
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-2">ইমেইল/ফোন</label>
+            <input id="editStudentContact" type="text" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="${
+              student.contact
+            }">
+          </div>
+
+          <div>
+    <label class="block text-sm font-medium mb-2">একাডেমিক গ্রুপ</label>
+    <input id="editStudentAcademicGroup" type="text" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="${
+      student.academicGroup || ""
+    }">
+</div>
+          <div>
+            <label class="block text-sm font-medium mb-2">সেশন</label>
+            <input id="editStudentSession" type="text" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="${
+              student.session
+            }">
+          </div>
+        </div>
+      `;
+
+        document.getElementById("editModal").style.display = "flex";
+
+        document.getElementById("saveEdit").onclick = () => {
+          const name = document.getElementById("editStudentName").value.trim();
+          const roll = document.getElementById("editStudentRoll").value.trim();
+          const gender = document.getElementById("editStudentGender").value;
+          const groupId = document.getElementById("editStudentGroup").value;
+          const academicGroup = document.getElementById(
+            "editStudentAcademicGroup"
+          ).value;
+          const contact = document
+            .getElementById("editStudentContact")
+            .value.trim();
+          const session = document
+            .getElementById("editStudentSession")
+            .value.trim();
+
+          if (name && roll && gender && groupId && contact && session) {
+            showLoading();
+            db.collection("students")
+              .doc(studentId)
+              .update({
+                name: name,
+                roll: roll,
+                gender: gender,
+                groupId: groupId,
+                academicGroup: academicGroup,
+                contact: contact,
+                session: session,
+              })
+              .then(() => {
+                hideLoading();
+                document.getElementById("editModal").style.display = "none";
+                loadStudents();
+                loadAllStudentsCards();
+              })
+              .catch((error) => {
+                hideLoading();
+                alert(
+                  "শিক্ষার্থী সম্পাদনা করতে সমস্যা হয়েছে: " + error.message
+                );
+              });
+          } else {
+            alert("সমস্ত তথ্য পূরণ করুন");
+          }
+        };
+      }
+
+      // Delete Student
+      function deleteStudent(studentId) {
+        const student = students.find((s) => s.id === studentId);
+        if (!student) return;
+
+        document.getElementById(
+          "deleteModalText"
+        ).textContent = `আপনি কি নিশ্চিত যে আপনি "${student.name}" শিক্ষার্থীটি ডিলিট করতে চান?`;
+        document.getElementById("deleteModal").style.display = "flex";
+
+        document.getElementById("confirmDelete").onclick = () => {
+          showLoading();
+          db.collection("students")
+            .doc(studentId)
+            .delete()
+            .then(() => {
+              hideLoading();
+              document.getElementById("deleteModal").style.display = "none";
+              loadStudents();
+              loadAllStudentsCards();
+            })
+            .catch((error) => {
+              hideLoading();
+              alert("শিক্ষার্থী ডিলিট করতে সমস্যা হয়েছে: " + error.message);
+            });
+        };
+      }
+
+      // Render Group Filters
+      function renderGroupFilters() {
+        const filterContainer = document.querySelector(
+          "#page-members .flex-wrap"
+        );
+        const allStudentsFilterContainer = document.querySelector(
+          "#page-all-students .flex-wrap"
+        );
+
+        // Clear existing filters (except "All")
+        const allFilter = filterContainer.querySelector('[data-group=""]');
+        const allStudentsAllFilter =
+          allStudentsFilterContainer.querySelector('[data-group=""]');
+
+        filterContainer.innerHTML = "";
+        allStudentsFilterContainer.innerHTML = "";
+
+        // Add "All" filter back
+        filterContainer.appendChild(allFilter);
+        allStudentsFilterContainer.appendChild(allStudentsAllFilter);
+
+        // Add group filters
+        groups.forEach((group) => {
+          const filterBtn = document.createElement("button");
+          filterBtn.className =
+            "filter-btn px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm";
+          filterBtn.setAttribute("data-group", group.id);
+          filterBtn.textContent = group.name;
+          filterContainer.appendChild(filterBtn.cloneNode(true));
+          allStudentsFilterContainer.appendChild(filterBtn);
+        });
+
+        // Add event listeners to filter buttons
+        document.querySelectorAll(".filter-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const groupId = btn.getAttribute("data-group");
+
+            // Update active filter
+            document.querySelectorAll(".filter-btn").forEach((b) => {
+              b.classList.remove(
+                "bg-blue-100",
+                "dark:bg-blue-900",
+                "text-blue-800",
+                "dark:text-blue-200"
+              );
+              b.classList.add(
+                "bg-gray-100",
+                "dark:bg-gray-800",
+                "text-gray-800",
+                "dark:text-gray-200"
+              );
+            });
+
+            btn.classList.add(
+              "bg-blue-100",
+              "dark:bg-blue-900",
+              "text-blue-800",
+              "dark:text-blue-200"
+            );
+            btn.classList.remove(
+              "bg-gray-100",
+              "dark:bg-gray-800",
+              "text-gray-800",
+              "dark:text-gray-200"
+            );
+
+            // Filter students
+            filterStudents(groupId);
+          });
+        });
+      }
+
+      // Filter Students
+      function filterStudents(groupId) {
+        const studentsList = document.getElementById("studentsList");
+        studentsList.innerHTML = "";
+
+        const filteredStudents = groupId
+          ? students.filter((student) => student.groupId === groupId)
+          : students;
+
+        filteredStudents.forEach((student) => {
+          const group = groups.find((g) => g.id === student.groupId);
+          const groupName = group ? group.name : "গ্রুপ নেই";
+
+          const studentElement = document.createElement("div");
+          studentElement.className =
+            "flex justify-between items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg";
+          studentElement.innerHTML = `
+          <div>
+            <div class="font-medium">${student.name}</div>
+            <div class="text-sm text-gray-500">রোল: ${student.roll} | লিঙ্গ: ${student.gender} | গ্রুপ: ${groupName} | সেশন: ${student.session}</div>
+            <div class="text-sm text-gray-500">যোগাযোগ: ${student.contact}</div>
+          </div>
+          <div class="flex gap-2">
+            <button class="edit-student-btn px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm" data-id="${student.id}">সম্পাদনা</button>
+            <button class="delete-student-btn px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg text-sm" data-id="${student.id}">ডিলিট</button>
+          </div>
+        `;
+          studentsList.appendChild(studentElement);
+        });
+
+        // Re-add event listeners for edit and delete buttons
+        document.querySelectorAll(".edit-student-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const studentId = btn.getAttribute("data-id");
+            editStudent(studentId);
+          });
+        });
+
+        document.querySelectorAll(".delete-student-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const studentId = btn.getAttribute("data-id");
+            deleteStudent(studentId);
+          });
+        });
+      }
+
+      // Search Students
+      document
+        .getElementById("studentSearchInput")
+        .addEventListener("input", (e) => {
+          const searchTerm = e.target.value.toLowerCase();
+          const activeFilter = document.querySelector(
+            "#page-members .filter-btn.bg-blue-100, #page-members .filter-btn.dark\\:bg-blue-900"
+          );
+          const groupId = activeFilter
+            ? activeFilter.getAttribute("data-group")
+            : "";
+
+          const filteredStudents = groupId
+            ? students.filter((student) => student.groupId === groupId)
+            : students;
+
+          const searchedStudents = filteredStudents.filter(
+            (student) =>
+              student.name.toLowerCase().includes(searchTerm) ||
+              student.roll.toLowerCase().includes(searchTerm) ||
+              student.contact.toLowerCase().includes(searchTerm) ||
+              student.session.toLowerCase().includes(searchTerm)
+          );
+
+          const studentsList = document.getElementById("studentsList");
+          studentsList.innerHTML = "";
+
+          searchedStudents.forEach((student) => {
+            const group = groups.find((g) => g.id === student.groupId);
+            const groupName = group ? group.name : "গ্রুপ নেই";
+
+            const studentElement = document.createElement("div");
+            studentElement.className =
+              "flex justify-between items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg";
+            studentElement.innerHTML = `
+          <div>
+            <div class="font-medium">${student.name}</div>
+            <div class="text-sm text-gray-500">রোল: ${student.roll} | লিঙ্গ: ${student.gender} | গ্রুপ: ${groupName} | সেশন: ${student.session}</div>
+            <div class="text-sm text-gray-500">যোগাযোগ: ${student.contact}</div>
+          </div>
+          <div class="flex gap-2">
+            <button class="edit-student-btn px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm" data-id="${student.id}">সম্পাদনা</button>
+            <button class="delete-student-btn px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg text-sm" data-id="${student.id}">ডিলিট</button>
+          </div>
+        `;
+            studentsList.appendChild(studentElement);
+          });
+
+          // Re-add event listeners for edit and delete buttons
+          document.querySelectorAll(".edit-student-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const studentId = btn.getAttribute("data-id");
+              editStudent(studentId);
+            });
+          });
+
+          document.querySelectorAll(".delete-student-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const studentId = btn.getAttribute("data-id");
+              deleteStudent(studentId);
+            });
+          });
+        });
+
+      // Load Group Members Page
+      function loadGroupMembersPage() {
+        // This function is called when the group members page is opened
+        // The groups are already loaded, so we just need to render the group selection list
+        renderGroups();
+      }
+
+      // Load Group Members
+      function loadGroupMembers(groupId) {
+        const groupMembersList = document.getElementById("groupMembersList");
+        const selectedGroupTitle =
+          document.getElementById("selectedGroupTitle");
+
+        const group = groups.find((g) => g.id === groupId);
+        if (!group) return;
+
+        selectedGroupTitle.textContent = `${group.name} - গ্রুপ সদস্য`;
+
+        // Filter students by group
+        const groupStudents = students.filter(
+          (student) => student.groupId === groupId
+        );
+
+        groupMembersList.innerHTML = "";
+
+        if (groupStudents.length === 0) {
+          groupMembersList.innerHTML =
+            '<p class="text-center text-gray-500 py-8">এই গ্রুপে কোন সদস্য নেই</p>';
+          return;
+        }
+
+        groupStudents.forEach((student) => {
+          const memberElement = document.createElement("div");
+          memberElement.className =
+            "flex justify-between items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg";
+          memberElement.innerHTML = `
+          <div>
+            <div class="font-medium">${student.name}</div>
+            <div class="text-sm text-gray-500">রোল: ${student.roll} | লিঙ্গ: ${student.gender} | সেশন: ${student.session}</div>
+            <div class="text-sm text-gray-500">একাডেমিক গ্রুপ: ${student.academicGroup || 'তথ্য নেই'}</div>
+            <div class="text-sm text-gray-500">যোগাযোগ: ${student.contact}</div>
+          </div>
+          <div class="flex gap-2">
+            <button class="assign-role-btn px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm" data-id="${student.id}">দায়িত্ব নির্ধারণ</button>
+            <button class="remove-from-group-btn px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg text-sm" data-id="${student.id}">গ্রুপ থেকে সরান</button>
+          </div>
+        `;
+          groupMembersList.appendChild(memberElement);
+        });
+
+        // Add event listeners for role assignment and removal
+        document.querySelectorAll(".assign-role-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const studentId = btn.getAttribute("data-id");
+            assignRole(studentId, groupId);
+          });
+        });
+
+        document.querySelectorAll(".remove-from-group-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const studentId = btn.getAttribute("data-id");
+            removeFromGroup(studentId, groupId);
+          });
+        });
+      }
+
+      // Assign Role to Student
+      function assignRole(studentId, groupId) {
+        const student = students.find((s) => s.id === studentId);
+        if (!student) return;
+
+        document.getElementById("editModalTitle").textContent =
+          "দায়িত্ব নির্ধারণ করুন";
+        document.getElementById("editModalContent").innerHTML = `
+        <div class="mb-4">
+          <p class="mb-2"><strong>শিক্ষার্থী:</strong> ${student.name}</p>
+          <label class="block text-sm font-medium mb-2">দায়িত্ব নির্বাচন করুন</label>
+          <select id="studentRole" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <option value="">কোন দায়িত্ব নেই</option>
+            <option value="team-leader" ${
+              student.role === "team-leader" ? "selected" : ""
+            }>টিম লিডার</option>
+            <option value="time-keeper" ${
+              student.role === "time-keeper" ? "selected" : ""
+            }>টাইম কিপার</option>
+            <option value="reporter" ${
+              student.role === "reporter" ? "selected" : ""
+            }>রিপোর্টার</option>
+            <option value="resource-manager" ${
+              student.role === "resource-manager" ? "selected" : ""
+            }>রিসোর্স ম্যানেজার</option>
+            <option value="peace-maker" ${
+              student.role === "peace-maker" ? "selected" : ""
+            }>পিস মেকার</option>
+          </select>
+        </div>
+      `;
+
+        document.getElementById("editModal").style.display = "flex";
+
+        document.getElementById("saveEdit").onclick = () => {
+          const role = document.getElementById("studentRole").value;
+
+          showLoading();
+          db.collection("students")
+            .doc(studentId)
+            .update({
+              role: role,
+            })
+            .then(() => {
+              hideLoading();
+              document.getElementById("editModal").style.display = "none";
+              loadStudents();
+              loadGroupMembers(groupId);
+              loadAllStudentsCards();
+            })
+            .catch((error) => {
+              hideLoading();
+              alert("দায়িত্ব নির্ধারণ করতে সমস্যা হয়েছে: " + error.message);
+            });
+        };
+      }
+
+      // Remove Student from Group
+      function removeFromGroup(studentId, groupId) {
+        const student = students.find((s) => s.id === studentId);
+        if (!student) return;
+
+        document.getElementById(
+          "deleteModalText"
+        ).textContent = `আপনি কি নিশ্চিত যে আপনি "${student.name}" কে এই গ্রুপ থেকে সরাতে চান?`;
+        document.getElementById("deleteModal").style.display = "flex";
+
+        document.getElementById("confirmDelete").onclick = () => {
+          showLoading();
+          db.collection("students")
+            .doc(studentId)
+            .update({
+              groupId: "",
+            })
+            .then(() => {
+              hideLoading();
+              document.getElementById("deleteModal").style.display = "none";
+              loadStudents();
+              loadGroupMembers(groupId);
+              loadAllStudentsCards();
+            })
+            .catch((error) => {
+              hideLoading();
+              alert(
+                "শিক্ষার্থীকে গ্রুপ থেকে সরাতে সমস্যা হয়েছে: " + error.message
+              );
+            });
+        };
+      }
+
+      // Search Group Members
+      document
+        .getElementById("memberSearchInput")
+        .addEventListener("input", (e) => {
+          const searchTerm = e.target.value.toLowerCase();
+          const activeGroup = document.querySelector(".group-bar.active");
+
+          if (!activeGroup) return;
+
+          const groupId = activeGroup.getAttribute("data-id");
+          const groupStudents = students.filter(
+            (student) => student.groupId === groupId
+          );
+
+          const searchedStudents = groupStudents.filter(
+            (student) =>
+              student.name.toLowerCase().includes(searchTerm) ||
+              student.roll.toLowerCase().includes(searchTerm) ||
+              student.contact.toLowerCase().includes(searchTerm)
+          );
+
+          const groupMembersList = document.getElementById("groupMembersList");
+          groupMembersList.innerHTML = "";
+
+          if (searchedStudents.length === 0) {
+            groupMembersList.innerHTML =
+              '<p class="text-center text-gray-500 py-8">কোন সদস্য পাওয়া যায়নি</p>';
+            return;
+          }
+
+          searchedStudents.forEach((student) => {
+            const memberElement = document.createElement("div");
+            memberElement.className =
+              "flex justify-between items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg";
+            memberElement.innerHTML = `
+          <div>
+            <div class="font-medium">${student.name}</div>
+            <div class="text-sm text-gray-500">রোল: ${student.roll} | লিঙ্গ: ${student.gender} | সেশন: ${student.session}</div>
+            <div class="text-sm text-gray-500">যোগাযোগ: ${student.contact}</div>
+          </div>
+          <div class="flex gap-2">
+            <button class="assign-role-btn px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm" data-id="${student.id}">দায়িত্ব নির্ধারণ</button>
+            <button class="remove-from-group-btn px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg text-sm" data-id="${student.id}">গ্রুপ থেকে সরান</button>
+          </div>
+        `;
+            groupMembersList.appendChild(memberElement);
+          });
+
+          // Re-add event listeners
+          document.querySelectorAll(".assign-role-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const studentId = btn.getAttribute("data-id");
+              assignRole(studentId, groupId);
+            });
+          });
+
+          document.querySelectorAll(".remove-from-group-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const studentId = btn.getAttribute("data-id");
+              removeFromGroup(studentId, groupId);
+            });
+          });
+        });
+
+      // Load All Students Cards
+      function loadAllStudentsCards() {
+        const allStudentsCards = document.getElementById("allStudentsCards");
+        allStudentsCards.innerHTML = "";
+
+        students.forEach((student) => {
+          const group = groups.find((g) => g.id === student.groupId);
+          const groupName = group ? group.name : "গ্রুপ নেই";
+          const groupIndex = groups.findIndex((g) => g.id === student.groupId);
+          const cardColorClass = `group-card-${(groupIndex % 8) + 1}`;
+
+          let roleBadge = "";
+          if (student.role) {
+            const roleNames = {
+              "team-leader": "টিম লিডার",
+              "time-keeper": "টাইম কিপার",
+              reporter: "রিপোর্টার",
+              "resource-manager": "রিসোর্স ম্যানেজার",
+              "peace-maker": "পিস মেকার",
+            };
+            roleBadge = `<span class="member-role-badge ${student.role}">${
+              roleNames[student.role] || student.role
+            }</span>`;
+          }
+
+          const studentCard = document.createElement("div");
+          studentCard.className = `student-card ${cardColorClass} p-4 rounded-xl shadow-md relative overflow-hidden`;
+          studentCard.innerHTML = `
+          <div class="group-serial">${groupIndex + 1}</div>
+          <div class="flex items-center mb-3">
+            <div class="student-avatar bg-primary text-white">${student.name.charAt(
+              0
+            )}</div>
+            <div>
+              <h3 class="font-bold text-lg">${student.name} ${roleBadge}</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-300">রোল: ${
+                student.roll
+              }</p>
+            </div>
+          </div>
+          <div class="space-y-1 text-sm">
+            <p><i class="fas fa-venus-mars mr-2"></i> লিঙ্গ: ${
+              student.gender
+            }</p>
+            <p><i class="fas fa-users mr-2"></i> গ্রুপ: ${groupName}</p>
+            <p><i class="fas fa-envelope mr-2"></i> যোগাযোগ: ${
+              student.contact
+            }</p>
+            <p><i class="fas fa-book mr-2"></i> একাডেমিক গ্রুপ: ${student.academicGroup || 'তথ্য নেই'}</p>
+            <p><i class="fas fa-calendar mr-2"></i> সেশন: ${student.session}</p>
+          </div>
+        `;
+          allStudentsCards.appendChild(studentCard);
+        });
+      }
+
+      // Search All Students Cards
+      document
+        .getElementById("allStudentsSearchInput")
+        .addEventListener("input", (e) => {
+          const searchTerm = e.target.value.toLowerCase();
+          const activeFilter = document.querySelector(
+            "#page-all-students .filter-btn.bg-blue-100, #page-all-students .filter-btn.dark\\:bg-blue-900"
+          );
+          const groupId = activeFilter
+            ? activeFilter.getAttribute("data-group")
+            : "";
+
+          const filteredStudents = groupId
+            ? students.filter((student) => student.groupId === groupId)
+            : students;
+
+          const searchedStudents = filteredStudents.filter(
+            (student) =>
+              student.name.toLowerCase().includes(searchTerm) ||
+              student.roll.toLowerCase().includes(searchTerm) ||
+              student.contact.toLowerCase().includes(searchTerm) ||
+              student.session.toLowerCase().includes(searchTerm)
+          );
+
+          const allStudentsCards = document.getElementById("allStudentsCards");
+          allStudentsCards.innerHTML = "";
+
+          searchedStudents.forEach((student) => {
+            const group = groups.find((g) => g.id === student.groupId);
+            const groupName = group ? group.name : "গ্রুপ নেই";
+            const groupIndex = groups.findIndex(
+              (g) => g.id === student.groupId
+            );
+            const cardColorClass = `group-card-${(groupIndex % 8) + 1}`;
+
+            let roleBadge = "";
+            if (student.role) {
+              const roleNames = {
+                "team-leader": "টিম লিডার",
+                "time-keeper": "টাইম কিপার",
+                reporter: "রিপোর্টার",
+                "resource-manager": "রিসোর্স ম্যানেজার",
+                "peace-maker": "পিস মেকার",
+              };
+              roleBadge = `<span class="member-role-badge ${student.role}">${
+                roleNames[student.role] || student.role
+              }</span>`;
+            }
+
+            const studentCard = document.createElement("div");
+            studentCard.className = `student-card ${cardColorClass} p-4 rounded-xl shadow-md relative overflow-hidden`;
+            studentCard.innerHTML = `
+          <div class="group-serial">${groupIndex + 1}</div>
+          <div class="flex items-center mb-3">
+            <div class="student-avatar bg-primary text-white">${student.name.charAt(
+              0
+            )}</div>
+            <div>
+              <h3 class="font-bold text-lg">${student.name} ${roleBadge}</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-300">রোল: ${
+                student.roll
+              }</p>
+            </div>
+          </div>
+          <div class="space-y-1 text-sm">
+            <p><i class="fas fa-venus-mars mr-2"></i> লিঙ্গ: ${
+              student.gender
+            }</p>
+            <p><i class="fas fa-users mr-2"></i> গ্রুপ: ${groupName}</p>
+            <p><i class="fas fa-envelope mr-2"></i> যোগাযোগ: ${
+              student.contact
+            }</p>
+            <p><i class="fas fa-calendar mr-2"></i> সেশন: ${student.session}</p>
+          </div>
+        `;
+            allStudentsCards.appendChild(studentCard);
+          });
+        });
+
+      // Filter All Students Cards
+      document
+        .querySelectorAll("#page-all-students .filter-btn")
+        .forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const groupId = btn.getAttribute("data-group");
+
+            // Update active filter
+            document
+              .querySelectorAll("#page-all-students .filter-btn")
+              .forEach((b) => {
+                b.classList.remove(
+                  "bg-blue-100",
+                  "dark:bg-blue-900",
+                  "text-blue-800",
+                  "dark:text-blue-200"
+                );
+                b.classList.add(
+                  "bg-gray-100",
+                  "dark:bg-gray-800",
+                  "text-gray-800",
+                  "dark:text-gray-200"
+                );
+              });
+
+            btn.classList.add(
+              "bg-blue-100",
+              "dark:bg-blue-900",
+              "text-blue-800",
+              "dark:text-blue-200"
+            );
+            btn.classList.remove(
+              "bg-gray-100",
+              "dark:bg-gray-800",
+              "text-gray-800",
+              "dark:text-gray-200"
+            );
+
+            // Filter students
+            const filteredStudents = groupId
+              ? students.filter((student) => student.groupId === groupId)
+              : students;
+
+            const allStudentsCards =
+              document.getElementById("allStudentsCards");
+            allStudentsCards.innerHTML = "";
+
+            filteredStudents.forEach((student) => {
+              const group = groups.find((g) => g.id === student.groupId);
+              const groupName = group ? group.name : "গ্রুপ নেই";
+              const groupIndex = groups.findIndex(
+                (g) => g.id === student.groupId
+              );
+              const cardColorClass = `group-card-${(groupIndex % 8) + 1}`;
+
+              let roleBadge = "";
+              if (student.role) {
+                const roleNames = {
+                  "team-leader": "টিম লিডার",
+                  "time-keeper": "টাইম কিপার",
+                  reporter: "রিপোর্টার",
+                  "resource-manager": "রিসোর্স ম্যানেজার",
+                  "peace-maker": "পিস মেকার",
+                };
+                roleBadge = `<span class="member-role-badge ${student.role}">${
+                  roleNames[student.role] || student.role
+                }</span>`;
+              }
+
+              const studentCard = document.createElement("div");
+              studentCard.className = `student-card ${cardColorClass} p-4 rounded-xl shadow-md relative overflow-hidden`;
+              studentCard.innerHTML = `
+            <div class="group-serial">${groupIndex + 1}</div>
+            <div class="flex items-center mb-3">
+              <div class="student-avatar bg-primary text-white">${student.name.charAt(
+                0
+              )}</div>
+              <div>
+                <h3 class="font-bold text-lg">${student.name} ${roleBadge}</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-300">রোল: ${
+                  student.roll
+                }</p>
+              </div>
+            </div>
+            <div class="space-y-1 text-sm">
+              <p><i class="fas fa-venus-mars mr-2"></i> লিঙ্গ: ${
+                student.gender
+              }</p>
+              <p><i class="fas fa-users mr-2"></i> গ্রুপ: ${groupName}</p>
+              <p><i class="fas fa-envelope mr-2"></i> যোগাযোগ: ${
+                student.contact
+              }</p>
+              <p><i class="fas fa-calendar mr-2"></i> সেশন: ${
+                student.session
+              }</p>
+            </div>
+          `;
+              allStudentsCards.appendChild(studentCard);
+            });
+          });
+        });
+
+      // Load Tasks
+      function loadTasks() {
+        showLoading();
+        db.collection("tasks")
+          .orderBy("date", "desc")
+          .get()
+          .then((querySnapshot) => {
+            tasks = [];
+            querySnapshot.forEach((doc) => {
+              tasks.push({ id: doc.id, ...doc.data() });
+            });
+            renderTasks();
+            hideLoading();
+          })
+          .catch((error) => {
+            hideLoading();
+            console.error("Error loading tasks: ", error);
+          });
+      }
+
+      // Render Tasks
+      function renderTasks() {
+        const tasksList = document.getElementById("tasksList");
+        const evaluationTaskSelect = document.getElementById(
+          "evaluationTaskSelect"
+        );
+
+        tasksList.innerHTML = "";
+        evaluationTaskSelect.innerHTML =
+          '<option value="">একটি টাস্ক নির্বাচন করুন</option>';
+
+        tasks.forEach((task) => {
+          // Tasks list for management page
+          const taskElement = document.createElement("div");
+          taskElement.className =
+            "border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden";
+          taskElement.innerHTML = `
+          <div class="p-4 bg-gray-50 dark:bg-gray-800 flex justify-between items-center">
+            <div>
+              <h3 class="font-semibold">${task.name}</h3>
+              <p class="text-sm text-gray-500">তারিখ: ${new Date(
+                task.date.seconds * 1000
+              ).toLocaleDateString("bn-BD")} | সর্বোচ্চ স্কোর: ${
+            task.maxScore
+          }</p>
+            </div>
+            <div class="flex gap-2">
+              <button class="edit-task-btn px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm" data-id="${
+                task.id
+              }">সম্পাদনা</button>
+              <button class="delete-task-btn px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg text-sm" data-id="${
+                task.id
+              }">ডিলিট</button>
+            </div>
+          </div>
+          <div class="p-4">
+            <p class="text-gray-600 dark:text-gray-300">${task.description}</p>
+          </div>
+        `;
+          tasksList.appendChild(taskElement);
+
+          // Add to evaluation task dropdown
+          const option = document.createElement("option");
+          option.value = task.id;
+          option.textContent = `${task.name} (${new Date(
+            task.date.seconds * 1000
+          ).toLocaleDateString("bn-BD")})`;
+          evaluationTaskSelect.appendChild(option);
+        });
+
+        // Add event listeners for edit and delete buttons
+        document.querySelectorAll(".edit-task-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const taskId = btn.getAttribute("data-id");
+            editTask(taskId);
+          });
+        });
+
+        document.querySelectorAll(".delete-task-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const taskId = btn.getAttribute("data-id");
+            deleteTask(taskId);
+          });
+        });
+      }
+
+      // Add Task
+      document.getElementById("addTaskBtn").addEventListener("click", () => {
+        const name = document.getElementById("taskNameInput").value.trim();
+        const description = document
+          .getElementById("taskDescriptionInput")
+          .value.trim();
+        const maxScore = parseInt(
+          document.getElementById("taskMaxScoreInput").value
+        );
+        const date = document.getElementById("taskDateInput").value;
+
+        if (name && description && maxScore && date) {
+          showLoading();
+          db.collection("tasks")
+            .add({
+              name: name,
+              description: description,
+              maxScore: maxScore,
+              date: new Date(date),
+              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            })
+            .then(() => {
+              hideLoading();
+              // Clear form
+              document.getElementById("taskNameInput").value = "";
+              document.getElementById("taskDescriptionInput").value = "";
+              document.getElementById("taskMaxScoreInput").value = "";
+              document.getElementById("taskDateInput").value = "";
+
+              loadTasks();
+            })
+            .catch((error) => {
+              hideLoading();
+              alert("টাস্ক যোগ করতে সমস্যা হয়েছে: " + error.message);
+            });
+        } else {
+          alert("সমস্ত তথ্য পূরণ করুন");
+        }
+      });
+
+      // Edit Task
+      function editTask(taskId) {
+        const task = tasks.find((t) => t.id === taskId);
+        if (!task) return;
+
+        const taskDate = new Date(task.date.seconds * 1000);
+        const formattedDate = taskDate.toISOString().split("T")[0];
+
+        document.getElementById("editModalTitle").textContent =
+          "টাস্ক সম্পাদনা করুন";
+        document.getElementById("editModalContent").innerHTML = `
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium mb-2">টাস্কের নাম</label>
+            <input id="editTaskName" type="text" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="${task.name}">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-2">টাস্কের বিবরণ</label>
+            <textarea id="editTaskDescription" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent" rows="3">${task.description}</textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-2">সর্বোচ্চ স্কোর</label>
+            <input id="editTaskMaxScore" type="number" min="1" max="100" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="${task.maxScore}">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-2">টাস্কের তারিখ</label>
+            <input id="editTaskDate" type="date" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="${formattedDate}">
+          </div>
+        </div>
+      `;
+
+        document.getElementById("editModal").style.display = "flex";
+
+        document.getElementById("saveEdit").onclick = () => {
+          const name = document.getElementById("editTaskName").value.trim();
+          const description = document
+            .getElementById("editTaskDescription")
+            .value.trim();
+          const maxScore = parseInt(
+            document.getElementById("editTaskMaxScore").value
+          );
+          const date = document.getElementById("editTaskDate").value;
+
+          if (name && description && maxScore && date) {
+            showLoading();
+            db.collection("tasks")
+              .doc(taskId)
+              .update({
+                name: name,
+                description: description,
+                maxScore: maxScore,
+                date: new Date(date),
+              })
+              .then(() => {
+                hideLoading();
+                document.getElementById("editModal").style.display = "none";
+                loadTasks();
+              })
+              .catch((error) => {
+                hideLoading();
+                alert("টাস্ক সম্পাদনা করতে সমস্যা হয়েছে: " + error.message);
+              });
+          } else {
+            alert("সমস্ত তথ্য পূরণ করুন");
+          }
+        };
+      }
+
+      // Delete Task
+      function deleteTask(taskId) {
+        const task = tasks.find((t) => t.id === taskId);
+        if (!task) return;
+
+        document.getElementById(
+          "deleteModalText"
+        ).textContent = `আপনি কি নিশ্চিত যে আপনি "${task.name}" টাস্কটি ডিলিট করতে চান?`;
+        document.getElementById("deleteModal").style.display = "flex";
+
+        document.getElementById("confirmDelete").onclick = () => {
+          showLoading();
+          db.collection("tasks")
+            .doc(taskId)
+            .delete()
+            .then(() => {
+              hideLoading();
+              document.getElementById("deleteModal").style.display = "none";
+              loadTasks();
+            })
+            .catch((error) => {
+              hideLoading();
+              alert("টাস্ক ডিলিট করতে সমস্যা হয়েছে: " + error.message);
+            });
+        };
+      }
+
+      // Load Evaluation Page
+      function loadEvaluationPage() {
+        // This function is called when the evaluation page is opened
+        // The tasks and groups are already loaded, so we just need to render the dropdowns
+        renderTasks();
+        renderGroups();
+      }
+
+      // Start Evaluation
+      document
+        .getElementById("startEvaluationBtn")
+        .addEventListener("click", () => {
+          const taskId = document.getElementById("evaluationTaskSelect").value;
+          const groupId = document.getElementById(
+            "evaluationGroupSelect"
+          ).value;
+
+          if (!taskId || !groupId) {
+            alert("একটি টাস্ক এবং গ্রুপ নির্বাচন করুন");
+            return;
+          }
+
+          const task = tasks.find((t) => t.id === taskId);
+          const group = groups.find((g) => g.id === groupId);
+          const groupStudents = students.filter(
+            (student) => student.groupId === groupId
+          );
+
+          if (!task || !group || groupStudents.length === 0) {
+            alert("গ্রুপে কোন সদস্য নেই");
+            return;
+          }
+
+          const evaluationTitle = document.getElementById("evaluationTitle");
+          evaluationTitle.textContent = `${group.name} - ${task.name} মূল্যায়ন`;
+
+          const evaluationForm = document.getElementById("evaluationForm");
+          evaluationForm.innerHTML = "";
+
+          // Check if evaluation already exists
+          db.collection("evaluations")
+            .where("taskId", "==", taskId)
+            .where("groupId", "==", groupId)
+            .get()
+            .then((querySnapshot) => {
+              let existingEvaluation = null;
+
+              if (!querySnapshot.empty) {
+                existingEvaluation = querySnapshot.docs[0].data();
+              }
+
+              // Create evaluation form
+              let formHTML = `
+            <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-4">
+              <p class="text-sm"><strong>টাস্ক:</strong> ${task.name}</p>
+              <p class="text-sm"><strong>সর্বোচ্চ স্কোর:</strong> ${task.maxScore}</p>
+              <p class="text-sm"><strong>গ্রুপ:</strong> ${group.name}</p>
+            </div>
+          `;
+
+              groupStudents.forEach((student) => {
+                const taskScore = existingEvaluation
+                  ? existingEvaluation.scores &&
+                    existingEvaluation.scores[student.id]
+                    ? existingEvaluation.scores[student.id].taskScore
+                    : 0
+                  : 0;
+                const teamworkScore = existingEvaluation
+                  ? existingEvaluation.scores &&
+                    existingEvaluation.scores[student.id]
+                    ? existingEvaluation.scores[student.id].teamworkScore
+                    : 0
+                  : 0;
+                const comments = existingEvaluation
+                  ? existingEvaluation.scores &&
+                    existingEvaluation.scores[student.id]
+                    ? existingEvaluation.scores[student.id].comments
+                    : ""
+                  : "";
+
+                formHTML += `
+              <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <h4 class="font-semibold mb-2">${student.name} (${student.roll})</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                  <div>
+                    <label class="block text-sm font-medium mb-1">টাস্ক স্কোর (০-${task.maxScore})</label>
+                    <input type="number" min="0" max="${task.maxScore}" class="task-score w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-gray-700" value="${taskScore}" data-student="${student.id}">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-1">টিমওয়ার্ক স্কোর (০-১০)</label>
+                    <input type="number" min="0" max="10" class="teamwork-score w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-gray-700" value="${teamworkScore}" data-student="${student.id}">
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1">মন্তব্য</label>
+                  <textarea class="comments w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-gray-700" rows="2" data-student="${student.id}" placeholder="মন্তব্য লিখুন...">${comments}</textarea>
+                </div>
+              </div>
+            `;
+              });
+
+              formHTML += `
+            <div class="mt-4">
+              <button id="saveEvaluationBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">মূল্যায়ন সংরক্ষণ করুন</button>
+            </div>
+          `;
+
+              evaluationForm.innerHTML = formHTML;
+
+              // Add event listener for save button
+              document
+                .getElementById("saveEvaluationBtn")
+                .addEventListener("click", () => {
+                  saveEvaluation(
+                    taskId,
+                    groupId,
+                    existingEvaluation ? existingEvaluation.id : null
+                  );
+                });
+            })
+            .catch((error) => {
+              console.error("Error checking existing evaluation: ", error);
+            });
+        });
+
+      // Save Evaluation
+      function saveEvaluation(taskId, groupId, evaluationId) {
+        const taskScores = document.querySelectorAll(".task-score");
+        const teamworkScores = document.querySelectorAll(".teamwork-score");
+        const comments = document.querySelectorAll(".comments");
+
+        const scores = {};
+
+        taskScores.forEach((input, index) => {
+          const studentId = input.getAttribute("data-student");
+          const taskScore = parseInt(input.value) || 0;
+          const teamworkScore = parseInt(teamworkScores[index].value) || 0;
+          const comment = comments[index].value;
+
+          scores[studentId] = {
+            taskScore: taskScore,
+            teamworkScore: teamworkScore,
+            comments: comment,
+          };
+        });
+
+        showLoading();
+
+        if (evaluationId) {
+          // Update existing evaluation
+          db.collection("evaluations")
+            .doc(evaluationId)
+            .update({
+              scores: scores,
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            })
+            .then(() => {
+              hideLoading();
+              alert("মূল্যায়ন সফলভাবে আপডেট করা হয়েছে");
+            })
+            .catch((error) => {
+              hideLoading();
+              alert("মূল্যায়ন সংরক্ষণ করতে সমস্যা হয়েছে: " + error.message);
+            });
+        } else {
+          // Create new evaluation
+          db.collection("evaluations")
+            .add({
+              taskId: taskId,
+              groupId: groupId,
+              scores: scores,
+              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            })
+            .then(() => {
+              hideLoading();
+              alert("মূল্যায়ন সফলভাবে সংরক্ষণ করা হয়েছে");
+            })
+            .catch((error) => {
+              hideLoading();
+              alert("মূল্যায়ন সংরক্ষণ করতে সমস্যা হয়েছে: " + error.message);
+            });
+        }
+      }
+
+      // Load Dashboard
+      function loadDashboard() {
+        // Load evaluations for calculating scores
+        db.collection("evaluations")
+          .get()
+          .then((querySnapshot) => {
+            evaluations = [];
+            querySnapshot.forEach((doc) => {
+              evaluations.push({ id: doc.id, ...doc.data() });
+            });
+
+            // Calculate group scores
+            const groupScores = calculateGroupScores();
+            renderTopGroups(groupScores);
+            renderGroupsRanking(groupScores);
+          })
+          .catch((error) => {
+            console.error("Error loading evaluations: ", error);
+          });
+      }
+
+      // Calculate Group Scores
+      function calculateGroupScores() {
+        const groupScores = {};
+
+        // Initialize group scores
+        groups.forEach((group) => {
+          groupScores[group.id] = {
+            groupId: group.id,
+            groupName: group.name,
+            totalScore: 0,
+            taskCount: 0,
+            averageScore: 0,
+          };
+        });
+
+        // Calculate scores from evaluations
+        evaluations.forEach((evaluation) => {
+          const groupId = evaluation.groupId;
+          const task = tasks.find((t) => t.id === evaluation.taskId);
+
+          if (!task || !groupScores[groupId]) return;
+
+          let totalTaskScore = 0;
+          let totalTeamworkScore = 0;
+          let studentCount = 0;
+
+          // Calculate average scores for the group
+          if (evaluation.scores) {
+            Object.values(evaluation.scores).forEach((score) => {
+              totalTaskScore += score.taskScore;
+              totalTeamworkScore += score.teamworkScore;
+              studentCount++;
+            });
+
+            if (studentCount > 0) {
+              const avgTaskScore = totalTaskScore / studentCount;
+              const avgTeamworkScore = totalTeamworkScore / studentCount;
+
+              // Calculate normalized scores (0-100)
+              const taskScoreNormalized = (avgTaskScore / task.maxScore) * 50;
+              const teamworkScoreNormalized = (avgTeamworkScore / 10) * 50;
+
+              const totalScore = taskScoreNormalized + teamworkScoreNormalized;
+
+              groupScores[groupId].totalScore += totalScore;
+              groupScores[groupId].taskCount++;
+            }
+          }
+        });
+
+        // Calculate average scores
+        Object.keys(groupScores).forEach((groupId) => {
+          if (groupScores[groupId].taskCount > 0) {
+            groupScores[groupId].averageScore =
+              groupScores[groupId].totalScore / groupScores[groupId].taskCount;
+          }
+        });
+
+        return groupScores;
+      }
+
+      // Render Top Groups
+      function renderTopGroups(groupScores) {
+        const topGroupsContainer =
+          document.getElementById("topGroupsContainer");
+        topGroupsContainer.innerHTML = "";
+
+        // Sort groups by average score
+        const sortedGroups = Object.values(groupScores)
+          .filter((score) => score.taskCount > 0)
+          .sort((a, b) => b.averageScore - a.averageScore)
+          .slice(0, 3);
+
+        // Add placeholder if less than 3 groups have scores
+        while (sortedGroups.length < 3) {
+          sortedGroups.push({
+            groupId: `placeholder-${sortedGroups.length}`,
+            groupName: "গ্রুপ নেই",
+            averageScore: 0,
+            taskCount: 0,
+          });
+        }
+
+        const rankTitles = ["১ম", "২য়", "৩য়"];
+        const rankClasses = ["rank-1-card", "rank-2-card", "rank-3-card"];
+        const rankTitleClasses = [
+          "rank-1-title",
+          "rank-2-title",
+          "rank-3-title",
+        ];
+
+        sortedGroups.forEach((group, index) => {
+          const isPlaceholder = group.groupId.startsWith("placeholder");
+
+          const groupCard = document.createElement("div");
+          groupCard.className = `rank-card ${rankClasses[index]} rank-card-glow text-center p-6 rounded-xl`;
+          groupCard.innerHTML = `
+          <div class="crown-icon">
+            ${
+              index === 0
+                ? '<i class="fas fa-crown text-yellow-500"></i>'
+                : index === 1
+                ? '<i class="fas fa-crown text-gray-400"></i>'
+                : '<i class="fas fa-crown text-amber-700"></i>'
+            }
+          </div>
+          <div class="rank-title ${rankTitleClasses[index]}">${
+            rankTitles[index]
+          } স্থান</div>
+          <div class="text-2xl font-bold mb-2">${
+            isPlaceholder ? "N/A" : Math.round(group.averageScore)
+          }</div>
+          <div class="text-lg font-semibold">${group.groupName}</div>
+          <div class="text-sm text-gray-500 mt-2">${
+            isPlaceholder ? "মূল্যায়ন নেই" : `${group.taskCount} টি টাস্ক`
+          }</div>
+          <div class="progress-bar mt-4">
+            <div class="progress-fill bg-blue-500" style="width: ${
+              isPlaceholder ? 0 : group.averageScore
+            }%"></div>
+          </div>
+        `;
+          topGroupsContainer.appendChild(groupCard);
+        });
+      }
+
+      // Render Groups Ranking
+      function renderGroupsRanking(groupScores) {
+        const groupsRankingList = document.getElementById("groupsRankingList");
+        groupsRankingList.innerHTML = "";
+
+        // Sort groups by average score
+        const sortedGroups = Object.values(groupScores)
+          .filter((score) => score.taskCount > 0)
+          .sort((a, b) => b.averageScore - a.averageScore);
+
+        if (sortedGroups.length === 0) {
+          groupsRankingList.innerHTML =
+            '<p class="text-center text-gray-500 py-4">কোন মূল্যায়ন তথ্য পাওয়া যায়নি</p>';
+          return;
+        }
+
+        sortedGroups.forEach((group, index) => {
+          const rank = index + 1;
+          let rankBadgeClass = "rank-other";
+          if (rank === 1) rankBadgeClass = "rank-1";
+          else if (rank === 2) rankBadgeClass = "rank-2";
+          else if (rank === 3) rankBadgeClass = "rank-3";
+
+          const groupElement = document.createElement("div");
+          groupElement.className =
+            "flex items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg group-bar";
+          groupElement.innerHTML = `
+          <div class="rank-badge ${rankBadgeClass} mr-3">${rank}</div>
+          <div class="flex-1">
+            <div class="font-medium">${group.groupName}</div>
+            <div class="text-sm text-gray-500">গড় স্কোর: ${Math.round(
+              group.averageScore
+            )} | টাস্ক: ${group.taskCount} টি</div>
+          </div>
+          <div class="w-24">
+            <div class="progress-bar">
+              <div class="progress-fill bg-blue-500" style="width: ${
+                group.averageScore
+              }%"></div>
+            </div>
+          </div>
+        `;
+          groupsRankingList.appendChild(groupElement);
+        });
+      }
+
+      // Policy Section Toggle
+      document.querySelectorAll(".policy-header").forEach((header) => {
+        header.addEventListener("click", () => {
+          const content = header.nextElementSibling;
+          const icon = header.querySelector(".expand-icon");
+
+          content.classList.toggle("open");
+          icon.classList.toggle("rotated");
+        });
+      });
+
+      // CSV Import/Export Functions
+      document.getElementById("importCsvBtn").addEventListener("click", () => {
+        document.getElementById("csvImportSection").classList.toggle("hidden");
+      });
+
+      document
+        .getElementById("cancelImportBtn")
+        .addEventListener("click", () => {
+          document.getElementById("csvImportSection").classList.add("hidden");
+          document.getElementById("csvFileInput").value = "";
+        });
+
+  document.getElementById('confirmImportBtn').addEventListener('click', () => {
+  const fileInput = document.getElementById('csvFileInput');
+  const file = fileInput.files[0];
+
+  if (!file) {
+    alert('একটি CSV ফাইল নির্বাচন করুন');
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    // UTF-8 সঠিকভাবে ডিকোড করা
+    const bytes = new Uint8Array(e.target.result);
+    const csvData = new TextDecoder('utf-8').decode(bytes);
+    importStudentsFromCSV(csvData);
+  };
+
+  reader.readAsArrayBuffer(file); // <-- ব্যবহার করুন
+});
+
+
+   
+// // Import Students from CSV (Updated for UTF-8)
+// function importStudentsFromCSV(csvData) {
+//   const rows = csvData.split("\n");
+//   if (rows.length <= 1) {
+//     alert("CSV ফাইলটি খালি বা শুধুমাত্র হেডার রয়েছে।");
+//     hideLoading();
+//     return;
+//   }
+
+//   const headers = rows[0].split(",").map((header) => header.trim());
+
+//   // প্রয়োজনীয় কলামগুলো চেক
+//   const requiredColumns = [
+//     "Name",
+//     "Roll",
+//     "Gender",
+//     "Group",
+//     "Email/Phone",
+//     "Session",
+//     "Academic Group", // নতুন কলাম যোগ করা হলো
+//   ];
+
+//   const hasRequiredColumns = requiredColumns.every((column) =>
+//     headers.includes(column)
+//   );
+
+//   if (!hasRequiredColumns) {
+//     alert(
+//       "CSV ফাইলে প্রয়োজনীয় কলাম নেই। প্রয়োজনীয় কলাম: " +
+//         requiredColumns.join(", ")
+//     );
+//     return;
+//   }
+
+//   showLoading();
+//   let importedCount = 0;
+//   let errorCount = 0;
+//   const importPromises = [];
+
+//   // প্রতিটি row প্রসেস করা হবে (header বাদ দিয়ে)
+//   for (let i = 1; i < rows.length; i++) {
+//     const row = rows[i].trim();
+//     if (!row) continue;
+
+//     const cells = row
+//       .split(",")
+//       .map((cell) => cell.trim().replace(/^"|"$/g, "")); // quote সরানো
+
+//     if (cells.length < headers.length) continue;
+
+//     // header অনুযায়ী object বানানো
+//     const studentData = {};
+//     headers.forEach((header, index) => {
+//       studentData[header] = cells[index] || "";
+//     });
+
+//     // group find করা
+//     const group = groups.find((g) => g.name === studentData.Group);
+
+//     if (!group) {
+//       errorCount++;
+//       continue;
+//     }
+
+//     const student = {
+//       name: studentData.Name,
+//       roll: studentData.Roll,
+//       gender: studentData.Gender,
+//       groupId: group.id,
+//       academicGroup: studentData["Academic Group"] || "",
+//       contact: studentData["Email/Phone"],
+//       session: studentData.Session,
+//       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+//     };
+
+//     const promise = db
+//       .collection("students")
+//       .add(student)
+//       .then(() => {
+//         importedCount++;
+//       })
+//       .catch((error) => {
+//         console.error("Error importing student: ", error);
+//         errorCount++;
+//       });
+
+//     importPromises.push(promise);
+//   }
+
+//   Promise.all(importPromises)
+//     .then(() => {
+//       hideLoading();
+//       document.getElementById("csvImportSection").classList.add("hidden");
+//       document.getElementById("csvFileInput").value = "";
+
+//       alert(
+//         `CSV ইম্পোর্ট সম্পন্ন: ${importedCount} জন শিক্ষার্থী সফলভাবে ইম্পোর্ট হয়েছে, ${errorCount} টি ত্রুটি`
+//       );
+
+//       loadStudents();
+//       loadAllStudentsCards();
+//     })
+//     .catch((error) => {
+//       hideLoading();
+//       alert("CSV ইম্পোর্ট করতে সমস্যা হয়েছে: " + error.message);
+//     });
+// }
+
+
+
+
+function importStudentsFromCSV(csvData) {
+  const rows = csvData.split("\n");
+  if (rows.length <= 1) {
+    alert("CSV ফাইলটি খালি বা শুধুমাত্র হেডার রয়েছে।");
+    hideLoading();
+    return;
+  }
+
+  const headers = rows[0].split(",").map((header) => header.trim());
+
+  // প্রয়োজনীয় কলামগুলো চেক
+  const requiredColumns = [
+    "Name",
+    "Roll",
+    "Gender",
+    "Group",
+    "Email/Phone",
+    "Session",
+    "Academic Group", // নতুন কলাম যোগ করা হলো
+  ];
+
+  const hasRequiredColumns = requiredColumns.every((column) =>
+    headers.includes(column)
+  );
+
+  if (!hasRequiredColumns) {
+    alert(
+      "CSV ফাইলে প্রয়োজনীয় কলাম নেই। প্রয়োজনীয় কলাম: " +
+        requiredColumns.join(", ")
+    );
+    return;
+  }
+
+  showLoading();
+  let importedCount = 0;
+  let errorCount = 0;
+  const importPromises = [];
+
+  // প্রতিটি row প্রসেস করা হবে (header বাদ দিয়ে)
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i].trim();
+    if (!row) continue;
+
+    const cells = row
+      .split(",")
+      .map((cell) => cell.trim().replace(/^"|"$/g, "")); // quote সরানো
+
+    if (cells.length < headers.length) continue;
+
+    // header অনুযায়ী object বানানো
+    const studentData = {};
+    headers.forEach((header, index) => {
+      studentData[header] = cells[index] || "";
+    });
+
+    // group find করা
+    const group = groups.find((g) => g.name === studentData.Group);
+
+    if (!group) {
+      errorCount++;
+      continue;
+    }
+
+    const student = {
+      name: studentData.Name,
+      roll: studentData.Roll,
+      gender: studentData.Gender,
+      groupId: group.id,
+      academicGroup: studentData["Academic Group"] || "",
+      contact: studentData["Email/Phone"],
+      session: studentData.Session,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    };
+
+    // ⬇️ এখানে ভেলিডেশন যোগ করা হলো (একই গ্রুপে একই রোল থাকলে বাদ যাবে)
+    const promise = db
+      .collection("students")
+      .where("groupId", "==", group.id)
+      .where("roll", "==", student.roll) // roll দিয়ে ডুপ্লিকেট চেক
+      .get()
+      .then((querySnapshot) => {
+        if (!querySnapshot.empty) {
+          console.warn(
+            `ডুপ্লিকেট পাওয়া গেছে: ${student.name} (${student.roll}) ${group.name}-এ যোগ হয়নি`
+          );
+          errorCount++;
+          return null; // নতুন student যোগ হবে না
+        } else {
+          return db.collection("students").add(student).then(() => {
+            importedCount++;
+          });
+        }
+      })
+      .catch((error) => {
+        console.error("Error importing student: ", error);
+        errorCount++;
+      });
+
+    importPromises.push(promise);
+  }
+
+  Promise.all(importPromises)
+    .then(() => {
+      hideLoading();
+      document.getElementById("csvImportSection").classList.add("hidden");
+      document.getElementById("csvFileInput").value = "";
+
+      alert(
+        `CSV ইম্পোর্ট সম্পন্ন: ${importedCount} জন শিক্ষার্থী সফলভাবে ইম্পোর্ট হয়েছে, ${errorCount} টি ত্রুটি`
+      );
+
+      loadStudents();
+      loadAllStudentsCards();
+    })
+    .catch((error) => {
+      hideLoading();
+      alert("CSV ইম্পোর্ট করতে সমস্যা হয়েছে: " + error.message);
+    });
+}
+
+
+      // Export Students to CSV
+      document.getElementById("exportCsvBtn").addEventListener("click", () => {
+        exportStudentsToCSV();
+      });
+
+      function exportStudentsToCSV() {
+        const headers = [
+          "Name",
+          "Roll",
+          "Gender",
+          "Group",
+          "Academic Group",
+          "Email/Phone",
+          "Session",
+          "Role",
+        ];
+
+        let csvContent = headers.join(",") + "\n";
+
+        students.forEach((student) => {
+          const group = groups.find((g) => g.id === student.groupId);
+          const academicGroup = student.academicGroup || ""; // শিক্ষার্থী ডকুমেন্ট থেকে academicGroup ভ্যালু নিন
+          const groupName = group ? group.name : "";
+
+          const roleNames = {
+            "team-leader": "টিম লিডার",
+            "time-keeper": "টাইম কিপার",
+            reporter: "রিপোর্টার",
+            "resource-manager": "রিসোর্স ম্যানেজার",
+            "peace-maker": "পিস মেকার",
+          };
+
+          const role = student.role
+            ? roleNames[student.role] || student.role
+            : "";
+
+          const row = [
+            student.name,
+            student.roll,
+            student.gender,
+            groupName,
+            academicGroup,
+            student.contact,
+            student.session,
+            roleNames[student.role] || "",
+          ]
+            .map((field) => `"${field}"`)
+            .join(",");
+
+          csvContent += row + "\n";
+        });
+
+        downloadCSV(csvContent, "students.csv");
+      }
+
+      // Export Groups to CSV
+      document
+        .getElementById("exportGroupsBtn")
+        .addEventListener("click", () => {
+          exportGroupsToCSV();
+        });
+
+      function exportGroupsToCSV() {
+        const headers = ["Group Name", "Member Count", "Created At"];
+
+        let csvContent = headers.join(",") + "\n";
+
+        groups.forEach((group) => {
+          const createdAt = group.createdAt
+            ? new Date(group.createdAt.seconds * 1000).toLocaleDateString(
+                "bn-BD"
+              )
+            : "";
+
+          const row = [group.name, group.memberCount || 0, createdAt]
+            .map((field) => `"${field}"`)
+            .join(",");
+
+          csvContent += row + "\n";
+        });
+
+        downloadCSV(csvContent, "groups.csv");
+      }
+
+      // Export Evaluations to CSV
+      document
+        .getElementById("exportEvaluationsBtn")
+        .addEventListener("click", () => {
+          exportEvaluationsToCSV();
+        });
+
+      function exportEvaluationsToCSV() {
+        const headers = [
+          "Task",
+          "Group",
+          "Student",
+          "Task Score",
+          "Teamwork Score",
+          "Comments",
+          "Evaluation Date",
+        ];
+
+        let csvContent = headers.join(",") + "\n";
+
+        evaluations.forEach((evaluation) => {
+          const task = tasks.find((t) => t.id === evaluation.taskId);
+          const group = groups.find((g) => g.id === evaluation.groupId);
+
+          if (!task || !group || !evaluation.scores) return;
+
+          Object.keys(evaluation.scores).forEach((studentId) => {
+            const student = students.find((s) => s.id === studentId);
+            if (!student) return;
+
+            const score = evaluation.scores[studentId];
+            const evaluationDate = evaluation.createdAt
+              ? new Date(
+                  evaluation.createdAt.seconds * 1000
+                ).toLocaleDateString("bn-BD")
+              : "";
+
+            const row = [
+              task.name,
+              group.name,
+              student.name,
+              score.taskScore,
+              score.teamworkScore,
+              score.comments,
+              evaluationDate,
+            ]
+              .map((field) => `"${field}"`)
+              .join(",");
+
+            csvContent += row + "\n";
+          });
+        });
+
+        downloadCSV(csvContent, "evaluations.csv");
+      }
+
+      // Export All Data
+      document.getElementById("exportAllBtn").addEventListener("click", () => {
+        // Create a zip file with all CSV files
+        const zip = new JSZip();
+
+        // Export students
+        const studentsCSV = exportStudentsToCSVString();
+        zip.file("students.csv", studentsCSV);
+
+        // Export groups
+        const groupsCSV = exportGroupsToCSVString();
+        zip.file("groups.csv", groupsCSV);
+
+        // Export evaluations
+        const evaluationsCSV = exportEvaluationsToCSVString();
+        zip.file("evaluations.csv", evaluationsCSV);
+
+        // Export tasks
+        const tasksCSV = exportTasksToCSVString();
+        zip.file("tasks.csv", tasksCSV);
+
+        // Generate zip file
+        zip.generateAsync({ type: "blob" }).then(function (content) {
+          // Create download link
+          const a = document.createElement("a");
+          const url = URL.createObjectURL(content);
+          a.href = url;
+          a.download = "smart_evaluator_data.zip";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        });
+      });
+
+      // Helper function to download CSV
+      function downloadCSV(csvContent, filename) {
+        const blob = new Blob([csvContent], {
+          type: "text/csv;charset=utf-8;",
+        });
+        const link = document.createElement("a");
+
+        if (link.download !== undefined) {
+          const url = URL.createObjectURL(blob);
+          link.setAttribute("href", url);
+          link.setAttribute("download", filename);
+          link.style.visibility = "hidden";
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+      }
+
+      // Helper functions for CSV export
+      function exportStudentsToCSVString() {
+        const headers = [
+          "Name",
+          "Roll",
+          "Gender",
+          "Group",
+          "Email/Phone",
+          "Session",
+          "Role",
+        ];
+
+        let csvContent = headers.join(",") + "\n";
+
+        students.forEach((student) => {
+          const group = groups.find((g) => g.id === student.groupId);
+          const groupName = group ? group.name : "";
+
+          const roleNames = {
+            "team-leader": "টিম লিডার",
+            "time-keeper": "টাইম কিপার",
+            reporter: "রিপোর্টার",
+            "resource-manager": "রিসোর্স ম্যানেজার",
+            "peace-maker": "পিস মেকার",
+          };
+
+          const role = student.role
+            ? roleNames[student.role] || student.role
+            : "";
+
+          const row = [
+            student.name,
+            student.roll,
+            student.gender,
+            groupName,
+            student.contact,
+            student.session,
+            role,
+          ]
+            .map((field) => `"${field}"`)
+            .join(",");
+
+          csvContent += row + "\n";
+        });
+
+        return csvContent;
+      }
+
+      function exportGroupsToCSVString() {
+        const headers = ["Group Name", "Member Count", "Created At"];
+
+        let csvContent = headers.join(",") + "\n";
+
+        groups.forEach((group) => {
+          const createdAt = group.createdAt
+            ? new Date(group.createdAt.seconds * 1000).toLocaleDateString(
+                "bn-BD"
+              )
+            : "";
+
+          const row = [group.name, group.memberCount || 0, createdAt]
+            .map((field) => `"${field}"`)
+            .join(",");
+
+          csvContent += row + "\n";
+        });
+
+        return csvContent;
+      }
+
+      function exportEvaluationsToCSVString() {
+        const headers = [
+          "Task",
+          "Group",
+          "Student",
+          "Task Score",
+          "Teamwork Score",
+          "Comments",
+          "Evaluation Date",
+        ];
+
+        let csvContent = headers.join(",") + "\n";
+
+        evaluations.forEach((evaluation) => {
+          const task = tasks.find((t) => t.id === evaluation.taskId);
+          const group = groups.find((g) => g.id === evaluation.groupId);
+
+          if (!task || !group || !evaluation.scores) return;
+
+          Object.keys(evaluation.scores).forEach((studentId) => {
+            const student = students.find((s) => s.id === studentId);
+            if (!student) return;
+
+            const score = evaluation.scores[studentId];
+            const evaluationDate = evaluation.createdAt
+              ? new Date(
+                  evaluation.createdAt.seconds * 1000
+                ).toLocaleDateString("bn-BD")
+              : "";
+
+            const row = [
+              task.name,
+              group.name,
+              student.name,
+              score.taskScore,
+              score.teamworkScore,
+              score.comments,
+              evaluationDate,
+            ]
+              .map((field) => `"${field}"`)
+              .join(",");
+
+            csvContent += row + "\n";
+          });
+        });
+
+        return csvContent;
+      }
+
+      function exportTasksToCSVString() {
+        const headers = ["Task Name", "Description", "Max Score", "Date"];
+
+        let csvContent = headers.join(",") + "\n";
+
+        tasks.forEach((task) => {
+          const date = task.date
+            ? new Date(task.date.seconds * 1000).toLocaleDateString("bn-BD")
+            : "";
+
+          const row = [task.name, task.description, task.maxScore, date]
+            .map((field) => `"${field}"`)
+            .join(",");
+
+          csvContent += row + "\n";
+        });
+
+        return csvContent;
+      }
+
+      // Load Admins
+      function loadAdmins() {
+        showLoading();
+        db.collection("admins")
+          .get()
+          .then((querySnapshot) => {
+            admins = [];
+            querySnapshot.forEach((doc) => {
+              admins.push({ id: doc.id, ...doc.data() });
+            });
+            renderAdmins();
+            hideLoading();
+          })
+          .catch((error) => {
+            hideLoading();
+            console.error("Error loading admins: ", error);
+          });
+      }
+
+      // Render Admins
+      function renderAdmins() {
+        const adminList = document.getElementById("adminList");
+        adminList.innerHTML = "";
+
+        admins.forEach((admin) => {
+          const adminElement = document.createElement("div");
+          adminElement.className =
+            "flex justify-between items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg";
+          adminElement.innerHTML = `
+          <div>
+            <div class="font-medium">${admin.email}</div>
+            <div class="text-sm text-gray-500">টাইপ: ${
+              admin.type === "super-admin" ? "সুপার অ্যাডমিন" : "অ্যাডমিন"
+            } | তৈরি: ${
+            admin.createdAt
+              ? new Date(admin.createdAt.seconds * 1000).toLocaleDateString(
+                  "bn-BD"
+                )
+              : "N/A"
+          }</div>
+          </div>
+          <div class="flex gap-2">
+            ${
+              admin.type !== "super-admin"
+                ? `
+              <button class="delete-admin-btn px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg text-sm" data-id="${admin.id}">ডিলিট</button>
+            `
+                : ""
+            }
+          </div>
+        `;
+          adminList.appendChild(adminElement);
+        });
+
+        // Add event listeners for delete buttons
+        document.querySelectorAll(".delete-admin-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const adminId = btn.getAttribute("data-id");
+            deleteAdmin(adminId);
+          });
+        });
+      }
+
+      // Add Admin
+      document.getElementById("addAdminBtn").addEventListener("click", () => {
+        const email = document.getElementById("adminEmailInput").value.trim();
+        const adminType = document.getElementById("newAdminType").value;
+
+        if (email) {
+          showLoading();
+
+          // Create user with temporary password
+          const tempPassword = Math.random().toString(36).slice(-8);
+
+          auth
+            .createUserWithEmailAndPassword(email, tempPassword)
+            .then((userCredential) => {
+              const user = userCredential.user;
+
+              // Save admin data to Firestore
+              return db.collection("admins").doc(user.uid).set({
+                email: email,
+                type: adminType,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+              });
+            })
+            .then(() => {
+              hideLoading();
+              document.getElementById("adminEmailInput").value = "";
+              alert(
+                `অ্যাডমিন সফলভাবে যোগ করা হয়েছে। অস্থায়ী পাসওয়ার্ড: ${tempPassword}`
+              );
+              loadAdmins();
+            })
+            .catch((error) => {
+              hideLoading();
+              alert("অ্যাডমিন যোগ করতে সমস্যা হয়েছে: " + error.message);
+            });
+        } else {
+          alert("ইমেইল লিখুন");
+        }
+      });
+
+      // Delete Admin
+      function deleteAdmin(adminId) {
+        const admin = admins.find((a) => a.id === adminId);
+        if (!admin) return;
+
+        document.getElementById(
+          "deleteModalText"
+        ).textContent = `আপনি কি নিশ্চিত যে আপনি "${admin.email}" অ্যাডমিনটি ডিলিট করতে চান?`;
+        document.getElementById("deleteModal").style.display = "flex";
+
+        document.getElementById("confirmDelete").onclick = () => {
+          showLoading();
+
+          // Delete admin from Firestore
+          db.collection("admins")
+            .doc(adminId)
+            .delete()
+            .then(() => {
+              // Also delete the user account
+              return auth.getUserByEmail(admin.email);
+            })
+            .then((userRecord) => {
+              return auth.deleteUser(userRecord.uid);
+            })
+            .then(() => {
+              hideLoading();
+              document.getElementById("deleteModal").style.display = "none";
+              loadAdmins();
+            })
+            .catch((error) => {
+              hideLoading();
+              alert("অ্যাডমিন ডিলিট করতে সমস্যা হয়েছে: " + error.message);
+            });
+        };
+      }
+
+      // Search Groups
+      document
+        .getElementById("groupSearchInput")
+        .addEventListener("input", (e) => {
+          const searchTerm = e.target.value.toLowerCase();
+          const groupsList = document.getElementById("groupsList");
+          groupsList.innerHTML = "";
+
+          const searchedGroups = groups.filter((group) =>
+            group.name.toLowerCase().includes(searchTerm)
+          );
+
+          searchedGroups.forEach((group) => {
+            const groupElement = document.createElement("div");
+            groupElement.className =
+              "flex justify-between items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg";
+            groupElement.innerHTML = `
+          <div>
+            <div class="font-medium">${group.name}</div>
+            <div class="text-sm text-gray-500">সদস্য: ${
+              group.memberCount || 0
+            } জন</div>
+          </div>
+          <div class="flex gap-2">
+            <button class="edit-group-btn px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm" data-id="${
+              group.id
+            }">সম্পাদনা</button>
+            <button class="delete-group-btn px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg text-sm" data-id="${
+              group.id
+            }">ডিলিট</button>
+          </div>
+        `;
+            groupsList.appendChild(groupElement);
+          });
+
+          // Re-add event listeners for edit and delete buttons
+          document.querySelectorAll(".edit-group-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const groupId = btn.getAttribute("data-id");
+              editGroup(groupId);
+            });
+          });
+
+          document.querySelectorAll(".delete-group-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const groupId = btn.getAttribute("data-id");
+              deleteGroup(groupId);
+            });
+          });
+        });
+
+      // Search Group Members (Group Selection)
+      document
+        .getElementById("groupMemberSearchInput")
+        .addEventListener("input", (e) => {
+          const searchTerm = e.target.value.toLowerCase();
+          const groupSelectionList =
+            document.getElementById("groupSelectionList");
+          groupSelectionList.innerHTML = "";
+
+          const searchedGroups = groups.filter((group) =>
+            group.name.toLowerCase().includes(searchTerm)
+          );
+
+          searchedGroups.forEach((group) => {
+            const groupSelectionElement = document.createElement("div");
+            groupSelectionElement.className =
+              "group-bar p-3 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer";
+            groupSelectionElement.setAttribute("data-id", group.id);
+            groupSelectionElement.innerHTML = `
+          <div class="font-medium">${group.name}</div>
+          <div class="text-sm text-gray-500">সদস্য: ${
+            group.memberCount || 0
+          } জন</div>
+        `;
+            groupSelectionList.appendChild(groupSelectionElement);
+          });
+
+          // Add event listeners for group selection
+          document.querySelectorAll(".group-bar").forEach((bar) => {
+            bar.addEventListener("click", () => {
+              document
+                .querySelectorAll(".group-bar")
+                .forEach((b) => b.classList.remove("active"));
+              bar.classList.add("active");
+              const groupId = bar.getAttribute("data-id");
+              loadGroupMembers(groupId);
+            });
+          });
+        });
+
+      // Initialize the application
+      function initApp() {
+        // Check if user is already logged in
+        auth.onAuthStateChanged((user) => {
+          if (user) {
+            // User is signed in
+            authModal.style.display = "none";
+            appContainer.classList.remove("hidden");
+
+            // Load initial data
+            loadGroups();
+            loadStudents();
+            loadTasks();
+            loadAdmins();
+          } else {
+            // User is signed out
+            authModal.style.display = "flex";
+            appContainer.classList.add("hidden");
+          }
+        });
+      }
+
+
+      
+
+      // Start the application
+      initApp();
+      
+      
+    </script>
+
+    <!-- JSZip for exporting all data as zip -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  </body>
+</html>
