@@ -998,14 +998,14 @@
               </p>
 
               <!-- স্কোর ক্যালকুলেশন তথ্য -->
-              <div class="score-calculation-info mt-4">
+              <!-- <div class="score-calculation-info mt-4">
                 <p class="text-sm flex items-center">
                   <i class="fas fa-info-circle mr-2 text-blue-500"></i>
                   <strong>স্কোর ক্যালকুলেশন পদ্ধতি:</strong> একাধিক টাস্কের
                   ক্ষেত্রে মোট স্কোর = (মোট টাস্ক স্কোর/মোট সম্ভাব্য টাস্ক স্কোর
                   + মোট টিম স্কোর/মোট সম্ভাব্য টিম স্কোর) ÷ 2 × 50
                 </p>
-              </div>
+              </div> -->
             </div>
 
             <!-- Top 3 Groups in Circular Progress -->
@@ -2351,9 +2351,9 @@
           studentElement.innerHTML = `
           <div>
             <div class="font-medium">${student.name}</div>
-            <div class="text-sm text-gray-500">রোল: ${student.roll} | লিঙ্গ: ${student.gender} | গ্রুপ: ${groupName} | সেশন: ${student.session}</div>
-            <div class="text-sm text-gray-500">একাডেমিক গ্রুপ: ${student.academicGroup || 'তথ্য নেই'}</div>
-            <div class="text-sm text-gray-500">যোগাযোগ: ${student.contact}</div>
+            <div class="text-sm text-gray-500">রোল: ${student.roll} | gender: ${student.gender} | নাম: ${groupName} | সেশন: ${student.session}</div>
+            <div class="text-sm text-gray-500"> গ্রুপ: ${student.academicGroup || 'তথ্য নেই'}</div>
+            <div class="text-xs text-gray-500"> ${student.contact}</div>
           </div>
           <div class="flex gap-2">
             <button class="edit-student-btn px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm" data-id="${student.id}">সম্পাদনা</button>
@@ -2671,8 +2671,8 @@
           studentElement.innerHTML = `
           <div>
             <div class="font-medium">${student.name}</div>
-            <div class="text-sm text-gray-500">রোল: ${student.roll} | লিঙ্গ: ${student.gender} | গ্রুপ: ${groupName} | সেশন: ${student.session}</div>
-            <div class="text-sm text-gray-500">যোগাযোগ: ${student.contact}</div>
+            <div class="text-sm text-gray-500">রোল: ${student.roll} | লিঙ্গ: ${student.gender} | নাম: ${groupName} | সেশন: ${student.session}</div>
+            <div class="text-xs text-gray-500"> ${student.contact}</div>
           </div>
           <div class="flex gap-2">
             <button class="edit-student-btn px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm" data-id="${student.id}">সম্পাদনা</button>
@@ -2735,8 +2735,8 @@
             studentElement.innerHTML = `
           <div>
             <div class="font-medium">${student.name}</div>
-            <div class="text-sm text-gray-500">রোল: ${student.roll} | লিঙ্গ: ${student.gender} | গ্রুপ: ${groupName} | সেশন: ${student.session}</div>
-            <div class="text-sm text-gray-500">যোগাযোগ: ${student.contact}</div>
+            <div class="text-sm text-gray-500">রোল: ${student.roll} | লিঙ্গ: ${student.gender} | নাম: ${groupName} | সেশন: ${student.session}</div>
+            <div class="text-xs text-gray-500"> ${student.contact}</div>
           </div>
           <div class="flex gap-2">
             <button class="edit-student-btn px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm" data-id="${student.id}">সম্পাদনা</button>
@@ -2802,7 +2802,7 @@
             <div class="font-medium">${student.name}</div>
             <div class="text-sm text-gray-500">রোল: ${student.roll} | লিঙ্গ: ${student.gender} | সেশন: ${student.session}</div>
             <div class="text-sm text-gray-500">একাডেমিক গ্রুপ: ${student.academicGroup || 'তথ্য নেই'}</div>
-            <div class="text-sm text-gray-500">যোগাযোগ: ${student.contact}</div>
+            <div class="text-xs text-gray-500"> ${student.contact}</div>
           </div>
           <div class="flex gap-2">
             <button class="assign-role-btn px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm" data-id="${student.id}">দায়িত্ব নির্ধারণ</button>
@@ -2918,306 +2918,254 @@
         };
       }
 
-      // Search Group Members
-      document
-        .getElementById("memberSearchInput")
-        .addEventListener("input", (e) => {
-          const searchTerm = e.target.value.toLowerCase();
-          const activeGroup = document.querySelector(".group-bar.active");
+     // 🔍 Search Group Members
+document.getElementById("memberSearchInput").addEventListener("input", (e) => {
+  const searchTerm = e.target.value.toLowerCase();
+  const activeGroup = document.querySelector(".group-bar.active");
 
-          if (!activeGroup) return;
+  if (!activeGroup) return;
 
-          const groupId = activeGroup.getAttribute("data-id");
-          const groupStudents = students.filter(
-            (student) => student.groupId === groupId
-          );
+  const groupId = activeGroup.getAttribute("data-id");
+  const groupStudents = students.filter(
+    (student) => student.groupId === groupId
+  );
 
-          const searchedStudents = groupStudents.filter(
-            (student) =>
-              student.name.toLowerCase().includes(searchTerm) ||
-              student.roll.toLowerCase().includes(searchTerm) ||
-              student.contact.toLowerCase().includes(searchTerm)
-          );
+  const searchedStudents = groupStudents.filter((student) =>
+    [student.name, student.roll, student.contact]
+      .filter(Boolean) // null/undefined বাদ
+      .some((field) => field.toLowerCase().includes(searchTerm))
+  );
 
-          const groupMembersList = document.getElementById("groupMembersList");
-          groupMembersList.innerHTML = "";
+  const groupMembersList = document.getElementById("groupMembersList");
+  groupMembersList.innerHTML = "";
 
-          if (searchedStudents.length === 0) {
-            groupMembersList.innerHTML =
-              '<p class="text-center text-gray-500 py-8">কোন সদস্য পাওয়া যায়নি</p>';
-            return;
-          }
+  if (searchedStudents.length === 0) {
+    groupMembersList.innerHTML =
+      '<p class="text-center text-gray-500 py-8">কোন সদস্য পাওয়া যায়নি</p>';
+    return;
+  }
 
-          searchedStudents.forEach((student) => {
-            const memberElement = document.createElement("div");
-            memberElement.className =
-              "flex justify-between items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg";
-            memberElement.innerHTML = `
-          <div>
-            <div class="font-medium">${student.name}</div>
-            <div class="text-sm text-gray-500">রোল: ${student.roll} | লিঙ্গ: ${student.gender} | সেশন: ${student.session}</div>
-            <div class="text-sm text-gray-500">যোগাযোগ: ${student.contact}</div>
-          </div>
-          <div class="flex gap-2">
-            <button class="assign-role-btn px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm" data-id="${student.id}">দায়িত্ব নির্ধারণ</button>
-            <button class="remove-from-group-btn px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg text-sm" data-id="${student.id}">গ্রুপ থেকে সরান</button>
-          </div>
-        `;
-            groupMembersList.appendChild(memberElement);
-          });
+  searchedStudents.forEach((student) => {
+    const memberElement = document.createElement("div");
+    memberElement.className =
+      "flex justify-between items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg";
+    memberElement.innerHTML = `
+      <div>
+        <div class="font-medium">${student.name || "নাম নেই"}</div>
+        <div class="text-sm text-gray-500">
+          রোল: ${student.roll || "তথ্য নেই"} | 
+          লিঙ্গ: ${student.gender || "অজানা"} | 
+          সেশন: ${student.session || "অজানা"}
+        </div>
+        <div class="text-xs text-gray-500">${student.contact || ""}</div>
+      </div>
+      <div class="flex gap-2">
+        <button class="assign-role-btn px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm" data-id="${student.id}">দায়িত্ব নির্ধারণ</button>
+        <button class="remove-from-group-btn px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg text-sm" data-id="${student.id}">গ্রুপ থেকে সরান</button>
+      </div>
+    `;
+    groupMembersList.appendChild(memberElement);
+  });
 
-          // Re-add event listeners
-          document.querySelectorAll(".assign-role-btn").forEach((btn) => {
-            btn.addEventListener("click", () => {
-              const studentId = btn.getAttribute("data-id");
-              assignRole(studentId, groupId);
-            });
-          });
+  // ✅ Event delegation ব্যবহার (ডুপ্লিকেট ইভেন্ট এড়াতে)
+  groupMembersList.addEventListener("click", (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
 
-          document.querySelectorAll(".remove-from-group-btn").forEach((btn) => {
-            btn.addEventListener("click", () => {
-              const studentId = btn.getAttribute("data-id");
-              removeFromGroup(studentId, groupId);
-            });
-          });
-        });
+    const studentId = btn.getAttribute("data-id");
+    if (btn.classList.contains("assign-role-btn")) {
+      assignRole(studentId, groupId);
+    } else if (btn.classList.contains("remove-from-group-btn")) {
+      removeFromGroup(studentId, groupId);
+    }
+  });
+});
 
-      // Load All Students Cards
-      function loadAllStudentsCards() {
-        const allStudentsCards = document.getElementById("allStudentsCards");
-        allStudentsCards.innerHTML = "";
+// 📋 Load All Students Cards
+function loadAllStudentsCards() {
+  const allStudentsCards = document.getElementById("allStudentsCards");
+  allStudentsCards.innerHTML = "";
 
-        students.forEach((student) => {
-          const group = groups.find((g) => g.id === student.groupId);
-          const groupName = group ? group.name : "গ্রুপ নেই";
-          const groupIndex = groups.findIndex((g) => g.id === student.groupId);
-          const cardColorClass = `group-card-${(groupIndex % 8) + 1}`;
+  students.forEach((student) => {
+    const group = groups.find((g) => g.id === student.groupId);
+    const groupName = group ? group.name : "গ্রুপ নেই";
+    const groupIndex = groups.findIndex((g) => g.id === student.groupId);
+    const cardColorClass = `group-card-${(groupIndex % 8) + 1}`;
 
-          let roleBadge = "";
-          if (student.role) {
-            const roleNames = {
-              "team-leader": "টিম লিডার",
-              "time-keeper": "টাইম কিপার",
-              reporter: "রিপোর্টার",
-              "resource-manager": "রিসোর্স ম্যানেজার",
-              "peace-maker": "পিস মেকার",
-            };
-            roleBadge = `<span class="member-role-badge ${student.role}">${
-              roleNames[student.role] || student.role
-            }</span>`;
-          }
+    let roleBadge = "";
+    if (student.role) {
+      const roleNames = {
+        "team-leader": "টিম লিডার",
+        "time-keeper": "টাইম কিপার",
+        reporter: "রিপোর্টার",
+        "resource-manager": "রিসোর্স ম্যানেজার",
+        "peace-maker": "পিস মেকার",
+      };
+      roleBadge = `<span class="member-role-badge ${student.role}">
+        ${roleNames[student.role] || student.role}
+      </span>`;
+    }
 
-          const studentCard = document.createElement("div");
-          studentCard.className = `student-card ${cardColorClass} p-4 rounded-xl shadow-md relative overflow-hidden`;
-          studentCard.innerHTML = `
-          <div class="group-serial">${groupIndex + 1}</div>
-          <div class="flex items-center mb-3">
-            <div class="student-avatar bg-primary text-white">${student.name.charAt(
-              0
-            )}</div>
-            <div>
-              <h3 class="font-bold text-lg">${student.name} ${roleBadge}</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-300">রোল: ${
-                student.roll
-              }</p>
-            </div>
-          </div>
-          <div class="space-y-1 text-sm">
-            <p><i class="fas fa-venus-mars mr-2"></i> লিঙ্গ: ${
-              student.gender
-            }</p>
-            <p><i class="fas fa-users mr-2"></i> গ্রুপ: ${groupName}</p>
-            <p><i class="fas fa-envelope mr-2"></i> যোগাযোগ: ${
-              student.contact
-            }</p>
-            <p><i class="fas fa-book mr-2"></i> একাডেমিক গ্রুপ: ${student.academicGroup || 'তথ্য নেই'}</p>
-            <p><i class="fas fa-calendar mr-2"></i> সেশন: ${student.session}</p>
-          </div>
-        `;
-          allStudentsCards.appendChild(studentCard);
-        });
-      }
+    const studentCard = document.createElement("div");
+    studentCard.className = `student-card ${cardColorClass} p-4 rounded-xl shadow-md relative overflow-hidden`;
+    studentCard.innerHTML = `
+      <div class="group-serial">${groupIndex + 1}</div>
+      <div class="flex items-center mb-3">
+        <div class="student-avatar bg-primary text-white">${(student.name || "?").charAt(
+          0
+        )}</div>
+        <div>
+          <h3 class="font-bold text-lg">${student.name || "নাম নেই"} ${roleBadge}</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-300">রোল: ${
+            student.roll || "তথ্য নেই"
+          }</p>
+        </div>
+      </div>
+      <div class="space-y-1 text-sm">
+        <p><i class="fas fa-venus-mars mr-2"></i> লিঙ্গ: ${
+          student.gender || "অজানা"
+        }</p>
+        <p><i class="fas fa-users mr-2"></i> গ্রুপ: ${groupName}</p>
+        <p><i class="fas fa-envelope mr-2"></i> ${student.contact || ""}</p>
+        <p><i class="fas fa-book mr-2"></i> একাডেমিক গ্রুপ: ${
+          student.academicGroup || "তথ্য নেই"
+        }</p>
+        <p><i class="fas fa-calendar mr-2"></i> সেশন: ${
+          student.session || "অজানা"
+        }</p>
+      </div>
+    `;
+    allStudentsCards.appendChild(studentCard);
+  });
+}
 
-      // Search All Students Cards
-      document
-        .getElementById("allStudentsSearchInput")
-        .addEventListener("input", (e) => {
-          const searchTerm = e.target.value.toLowerCase();
-          const activeFilter = document.querySelector(
-            "#page-all-students .filter-btn.bg-blue-100, #page-all-students .filter-btn.dark\\:bg-blue-900"
-          );
-          const groupId = activeFilter
-            ? activeFilter.getAttribute("data-group")
-            : "";
 
-          const filteredStudents = groupId
-            ? students.filter((student) => student.groupId === groupId)
-            : students;
+     
 
-          const searchedStudents = filteredStudents.filter(
-            (student) =>
-              student.name.toLowerCase().includes(searchTerm) ||
-              student.roll.toLowerCase().includes(searchTerm) ||
-              student.contact.toLowerCase().includes(searchTerm) ||
-              student.session.toLowerCase().includes(searchTerm)
-          );
 
-          const allStudentsCards = document.getElementById("allStudentsCards");
-          allStudentsCards.innerHTML = "";
+// 🟢 Helper Function: Render Students
+function renderStudents(studentsToRender) {
+  const allStudentsCards = document.getElementById("allStudentsCards");
+  allStudentsCards.innerHTML = "";
 
-          searchedStudents.forEach((student) => {
-            const group = groups.find((g) => g.id === student.groupId);
-            const groupName = group ? group.name : "গ্রুপ নেই";
-            const groupIndex = groups.findIndex(
-              (g) => g.id === student.groupId
-            );
-            const cardColorClass = `group-card-${(groupIndex % 8) + 1}`;
+  studentsToRender.forEach((student) => {
+    const group = groups.find((g) => g.id === student.groupId);
+    const groupName = group ? group.name : "গ্রুপ নেই";
+    const groupIndex = groups.findIndex((g) => g.id === student.groupId);
+    const cardColorClass = `group-card-${(groupIndex % 8) + 1}`;
 
-            let roleBadge = "";
-            if (student.role) {
-              const roleNames = {
-                "team-leader": "টিম লিডার",
-                "time-keeper": "টাইম কিপার",
-                reporter: "রিপোর্টার",
-                "resource-manager": "রিসোর্স ম্যানেজার",
-                "peace-maker": "পিস মেকার",
-              };
-              roleBadge = `<span class="member-role-badge ${student.role}">${
-                roleNames[student.role] || student.role
-              }</span>`;
-            }
+    let roleBadge = "";
+    if (student.role) {
+      const roleNames = {
+        "team-leader": "টিম লিডার",
+        "time-keeper": "টাইম কিপার",
+        reporter: "রিপোর্টার",
+        "resource-manager": "রিসোর্স ম্যানেজার",
+        "peace-maker": "পিস মেকার",
+      };
+      roleBadge = `<span class="member-role-badge ${student.role}">
+        ${roleNames[student.role] || student.role}
+      </span>`;
+    }
 
-            const studentCard = document.createElement("div");
-            studentCard.className = `student-card ${cardColorClass} p-4 rounded-xl shadow-md relative overflow-hidden`;
-            studentCard.innerHTML = `
-          <div class="group-serial">${groupIndex + 1}</div>
-          <div class="flex items-center mb-3">
-            <div class="student-avatar bg-primary text-white">${student.name.charAt(
-              0
-            )}</div>
-            <div>
-              <h3 class="font-bold text-lg">${student.name} ${roleBadge}</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-300">রোল: ${
-                student.roll
-              }</p>
-            </div>
-          </div>
-          <div class="space-y-1 text-sm">
-            <p><i class="fas fa-venus-mars mr-2"></i> লিঙ্গ: ${
-              student.gender
-            }</p>
-            <p><i class="fas fa-users mr-2"></i> গ্রুপ: ${groupName}</p>
-            <p><i class="fas fa-envelope mr-2"></i> যোগাযোগ: ${
-              student.contact
-            }</p>
-            <p><i class="fas fa-calendar mr-2"></i> সেশন: ${student.session}</p>
-          </div>
-        `;
-            allStudentsCards.appendChild(studentCard);
-          });
-        });
+    const studentCard = document.createElement("div");
+    studentCard.className = `student-card ${cardColorClass} p-4 rounded-xl shadow-md relative overflow-hidden`;
+    studentCard.innerHTML = `
+      <div class="group-serial">${groupIndex + 1}</div>
+      <div class="flex items-center mb-3">
+        <div class="student-avatar bg-primary text-white">${student.name.charAt(
+          0
+        )}</div>
+        <div>
+          <h3 class="font-bold text-lg">${student.name} ${roleBadge}</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-300">রোল: ${
+            student.roll
+          }</p>
+        </div>
+      </div>
+      <div class="space-y-1 text-sm">
+        <p><i class="fas fa-venus-mars mr-2"></i> লিঙ্গ: ${student.gender}</p>
+        <p><i class="fas fa-users mr-2"></i> গ্রুপ: ${groupName}</p>
+        <p><i class="fas fa-envelope mr-2"></i> ${student.contact}</p>
+        <p><i class="fas fa-calendar mr-2"></i> সেশন: ${student.session}</p>
+      </div>
+    `;
+    allStudentsCards.appendChild(studentCard);
+  });
+}
 
-      // Filter All Students Cards
-      document
-        .querySelectorAll("#page-all-students .filter-btn")
-        .forEach((btn) => {
-          btn.addEventListener("click", () => {
-            const groupId = btn.getAttribute("data-group");
+// 🟢 Search All Students
+document
+  .getElementById("allStudentsSearchInput")
+  .addEventListener("input", (e) => {
+    const searchTerm = e.target.value.toLowerCase();
 
-            // Update active filter
-            document
-              .querySelectorAll("#page-all-students .filter-btn")
-              .forEach((b) => {
-                b.classList.remove(
-                  "bg-blue-100",
-                  "dark:bg-blue-900",
-                  "text-blue-800",
-                  "dark:text-blue-200"
-                );
-                b.classList.add(
-                  "bg-gray-100",
-                  "dark:bg-gray-800",
-                  "text-gray-800",
-                  "dark:text-gray-200"
-                );
-              });
+    const activeFilter = document.querySelector(
+      "#page-all-students .filter-btn.bg-blue-100, #page-all-students .filter-btn.dark\\:bg-blue-900"
+    );
+    const groupId = activeFilter ? activeFilter.getAttribute("data-group") : "";
 
-            btn.classList.add(
-              "bg-blue-100",
-              "dark:bg-blue-900",
-              "text-blue-800",
-              "dark:text-blue-200"
-            );
-            btn.classList.remove(
-              "bg-gray-100",
-              "dark:bg-gray-800",
-              "text-gray-800",
-              "dark:text-gray-200"
-            );
+    const filteredStudents = groupId
+      ? students.filter((student) => student.groupId === groupId)
+      : students;
 
-            // Filter students
-            const filteredStudents = groupId
-              ? students.filter((student) => student.groupId === groupId)
-              : students;
+    const searchedStudents = filteredStudents.filter(
+      (student) =>
+        student.name.toLowerCase().includes(searchTerm) ||
+        student.roll.toLowerCase().includes(searchTerm) ||
+        student.contact.toLowerCase().includes(searchTerm) ||
+        student.session.toLowerCase().includes(searchTerm)
+    );
 
-            const allStudentsCards =
-              document.getElementById("allStudentsCards");
-            allStudentsCards.innerHTML = "";
+    renderStudents(searchedStudents);
+  });
 
-            filteredStudents.forEach((student) => {
-              const group = groups.find((g) => g.id === student.groupId);
-              const groupName = group ? group.name : "গ্রুপ নেই";
-              const groupIndex = groups.findIndex(
-                (g) => g.id === student.groupId
-              );
-              const cardColorClass = `group-card-${(groupIndex % 8) + 1}`;
+// 🟢 Filter All Students
+document
+  .querySelectorAll("#page-all-students .filter-btn")
+  .forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const groupId = btn.getAttribute("data-group");
 
-              let roleBadge = "";
-              if (student.role) {
-                const roleNames = {
-                  "team-leader": "টিম লিডার",
-                  "time-keeper": "টাইম কিপার",
-                  reporter: "রিপোর্টার",
-                  "resource-manager": "রিসোর্স ম্যানেজার",
-                  "peace-maker": "পিস মেকার",
-                };
-                roleBadge = `<span class="member-role-badge ${student.role}">${
-                  roleNames[student.role] || student.role
-                }</span>`;
-              }
+      // Update active filter styles
+      document.querySelectorAll("#page-all-students .filter-btn").forEach((b) => {
+        b.classList.remove(
+          "bg-blue-100",
+          "dark:bg-blue-900",
+          "text-blue-800",
+          "dark:text-blue-200"
+        );
+        b.classList.add(
+          "bg-gray-100",
+          "dark:bg-gray-800",
+          "text-gray-800",
+          "dark:text-gray-200"
+        );
+      });
 
-              const studentCard = document.createElement("div");
-              studentCard.className = `student-card ${cardColorClass} p-4 rounded-xl shadow-md relative overflow-hidden`;
-              studentCard.innerHTML = `
-            <div class="group-serial">${groupIndex + 1}</div>
-            <div class="flex items-center mb-3">
-              <div class="student-avatar bg-primary text-white">${student.name.charAt(
-                0
-              )}</div>
-              <div>
-                <h3 class="font-bold text-lg">${student.name} ${roleBadge}</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-300">রোল: ${
-                  student.roll
-                }</p>
-              </div>
-            </div>
-            <div class="space-y-1 text-sm">
-              <p><i class="fas fa-venus-mars mr-2"></i> লিঙ্গ: ${
-                student.gender
-              }</p>
-              <p><i class="fas fa-users mr-2"></i> গ্রুপ: ${groupName}</p>
-              <p><i class="fas fa-envelope mr-2"></i> যোগাযোগ: ${
-                student.contact
-              }</p>
-              <p><i class="fas fa-calendar mr-2"></i> সেশন: ${
-                student.session
-              }</p>
-            </div>
-          `;
-              allStudentsCards.appendChild(studentCard);
-            });
-          });
-        });
+      btn.classList.add(
+        "bg-blue-100",
+        "dark:bg-blue-900",
+        "text-blue-800",
+        "dark:text-blue-200"
+      );
+      btn.classList.remove(
+        "bg-gray-100",
+        "dark:bg-gray-800",
+        "text-gray-800",
+        "dark:text-gray-200"
+      );
+
+      // Filter Students
+      const filteredStudents = groupId
+        ? students.filter((student) => student.groupId === groupId)
+        : students;
+
+      renderStudents(filteredStudents);
+    });
+  });
+
+
 
       // Load Tasks
       function loadTasks() {
