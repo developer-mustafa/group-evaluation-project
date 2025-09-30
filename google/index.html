@@ -3,369 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>স্মার্ট গ্রুপ ইভালুয়েটর</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>স্মার্ট গ্রুপ মূল্যায়ন সিস্টেম</title>
+    
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- JSZip for export functionality -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-</head>
-<body class="theme-modern-blue">
-    <!-- Auth Modal -->
-    <div id="authModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-        <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-xl max-w-md w-full">
-            <form id="loginForm">
-                <h2 class="text-2xl font-bold mb-6">লগইন করুন</h2>
-                <input type="email" id="loginEmail" placeholder="ইমেইল" class="input mb-4" required>
-                <input type="password" id="loginPassword" placeholder="পাসওয়ার্ড" class="input mb-4" required>
-                <button type="button" id="loginBtn" class="btn btn-primary w-full mb-4">লগইন</button>
-                <p class="text-center mb-4">অথবা</p>
-                <button type="button" id="googleSignInBtn" class="btn btn-secondary w-full mb-4"><i class="fab fa-google mr-2"></i> Google দিয়ে লগইন করুন</button>
-                <p class="text-center">অ্যাকাউন্ট নেই? <a href="#" id="showRegister" class="text-primary">রেজিস্টার করুন</a></p>
-            </form>
-            <form id="registerForm" class="hidden">
-                <h2 class="text-2xl font-bold mb-6">রেজিস্টার করুন</h2>
-                <input type="email" id="registerEmail" placeholder="ইমেইল" class="input mb-4" required>
-                <input type="password" id="registerPassword" placeholder="পাসওয়ার্ড" class="input mb-4" required>
-                <select id="registerAdminType" class="select input mb-4">
-                    <option value="admin">সাধারণ অ্যাডমিন</option>
-                    <option value="superadmin">সুপার অ্যাডমিন</option>
-                </select>
-                <button type="button" id="registerBtn" class="btn btn-primary w-full mb-4">রেজিস্টার</button>
-                <p class="text-center">ইতিমধ্যে অ্যাকাউন্ট আছে? <a href="#" id="showLogin" class="text-primary">লগইন করুন</a></p>
-            </form>
-        </div>
-    </div>
-
-    <!-- App Container -->
-    <div id="appContainer" class="app-container hidden">
-        <aside class="sidebar hidden md:block">
-            <div class="p-6">
-                <h2 class="text-2xl font-bold mb-8">স্মার্ট গ্রুপ</h2>
-                <nav>
-                    <button class="nav-btn" data-page="dashboard"><i class="fas fa-tachometer-alt"></i> ড্যাশবোর্ড</button>
-                    <button class="nav-btn" data-page="groups"><i class="fas fa-users"></i> গ্রুপ ব্যবস্থাপনা</button>
-                    <button class="nav-btn" data-page="members"><i class="fas fa-user-plus"></i> সদস্য যোগ করুন</button>
-                    <button class="nav-btn" data-page="group-members"><i class="fas fa-user-group"></i> গ্রুপ সদস্য</button>
-                    <button class="nav-btn" data-page="all-students"><i class="fas fa-graduation-cap"></i> সকল শিক্ষার্থী</button>
-                    <button class="nav-btn" data-page="student-ranking"><i class="fas fa-trophy"></i> শিক্ষার্থী র‌্যাঙ্কিং</button>
-                    <button class="nav-btn" data-page="group-analysis"><i class="fas fa-chart-bar"></i> গ্রুপ বিশ্লেষণ</button>
-                    <button class="nav-btn" data-page="tasks"><i class="fas fa-tasks"></i> টাস্ক ব্যবস্থাপনা</button>
-                    <button class="nav-btn" data-page="evaluation"><i class="fas fa-clipboard-check"></i> মূল্যায়ন</button>
-                    <button class="nav-btn" data-page="group-policy"><i class="fas fa-gavel"></i> গ্রুপ নীতি</button>
-                    <button class="nav-btn" data-page="export"><i class="fas fa-download"></i> এক্সপোর্ট</button>
-                    <button class="nav-btn" data-page="admin-management"><i class="fas fa-user-shield"></i> অ্যাডমিন ব্যবস্থাপনা</button>
-                </nav>
-            </div>
-        </aside>
-        <div class="main-content">
-            <header class="flex items-center justify-between">
-                <button id="mobileMenuBtn" class="md:hidden"><i class="fas fa-bars text-2xl"></i></button>
-                <h1 id="pageTitle" class="text-2xl font-bold">ড্যাশবোর্ড</h1>
-                <div class="flex items-center space-x-4">
-                    <span id="userInfo"></span>
-                    <button id="themeToggle"><i class="fas fa-moon"></i></button>
-                    <button id="logoutBtn" class="btn btn-secondary">লগআউট</button>
-                </div>
-            </header>
-            <main class="page-content">
-                <!-- Dashboard Page -->
-                <section id="page-dashboard" class="page dashboard-grid">
-                    <!-- Stats Cards -->
-                    <div class="stats-grid">
-                        <!-- Dynamic stat cards will be added here -->
-                    </div>
-                    <!-- Content Grid -->
-                    <div class="content-grid">
-                        <div class="top-groups-section card">
-                            <h3 class="card-title">শীর্ষ গ্রুপসমূহ</h3>
-                            <!-- Top groups list -->
-                        </div>
-                        <div class="task-stats-section card">
-                            <h3 class="card-title">টাস্ক পরিসংখ্যান</h3>
-                            <!-- Task stats -->
-                        </div>
-                        <div class="groups-ranking-section card">
-                            <h3 class="card-title">গ্রুপ র‌্যাঙ্কিং</h3>
-                            <!-- Groups ranking -->
-                        </div>
-                        <div class="evaluation-stats-section card">
-                            <h3 class="card-title">মূল্যায়ন পরিসংখ্যান</h3>
-                            <!-- Evaluation stats -->
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Other pages similarly structured -->
-                <!-- Groups Management -->
-                <section id="page-groups" class="page hidden">
-                    <div class="card mb-6">
-                        <h3 class="card-title">গ্রুপ তৈরি করুন</h3>
-                        <input id="groupNameInput" placeholder="গ্রুপ নাম" class="input mb-4">
-                        <button id="addGroupBtn" class="btn btn-primary">গ্রুপ যোগ করুন</button>
-                    </div>
-                    <div class="card">
-                        <h3 class="card-title">গ্রুপ তালিকা</h3>
-                        <div id="groupsList"></div>
-                    </div>
-                </section>
-
-                <!-- Add Members -->
-                <section id="page-members" class="page hidden">
-                    <div class="card mb-6">
-                        <h3 class="card-title">নতুন শিক্ষার্থী যোগ করুন</h3>
-                        <div class="grid grid-cols-2 gap-4">
-                            <input id="studentNameInput" placeholder="নাম*" class="input">
-                            <input id="studentRollInput" placeholder="রোল*" class="input">
-                            <select id="studentGenderInput" class="select input">
-                                <option value="">লিঙ্গ*</option>
-                                <option value="ছেলে">ছেলে</option>
-                                <option value="মেয়ে">মেয়ে</option>
-                            </select>
-                            <select id="studentGroupInput" class="select input">
-                                <option value="">গ্রুপ*</option>
-                            </select>
-                            <input id="studentContactInput" placeholder="যোগাযোগ" class="input">
-                            <input id="studentAcademicGroupInput" placeholder="একাডেমিক গ্রুপ*" class="input">
-                            <input id="studentSessionInput" placeholder="সেশন*" class="input">
-                            <select id="studentRoleInput" class="select input">
-                                <option value="">দায়িত্ব</option>
-                                <option value="team-leader">টিম লিডার</option>
-                                <option value="time-keeper">টাইম কিপার</option>
-                                <option value="reporter">রিপোর্টার</option>
-                                <option value="resource-manager">রিসোর্স ম্যানেজার</option>
-                                <option value="peace-maker">পিস মেকার</option>
-                            </select>
-                        </div>
-                        <button id="addStudentBtn" class="btn btn-primary mt-4">শিক্ষার্থী যোগ করুন</button>
-                    </div>
-                    <div class="card">
-                        <h3 class="card-title">শিক্ষার্থী তালিকা</h3>
-                        <select id="membersFilterGroup" class="select input mb-4">
-                            <option value="">সকল গ্রুপ</option>
-                        </select>
-                        <input id="studentSearchInput" placeholder="শিক্ষার্থী অনুসন্ধান..." class="input mb-4">
-                        <div id="studentsList"></div>
-                    </div>
-                </section>
-
-                <!-- Group Members -->
-                <section id="page-group-members" class="page hidden">
-                    <div class="card">
-                        <h3 class="card-title">গ্রুপ সদস্য ব্যবস্থাপনা</h3>
-                        <select id="groupMembersGroupSelect" class="select input mb-4">
-                            <option value="">গ্রুপ নির্বাচন করুন</option>
-                        </select>
-                        <div id="groupMembersList"></div>
-                    </div>
-                </section>
-
-                <!-- All Students -->
-                <section id="page-all-students" class="page hidden">
-                    <div class="card">
-                        <h3 class="card-title">সকল শিক্ষার্থী</h3>
-                        <select id="cardsFilterGroup" class="select input mb-4">
-                            <option value="">সকল গ্রুপ</option>
-                        </select>
-                        <input id="allStudentsSearchInput" placeholder="শিক্ষার্থী অনুসন্ধান..." class="input mb-4">
-                        <div id="allStudentsCards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-                    </div>
-                </section>
-
-                <!-- Student Ranking -->
-                <section id="page-student-ranking" class="page hidden">
-                    <div class="card">
-                        <h3 class="card-title">শিক্ষার্থী র‌্যাঙ্কিং</h3>
-                        <button id="refreshRanking" class="btn btn-secondary mb-4">রিফ্রেশ</button>
-                        <div id="studentRankingList"></div>
-                    </div>
-                </section>
-
-                <!-- Group Analysis -->
-                <section id="page-group-analysis" class="page hidden">
-                    <div class="card mb-6">
-                        <h3 class="card-title">গ্রুপ বিশ্লেষণ</h3>
-                        <select id="analysisGroupSelect" class="select input mb-4 multiple" multiple>
-                            <option value="">সকল গ্রুপ</option>
-                        </select>
-                        <button id="updateAnalysisBtn" class="btn btn-primary">বিশ্লেষণ আপডেট করুন</button>
-                    </div>
-                    <div id="groupAnalysisDetails"></div>
-                </section>
-
-                <!-- Tasks Management -->
-                <section id="page-tasks" class="page hidden">
-                    <div class="card mb-6">
-                        <h3 class="card-title">নতুন টাস্ক তৈরি করুন</h3>
-                        <input id="taskNameInput" placeholder="টাস্ক নাম*" class="input mb-4">
-                        <input id="taskMaxScoreInput" type="number" placeholder="সর্বোচ্চ স্কোর*" class="input mb-4">
-                        <textarea id="taskDescriptionInput" placeholder="বিবরণ*" class="input textarea mb-4"></textarea>
-                        <input id="taskDateInput" type="date" class="input mb-4">
-                        <button id="addTaskBtn" class="btn btn-primary">টাস্ক যোগ করুন</button>
-                    </div>
-                    <div class="card">
-                        <h3 class="card-title">টাস্ক তালিকা</h3>
-                        <div id="tasksList"></div>
-                    </div>
-                </section>
-
-                <!-- Evaluation -->
-                <section id="page-evaluation" class="page hidden">
-                    <div class="card mb-6">
-                        <h3 class="card-title">মূল্যায়ন শুরু করুন</h3>
-                        <select id="evaluationTaskSelect" class="select input mb-4">
-                            <option value="">টাস্ক নির্বাচন করুন</option>
-                        </select>
-                        <select id="evaluationGroupSelect" class="select input mb-4">
-                            <option value="">গ্রুপ নির্বাচন করুন</option>
-                        </select>
-                        <button id="startEvaluationBtn" class="btn btn-primary">মূল্যায়ন শুরু করুন</button>
-                    </div>
-                    <div class="card hidden" id="evaluationForm">
-                        <!-- Dynamic evaluation form -->
-                    </div>
-                    <div class="card">
-                        <h3 class="card-title">মূল্যায়ন তালিকা</h3>
-                        <table id="evaluationListTable" class="evaluation-table">
-                            <thead>
-                                <tr>
-                                    <th>টাস্ক</th>
-                                    <th>গ্রুপ</th>
-                                    <th>তারিখ</th>
-                                    <th>মোট স্কোর</th>
-                                    <th>কার্যক্রম</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <!-- Group Policy -->
-                <section id="page-group-policy" class="page hidden">
-                    <div class="card">
-                        <h3 class="card-title">গ্রুপ নীতি ও নির্দেশিকা</h3>
-                        <div id="policySections"></div>
-                    </div>
-                </section>
-
-                <!-- Export -->
-                <section id="page-export" class="page hidden">
-                    <div class="card mb-6">
-                        <h3 class="card-title">ডেটা এক্সপোর্ট</h3>
-                        <button id="exportAllData" class="btn btn-primary mr-2">সমস্ত ডেটা (ZIP)</button>
-                        <button id="exportStudentsCSV" class="btn btn-secondary mr-2">শিক্ষার্থী CSV</button>
-                        <button id="exportGroupsCSV" class="btn btn-secondary mr-2">গ্রুপ CSV</button>
-                        <button id="exportEvaluationsCSV" class="btn btn-secondary">মূল্যায়ন CSV</button>
-                    </div>
-                    <div class="card">
-                        <h3 class="card-title">শিক্ষার্থী ইম্পোর্ট (CSV)</h3>
-                        <input type="file" id="csvFileInput" accept=".csv" class="hidden">
-                        <button id="importStudentsBtn" class="btn btn-primary">CSV ফাইল নির্বাচন করুন</button>
-                    </div>
-                </section>
-
-                <!-- Admin Management -->
-                <section id="page-admin-management" class="page hidden">
-                    <div class="card">
-                        <h3 class="card-title">অ্যাডমিন ব্যবস্থাপনা</h3>
-                        <button id="addAdminBtn" class="btn btn-primary mb-4">নতুন অ্যাডমিন</button>
-                        <input id="adminSearchInput" placeholder="অ্যাডমিন অনুসন্ধান..." class="input mb-4">
-                        <div id="adminManagementContent"></div>
-                    </div>
-                </section>
-            </main>
-        </div>
-    </div>
-
-    <!-- Modals -->
-    <div id="deleteModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 hidden">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl">
-            <h3 class="text-xl font-bold mb-4">ডিলিট নিশ্চিতকরণ</h3>
-            <p id="deleteModalText" class="mb-6">আপনি কি নিশ্চিত যে আপনি এই আইটেমটি ডিলিট করতে চান?</p>
-            <div class="flex justify-end space-x-4">
-                <button id="cancelDelete" class="btn btn-secondary">বাতিল</button>
-                <button id="confirmDelete" class="btn btn-error">ডিলিট</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="editModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 hidden">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full overflow-y-auto max-h-90vh">
-            <h3 id="editModalTitle" class="text-xl font-bold mb-4">সম্পাদনা করুন</h3>
-            <div id="editModalContent"></div>
-            <div class="flex justify-end space-x-4 mt-6">
-                <button id="cancelEdit" class="btn btn-secondary">বাতিল</button>
-                <button id="saveEdit" class="btn btn-primary">সংরক্ষণ করুন</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="groupDetailsModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 hidden">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-4xl w-full overflow-y-auto max-h-90vh">
-            <h3 id="groupDetailsTitle" class="text-xl font-bold mb-4">গ্রুপ বিস্তারিত ফলাফল</h3>
-            <div id="groupDetailsContent"></div>
-            <div class="flex justify-end mt-6">
-                <button id="closeGroupDetails" class="btn btn-secondary">বন্ধ করুন</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="adminModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 hidden">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full">
-            <h3 id="adminModalTitle" class="text-xl font-bold mb-4">নতুন অ্যাডমিন</h3>
-            <input id="adminEmail" placeholder="ইমেইল" class="input mb-4" required>
-            <input id="adminPassword" type="password" placeholder="পাসওয়ার্ড" class="input mb-4" required>
-            <select id="adminTypeSelect" class="select input mb-4">
-                <option value="admin">সাধারণ অ্যাডমিন</option>
-                <option value="superadmin">সুপার অ্যাডমিন</option>
-            </select>
-            <div id="permissionsSection" class="mb-4">
-                <label class="flex items-center mb-2">
-                    <input type="checkbox" id="permissionRead" class="checkbox mr-2">
-                    রিড একসেস
-                </label>
-                <label class="flex items-center mb-2">
-                    <input type="checkbox" id="permissionWrite" class="checkbox mr-2">
-                    এডিট একসেস
-                </label>
-                <label class="flex items-center">
-                    <input type="checkbox" id="permissionDelete" class="checkbox mr-2">
-                    ডিলিট একসেস
-                </label>
-            </div>
-            <div class="flex justify-end space-x-4">
-                <button id="cancelAdmin" class="btn btn-secondary">বাতিল</button>
-                <button id="saveAdmin" class="btn btn-primary">সংরক্ষণ করুন</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="logoutModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 hidden">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl">
-            <h3 class="text-xl font-bold mb-4">লগআউট নিশ্চিতকরণ</h3>
-            <p class="mb-6">আপনি কি নিশ্চিত যে আপনি লগআউট করতে চান?</p>
-            <div class="flex justify-end space-x-4">
-                <button id="cancelLogout" class="btn btn-secondary">বাতিল</button>
-                <button id="confirmLogout" class="btn btn-error">লগআউট</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay hidden">
-        <div class="loading-spinner"></div>
-    </div>
-
-    <!-- Toast Notification -->
-    <div id="toast" class="toast hidden">
-        <span id="toastMessage"></span>
-    </div>
-
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Firebase Configuration -->
     <script>
-       
         const firebaseConfig = {
         apiKey: "AIzaSyAkw1kL7AU73Y9FWrPZ-ERv5xFvXGGILBA",
         authDomain: "claritybudget-6lnmd.firebaseapp.com",
@@ -374,11 +32,635 @@
         messagingSenderId: "40318182466",
         appId: "1:40318182466:web:c2ce0637f8f23afa95b9db",
       };
-
+        
+        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
+        const googleProvider = new firebase.auth.GoogleAuthProvider();
     </script>
+</head>
+<body class="theme-modern-blue">
+    <!-- Authentication Modal -->
+    <div id="authModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">লগইন / রেজিস্ট্রেশন</h2>
+            </div>
+            
+            <!-- Login Form -->
+            <div id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">ইমেইল</label>
+                    <input type="email" id="loginEmail" class="form-input" placeholder="আপনার ইমেইল লিখুন">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">পাসওয়ার্ড</label>
+                    <input type="password" id="loginPassword" class="form-input" placeholder="আপনার পাসওয়ার্ড লিখুন">
+                </div>
+                <button id="loginBtn" class="btn btn-primary w-full">লগইন করুন</button>
+                <div class="text-center mt-4">
+                    <span class="text-muted">অ্যাকাউন্ট নেই?</span>
+                    <button id="showRegister" class="btn btn-outline btn-sm ml-2">রেজিস্ট্রেশন করুন</button>
+                </div>
+                <div class="text-center mt-4">
+                    <button id="googleSignInBtn" class="btn btn-outline w-full">
+                        <i class="fab fa-google mr-2"></i>Google দিয়ে লগইন
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Registration Form -->
+            <div id="registerForm" class="hidden">
+                <div class="form-group">
+                    <label class="form-label">ইমেইল</label>
+                    <input type="email" id="registerEmail" class="form-input" placeholder="আপনার ইমেইল লিখুন">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">পাসওয়ার্ড</label>
+                    <input type="password" id="registerPassword" class="form-input" placeholder="পাসওয়ার্ড তৈরি করুন">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">অ্যাডমিন টাইপ</label>
+                    <select id="adminType" class="form-select">
+                        <option value="admin">সাধারণ অ্যাডমিন</option>
+                        <option value="super-admin">সুপার অ্যাডমিন</option>
+                    </select>
+                </div>
+                <button id="registerBtn" class="btn btn-primary w-full">রেজিস্ট্রেশন করুন</button>
+                <div class="text-center mt-4">
+                    <span class="text-muted">ইতিমধ্যে অ্যাকাউন্ট আছে?</span>
+                    <button id="showLogin" class="btn btn-outline btn-sm ml-2">লগইন করুন</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="appContainer" class="app-container hidden">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="logo-text">স্মার্ট গ্রুপ মূল্যায়ন</div>
+                </div>
+                
+                <div class="header-actions">
+                    <button id="themeToggle" class="btn btn-icon">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    
+                    <div class="user-info">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div id="userInfo">
+                            <div class="text-xs">সাধারণ ব্যবহারকারী</div>
+                        </div>
+                    </div>
+                    
+                    <button id="logoutBtn" class="btn btn-outline hidden">
+                        <i class="fas fa-sign-out-alt"></i> লগআউট
+                    </button>
+                    
+                    <button id="mobileMenuBtn" class="btn btn-icon md:hidden">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Sidebar Navigation -->
+            <nav class="sidebar">
+                <div class="sidebar-nav">
+                    <button class="nav-btn active" data-page="dashboard">
+                        <i class="fas fa-tachometer-alt"></i> ড্যাশবোর্ড
+                    </button>
+                    <button class="nav-btn" data-page="groups">
+                        <i class="fas fa-layer-group"></i> গ্রুপ ম্যানেজমেন্ট
+                    </button>
+                    <button class="nav-btn" data-page="members">
+                        <i class="fas fa-user-plus"></i> সদস্য যোগ করুন
+                    </button>
+                    <button class="nav-btn" data-page="group-members">
+                        <i class="fas fa-users-cog"></i> গ্রুপ সদস্য ম্যানেজমেন্ট
+                    </button>
+                    <button class="nav-btn" data-page="all-students">
+                        <i class="fas fa-user-graduate"></i> সকল শিক্ষার্থী
+                    </button>
+                    <button class="nav-btn" data-page="student-ranking">
+                        <i class="fas fa-trophy"></i> শিক্ষার্থী র‌্যাঙ্কিং
+                    </button>
+                    <button class="nav-btn" data-page="group-analysis">
+                        <i class="fas fa-chart-bar"></i> গ্রুপ বিশ্লেষণ
+                    </button>
+                    <button class="nav-btn" data-page="tasks">
+                        <i class="fas fa-tasks"></i> টাস্ক ম্যানেজমেন্ট
+                    </button>
+                    <button class="nav-btn" data-page="evaluation">
+                        <i class="fas fa-clipboard-check"></i> মূল্যায়ন
+                    </button>
+                    <button class="nav-btn" data-page="group-policy">
+                        <i class="fas fa-book"></i> গ্রুপ পলিসি
+                    </button>
+                    <button class="nav-btn" data-page="export">
+                        <i class="fas fa-download"></i> ডেটা এক্সপোর্ট
+                    </button>
+                    
+                    <!-- Admin Management (Only for Super Admins) -->
+                    <div id="adminManagementSection" class="hidden">
+                        <button class="nav-btn" data-page="admin-management">
+                            <i class="fas fa-user-shield"></i> অ্যাডমিন ম্যানেজমেন্ট
+                        </button>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Content Area -->
+            <main class="content-area">
+                <!-- Page Header -->
+                <div class="page-header">
+                    <h1 id="pageTitle" class="page-title">ড্যাশবোর্ড</h1>
+                    <div class="page-actions">
+                        <!-- Dynamic action buttons will be added here -->
+                    </div>
+                </div>
+
+                <!-- Pages -->
+                <div class="pages">
+                  <!-- Dashboard Page -->
+<div id="page-dashboard" class="page space-y-6">
+    <!-- Stats Summary -->
+    <div class="card">
+      <h2 class="card-title">সংক্ষিপ্ত পরিসংখ্যান</h2>
+      <div id="statsSummary" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <!-- Stats will be populated by JavaScript -->
+      </div>
+    </div>
+  
+    <!-- একাডেমিক গ্রুপ -->
+    <div class="card">
+      <h2 class="card-title">একাডেমিক গ্রুপ ভিত্তিক শিক্ষার্থী</h2>
+      <div id="academicGroupStatsList" class="space-y-3">
+        <!-- Academic group stats will be populated by JavaScript -->
+      </div>
+    </div>
+  
+    <!-- শীর্ষ গ্রুপসমূহ -->
+    <div class="card">
+      <h2 class="card-title">শীর্ষ গ্রুপসমূহ</h2>
+      <div id="topGroupsContainer" class="space-y-3">
+        <!-- Top groups will be populated by JavaScript -->
+      </div>
+    </div>
+  
+    <!-- গ্রুপ র‌্যাঙ্কিং -->
+    <div class="card">
+      <h2 class="card-title">গ্রুপ র‌্যাঙ্কিং</h2>
+      <div id="groupsRankingList" class="space-y-3">
+        <!-- Groups ranking will be populated by JavaScript -->
+      </div>
+    </div>
+  </div>
+  
+
+                    <!-- Groups Management Page -->
+                    <div id="page-groups" class="page hidden">
+                        <div class="card">
+                            <h2 class="card-title">নতুন গ্রুপ যোগ করুন</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <input type="text" id="groupNameInput" class="form-input" placeholder="গ্রুপের নাম লিখুন">
+                                <button id="addGroupBtn" class="btn btn-primary">গ্রুপ যোগ করুন</button>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h2 class="card-title">সকল গ্রুপ</h2>
+                            <div id="groupsList" class="space-y-3">
+                                <!-- Groups list will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add Members Page -->
+                    <div id="page-members" class="page hidden">
+                        <div class="card">
+                            <h2 class="card-title">নতুন সদস্য যোগ করুন</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <input type="text" id="studentNameInput" class="form-input" placeholder="শিক্ষার্থীর নাম">
+                                <input type="text" id="studentRollInput" class="form-input" placeholder="রোল নম্বর">
+                                <select id="studentGenderInput" class="form-select">
+                                    <option value="">লিঙ্গ নির্বাচন</option>
+                                    <option value="ছেলে">ছেলে</option>
+                                    <option value="মেয়ে">মেয়ে</option>
+                                </select>
+                                <select id="studentGroupInput" class="form-select">
+                                    <option value="">গ্রুপ নির্বাচন</option>
+                                    <!-- Groups will be populated by JavaScript -->
+                                </select>
+                                <input type="text" id="studentContactInput" class="form-input" placeholder="যোগাযোগ নম্বর">
+                                <input type="text" id="studentAcademicGroupInput" class="form-input" placeholder="একাডেমিক গ্রুপ">
+                                <input type="text" id="studentSessionInput" class="form-input" placeholder="সেশন">
+                                <select id="studentRoleInput" class="form-select">
+                                    <option value="">দায়িত্ব নির্বাচন</option>
+                                    <option value="team-leader">টিম লিডার</option>
+                                    <option value="time-keeper">টাইম কিপার</option>
+                                    <option value="reporter">রিপোর্টার</option>
+                                    <option value="resource-manager">রিসোর্স ম্যানেজার</option>
+                                    <option value="peace-maker">পিস মেকার</option>
+                                </select>
+                                <button id="addStudentBtn" class="btn btn-primary md:col-span-2">শিক্ষার্থী যোগ করুন</button>
+                            </div>
+                        </div>
+
+                        <!-- CSV Import Section -->
+                        <div class="card">
+                            <h2 class="card-title">CSV থেকে শিক্ষার্থী ইম্পোর্ট করুন</h2>
+                            <div class="flex flex-col md:flex-row gap-4 items-center">
+                                <input type="file" id="csvFileInput" accept=".csv" class="hidden">
+                                <button id="importStudentsBtn" class="btn btn-outline">CSV ফাইল নির্বাচন</button>
+                                <button id="exportStudentsBtn" class="btn btn-outline">শিক্ষার্থী CSV এক্সপোর্ট</button>
+                                <span class="text-sm text-muted">CSV ফরম্যাট: নাম, রোল, লিঙ্গ, গ্রুপ, একাডেমিক গ্রুপ, সেশন</span>
+                            </div>
+                        </div>
+
+                        <!-- Students List -->
+                        <div class="card">
+                            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+                                <h2 class="card-title">সকল সদস্য</h2>
+                                <div class="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+                                    <select id="membersFilterGroup" class="form-select">
+                                        <option value="">সকল গ্রুপ</option>
+                                        <!-- Groups will be populated by JavaScript -->
+                                    </select>
+                                    <input type="text" id="studentSearchInput" class="form-input" placeholder="সদস্য খুঁজুন...">
+                                </div>
+                            </div>
+                            <div id="studentsList" class="space-y-3">
+                                <!-- Students list will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Group Members Management Page -->
+                    <div id="page-group-members" class="page hidden">
+                        <div class="card">
+                            <h2 class="card-title">গ্রুপ সদস্য ম্যানেজমেন্ট</h2>
+                            <div class="mb-4">
+                                <select id="groupMembersGroupSelect" class="form-select">
+                                    <option value="">সকল গ্রুপ</option>
+                                    <!-- Groups will be populated by JavaScript -->
+                                </select>
+                            </div>
+                            <div id="groupMembersList" class="space-y-3">
+                                <!-- Group members list will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- All Students Page -->
+                    <div id="page-all-students" class="page hidden">
+                        <div class="card">
+                            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+                                <h2 class="card-title">সকল শিক্ষার্থী</h2>
+                                <div class="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+                                    <select id="cardsFilterGroup" class="form-select">
+                                        <option value="">সকল গ্রুপ</option>
+                                        <!-- Groups will be populated by JavaScript -->
+                                    </select>
+                                    <input type="text" id="allStudentsSearchInput" class="form-input" placeholder="শিক্ষার্থী খুঁজুন...">
+                                </div>
+                            </div>
+                            <div id="allStudentsCards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <!-- Student cards will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Student Ranking Page -->
+                    <div id="page-student-ranking" class="page hidden">
+                        <div class="card">
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="card-title">শিক্ষার্থী র‌্যাঙ্কিং</h2>
+                                <button id="refreshRanking" class="btn btn-outline">
+                                    <i class="fas fa-sync-alt mr-2"></i>রিফ্রেশ
+                                </button>
+                            </div>
+                            <div id="studentRankingList" class="space-y-3">
+                                <!-- Student ranking will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Group Analysis Page -->
+                    <div id="page-group-analysis" class="page hidden">
+                        <div class="card">
+                            <h2 class="card-title">গ্রুপ বিশ্লেষণ</h2>
+                            <div class="mb-4">
+                                <div class="flex flex-col md:flex-row gap-4 items-end">
+                                    <div class="flex-1">
+                                        <label class="form-label">গ্রুপ নির্বাচন করুন (বহুবিধ)</label>
+                                        <select id="analysisGroupSelect" class="form-select" multiple size="4">
+                                            <!-- Groups will be populated by JavaScript -->
+                                        </select>
+                                    </div>
+                                    <button id="updateAnalysisBtn" class="btn btn-primary">বিশ্লেষণ আপডেট করুন</button>
+                                </div>
+                            </div>
+                            
+                            <div class="chart-container">
+                                <canvas id="groupAnalysisChart"></canvas>
+                            </div>
+                            
+                            <div id="groupAnalysisDetails" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+                                <!-- Group analysis details will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tasks Management Page -->
+                    <div id="page-tasks" class="page hidden">
+                        <div class="card">
+                            <h2 class="card-title">নতুন টাস্ক যোগ করুন</h2>
+                            <div class="grid grid-cols-1 gap-4">
+                                <input type="text" id="taskNameInput" class="form-input" placeholder="টাস্কের নাম">
+                                <textarea id="taskDescriptionInput" class="form-textarea" placeholder="টাস্কের বিবরণ" rows="3"></textarea>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <input type="number" id="taskMaxScoreInput" class="form-input" placeholder="সর্বোচ্চ স্কোর" min="1" max="1000">
+                                    <input type="date" id="taskDateInput" class="form-input">
+                                </div>
+                                <button id="addTaskBtn" class="btn btn-primary">টাস্ক যোগ করুন</button>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h2 class="card-title">সকল টাস্ক</h2>
+                            <div id="tasksList" class="space-y-4">
+                                <!-- Tasks list will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Evaluation Page -->
+                    <div id="page-evaluation" class="page hidden">
+                        <div class="card">
+                            <h2 class="card-title">মূল্যায়ন শুরু করুন</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                <select id="evaluationTaskSelect" class="form-select">
+                                    <option value="">টাস্ক নির্বাচন</option>
+                                    <!-- Tasks will be populated by JavaScript -->
+                                </select>
+                                <select id="evaluationGroupSelect" class="form-select">
+                                    <option value="">গ্রুপ নির্বাচন</option>
+                                    <!-- Groups will be populated by JavaScript -->
+                                </select>
+                                <button id="startEvaluationBtn" class="btn btn-primary">মূল্যায়ন শুরু করুন</button>
+                            </div>
+                            
+                            <div id="evaluationForm">
+                                <!-- Evaluation form will be populated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <!-- Evaluation List -->
+                        <div class="card">
+                            <h2 class="card-title">পূর্বের মূল্যায়নসমূহ</h2>
+                            <div class="overflow-x-auto">
+                                <table id="evaluationListTable" class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>টাস্ক</th>
+                                            <th>গ্রুপ</th>
+                                            <th>তারিখ</th>
+                                            <th>মোট স্কোর</th>
+                                            <th>কার্যক্রম</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Evaluation list will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Group Policy Page -->
+                    <div id="page-group-policy" class="page hidden">
+                        <div class="card">
+                            <h2 class="card-title">গ্রুপ পলিসি ও নির্দেশিকা</h2>
+                            <div id="policySections" class="space-y-4">
+                                <!-- Policy sections will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Export Page -->
+                    <div id="page-export" class="page hidden">
+                        <div class="card">
+                            <h2 class="card-title">ডেটা এক্সপোর্ট</h2>
+                            <div class="export-options">
+                                <div class="export-card" onclick="smartEvaluator.exportAllData()">
+                                    <div class="export-icon">
+                                        <i class="fas fa-file-archive"></i>
+                                    </div>
+                                    <h3 class="font-semibold mb-2">সমস্ত ডেটা (ZIP)</h3>
+                                    <p class="text-sm text-muted">সমস্ত ডেটা একটি ZIP ফাইলে এক্সপোর্ট করুন</p>
+                                    <button id="exportAllData" class="btn btn-primary mt-4">এক্সপোর্ট করুন</button>
+                                </div>
+                                
+                                <div class="export-card">
+                                    <div class="export-icon">
+                                        <i class="fas fa-user-graduate"></i>
+                                    </div>
+                                    <h3 class="font-semibold mb-2">শিক্ষার্থী ডেটা</h3>
+                                    <p class="text-sm text-muted">শিক্ষার্থীদের তথ্য CSV ফরম্যাটে এক্সপোর্ট করুন</p>
+                                    <button id="exportStudentsCSV" class="btn btn-outline mt-4">CSV এক্সপোর্ট</button>
+                                </div>
+                                
+                                <div class="export-card">
+                                    <div class="export-icon">
+                                        <i class="fas fa-layer-group"></i>
+                                    </div>
+                                    <h3 class="font-semibold mb-2">গ্রুপ ডেটা</h3>
+                                    <p class="text-sm text-muted">গ্রুপ তথ্য CSV ফরম্যাটে এক্সপোর্ট করুন</p>
+                                    <button id="exportGroupsCSV" class="btn btn-outline mt-4">CSV এক্সপোর্ট</button>
+                                </div>
+                                
+                                <div class="export-card">
+                                    <div class="export-icon">
+                                        <i class="fas fa-clipboard-check"></i>
+                                    </div>
+                                    <h3 class="font-semibold mb-2">মূল্যায়ন ডেটা</h3>
+                                    <p class="text-sm text-muted">মূল্যায়ন তথ্য CSV ফরম্যাটে এক্সপোর্ট করুন</p>
+                                    <button id="exportEvaluationsCSV" class="btn btn-outline mt-4">CSV এক্সপোর্ট</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Admin Management Page -->
+                    <div id="page-admin-management" class="page hidden">
+                        <div class="card">
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="card-title">অ্যাডমিন ম্যানেজমেন্ট</h2>
+                                <button id="addAdminBtn" class="btn btn-primary">
+                                    <i class="fas fa-plus mr-2"></i>নতুন অ্যাডমিন
+                                </button>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <input type="text" id="adminSearchInput" class="form-input" placeholder="অ্যাডমিন খুঁজুন...">
+                            </div>
+                            
+                            <div id="adminManagementContent">
+                                <!-- Admin management content will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Logout Confirmation Modal -->
+    <div id="logoutModal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">লগআউট নিশ্চিতকরণ</h2>
+            </div>
+            <div class="modal-content">
+                <p>আপনি কি নিশ্চিত যে আপনি লগআউট করতে চান?</p>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelLogout" class="btn btn-outline">বাতিল</button>
+                <button id="confirmLogout" class="btn btn-error">লগআউট</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">ডিলিট নিশ্চিতকরণ</h2>
+            </div>
+            <div class="modal-content">
+                <p id="deleteModalText">আপনি কি নিশ্চিত যে আপনি এই আইটেম ডিলিট করতে চান?</p>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelDelete" class="btn btn-outline">বাতিল</button>
+                <button id="confirmDelete" class="btn btn-error">ডিলিট</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal-overlay hidden">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h2 id="editModalTitle" class="modal-title">সম্পাদনা</h2>
+                <button id="cancelEdit" class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="editModalContent" class="modal-content">
+                <!-- Edit form will be populated by JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button id="saveEdit" class="btn btn-primary">সংরক্ষণ করুন</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Group Details Modal -->
+    <div id="groupDetailsModal" class="modal-overlay hidden">
+        <div class="modal modal-xl">
+            <div class="modal-header">
+                <h2 id="groupDetailsTitle" class="modal-title">গ্রুপ বিস্তারিত</h2>
+                <button id="closeGroupDetails" class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="groupDetailsContent" class="modal-content">
+                <!-- Group details will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Modal -->
+    <div id="adminModal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="adminModalTitle" class="modal-title">অ্যাডমিন ম্যানেজমেন্ট</h2>
+                <button id="cancelAdmin" class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="adminModalContent" class="modal-content">
+                <div class="space-y-4">
+                    <div>
+                        <label class="form-label">ইমেইল</label>
+                        <input type="email" id="adminEmail" class="form-input" placeholder="অ্যাডমিন ইমেইল">
+                    </div>
+                    <div>
+                        <label class="form-label">পাসওয়ার্ড</label>
+                        <input type="password" id="adminPassword" class="form-input" placeholder="নতুন পাসওয়ার্ড">
+                    </div>
+                    <div>
+                        <label class="form-label">অ্যাডমিন টাইপ</label>
+                        <select id="adminTypeSelect" class="form-select">
+                            <option value="admin">সাধারণ অ্যাডমিন</option>
+                            <option value="super-admin">সুপার অ্যাডমিন</option>
+                        </select>
+                    </div>
+                    <div id="permissionsSection" class="hidden">
+                        <label class="form-label mb-2">পারমিশন</label>
+                        <div class="space-y-2">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="permissionRead" class="mr-2">
+                                <label for="permissionRead">ডেটা পড়া</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="permissionWrite" class="mr-2">
+                                <label for="permissionWrite">ডেটা এডিট করা</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="permissionDelete" class="mr-2">
+                                <label for="permissionDelete">ডেটা ডিলিট করা</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="saveAdmin" class="btn btn-primary">সংরক্ষণ করুন</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loading-content">
+            <div class="loading-spinner mb-4"></div>
+            <p>লোড হচ্ছে...</p>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden">
+        <div id="toastMessage" class="toast-message"></div>
+        <button class="toast-close">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <!-- Custom JavaScript -->
     <script src="app.js"></script>
 </body>
 </html>
