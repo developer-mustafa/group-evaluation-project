@@ -7,10 +7,7 @@
     <link rel="icon" href="https://public-frontend-cos.metadl.com/mgx/img/favicon.png" type="image/png" />
     <!-- Tailwind & Icons -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <!-- Firebase App (compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <!-- Firebase Authentication (compat) -->
@@ -44,170 +41,68 @@
     </script>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
-
       * { font-family: "Inter", sans-serif; }
-
-      body {
-        margin: 0;
-        padding: 0;
-        height: 100vh;
-        overflow: hidden;
-      }
-
-      .app-container {
-        display: flex;
-        height: 100vh;
-      }
-
-      .sidebar {
-        width: 250px;
-        flex-shrink: 0;
-        height: 100%;
-        overflow-y: auto;
-      }
-
-      .main-content {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        overflow: hidden;
-      }
-
-      .page-content {
-        flex: 1;
-        overflow-y: auto;
-        padding: 20px;
-      }
-
-      .gradient-bg {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      }
-
+      body { margin: 0; padding: 0; height: 100vh; overflow: hidden; }
+      .app-container { display: flex; height: 100vh; }
+      .sidebar { width: 270px; flex-shrink: 0; height: 100%; overflow-y: auto; }
+      .main-content { flex: 1; display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+      .page-content { flex: 1; overflow-y: auto; padding: 20px; }
+      .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
       .card-hover { transition: transform 0.3s, box-shadow 0.3s; }
-      .card-hover:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-      }
-
-      .progress-bar {
-        height: 8px;
-        border-radius: 4px;
-        overflow: hidden;
-        background-color: #e5e7eb;
-      }
-      .progress-fill {
-        height: 100%;
-        border-radius: 4px;
-        transition: width 0.5s ease-in-out;
-      }
-
+      .card-hover:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); }
+      .glass-card { background: rgba(255,255,255,0.8); backdrop-filter: blur(6px); }
+      .dark .glass-card { background: rgba(30,41,59,0.7); }
+      .progress-bar { height: 8px; border-radius: 4px; overflow: hidden; background-color: #e5e7eb; }
+      .progress-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease-in-out; }
       .fade-in { animation: fadeIn 0.5s ease-in-out; }
-      @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to   { opacity: 1; transform: translateY(0); }
-      }
-
-      .rank-badge {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        font-weight: bold;
-        color: white;
-      }
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+      .rank-badge { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; font-weight: bold; color: white; }
       .rank-1 { background: linear-gradient(135deg, #ffd700, #ffa500); box-shadow: 0 4px 6px rgba(255, 165, 0, 0.3); }
       .rank-2 { background: linear-gradient(135deg, #c0c0c0, #a0a0a0); box-shadow: 0 4px 6px rgba(160, 160, 160, 0.3); }
       .rank-3 { background: linear-gradient(135deg, #cd7f32, #a56a3a); box-shadow: 0 4px 6px rgba(165, 106, 58, 0.3); }
       .rank-other { background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3); }
-
       .group-bar { transition: all 0.3s ease; cursor: pointer; }
       .group-bar:hover { transform: translateX(5px); background-color: rgba(59, 130, 246, 0.05); }
       .group-bar.active { background-color: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; }
-
-      .loader {
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #3b82f6;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        animation: spin 1s linear infinite;
-        margin: 20px auto;
-      }
+      .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
       @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-      .modal {
-        display: none;
-        position: fixed;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 1000;
-        justify-content: center;
-        align-items: center;
-      }
-      .modal-content {
-        background-color: white;
-        padding: 20px;
-        border-radius: 8px;
-        width: 90%; max-width: 500px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      }
+      .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 1000; justify-content: center; align-items: center; }
+      .modal-content { background-color: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 500px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
       .dark .modal-content { background-color: #1e293b; color: white; }
       .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-
       .task-details { max-height: 0; overflow: hidden; transition: max-height 0.5s ease; }
       .task-details.open { max-height: 1000px; }
       .expand-icon { transition: transform 0.3s ease; }
       .expand-icon.rotated { transform: rotate(180deg); }
-
       .crown-icon { font-size: 24px; margin-bottom: 10px; }
-
       .rank-card { position: relative; overflow: hidden; border-radius: 16px; padding: 20px; text-align: center; transition: all 0.3s ease; }
       .rank-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; }
       .rank-1-card::before { background: linear-gradient(90deg, #ffd700, #ffa500); }
       .rank-2-card::before { background: linear-gradient(90deg, #c0c0c0, #a0a0a0); }
       .rank-3-card::before { background: linear-gradient(90deg, #cd7f32, #a56a3a); }
       .rank-card-glow { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); }
-
       .rank-1-card { background: linear-gradient(135deg, #fff9e6, #fff0cc); border: 2px solid #ffd700; }
       .rank-2-card { background: linear-gradient(135deg, #f5f5f5, #e8e8e8); border: 2px solid #c0c0c0; }
       .rank-3-card { background: linear-gradient(135deg, #f8f0e6, #f0e0cc); border: 2px solid #cd7f32; }
       .dark .rank-1-card { background: linear-gradient(135deg, #332900, #4d3d00); border: 2px solid #ffd700; }
       .dark .rank-2-card { background: linear-gradient(135deg, #2a2a2a, #3a3a3a); border: 2px solid #c0c0c0; }
       .dark .rank-3-card { background: linear-gradient(135deg, #332200, #4d3300); border: 2px solid #cd7f32; }
-
       .rank-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
       .rank-1-title { color: #d4af37; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); }
       .rank-2-title { color: #c0c0c0; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); }
       .rank-3-title { color: #cd7f32; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); }
-
       .member-role-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; margin-left: 5px; }
       .team-leader { background-color: #3b82f6; color: white; }
       .time-keeper { background-color: #10b981; color: white; }
       .reporter { background-color: #f59e0b; color: white; }
       .resource-manager { background-color: #8b5cf6; color: white; }
       .peace-maker { background-color: #ec4899; color: white; }
-
-      .score-calculation-info {
-        background: #f0f9ff; border-left: 4px solid #3b82f6;
-        padding: 10px 15px; margin: 15px 0; border-radius: 0 8px 8px 0;
-      }
+      .score-calculation-info { background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 10px 15px; margin: 15px 0; border-radius: 0 8px 8px 0; }
       .dark .score-calculation-info { background: #1e3a5f; border-left: 4px solid #60a5fa; }
-
       .advanced-loader { display: inline-block; position: relative; width: 80px; height: 80px; }
-      .advanced-loader div {
-        position: absolute; border: 4px solid #3b82f6; opacity: 1; border-radius: 50%;
-        animation: advanced-loader 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
-      }
+      .advanced-loader div { position: absolute; border: 4px solid #3b82f6; opacity: 1; border-radius: 50%; animation: advanced-loader 1s cubic-bezier(0, 0.2, 0.8, 1) infinite; }
       .advanced-loader div:nth-child(2) { animation-delay: -0.5s; }
-      @keyframes advanced-loader {
-        0% { top: 36px; left: 36px; width: 0; height: 0; opacity: 1; }
-        100% { top: 0px; left: 0px; width: 72px; height: 72px; opacity: 0; }
-      }
-
+      @keyframes advanced-loader { 0% { top: 36px; left: 36px; width: 0; height: 0; opacity: 1; } 100% { top: 0px; left: 0px; width: 72px; height: 72px; opacity: 0; } }
       .group-card-1 { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
       .group-card-2 { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
       .group-card-3 { background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%); }
@@ -224,53 +119,29 @@
       .dark .group-card-6 { background: linear-gradient(135deg, #2a3c7a 0%, #1a3560 100%); }
       .dark .group-card-7 { background: linear-gradient(135deg, #7a3c2a 0%, #7a3a7a 100%); }
       .dark .group-card-8 { background: linear-gradient(135deg, #7a2a2a 0%, #7a3a6a 100%); }
-
-      .group-serial {
-        font-size: 4rem; font-weight: 900; opacity: 0.2;
-        position: absolute; top: 10px; right: 20px; line-height: 1;
-      }
-
+      .serial-badge { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.6); color: #fff; font-weight: 700; border-radius: 9999px; padding: 4px 10px; font-size: 12px; }
+      .group-serial { font-size: 4rem; font-weight: 900; opacity: 0.15; position: absolute; bottom: 10px; right: 20px; line-height: 1; }
       .search-container { position: relative; }
-      .search-icon {
-        position: absolute; left: 12px; top: 50%;
-        transform: translateY(-50%); color: #6b7280;
-      }
+      .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #6b7280; }
       .search-input { padding-left: 40px; }
-
       .tab-container { display: flex; border-bottom: 1px solid #e5e7eb; margin-bottom: 1rem; }
       .tab { padding: 0.75rem 1.5rem; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.3s; }
       .tab.active { border-bottom-color: #3b82f6; color: #3b82f6; font-weight: 600; }
-
       .comment-section { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed #d1d5db; }
-
       .student-card { transition: all 0.3s ease; border-radius: 12px; overflow: hidden; position: relative; }
       .student-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15); }
-      .student-avatar {
-        width: 60px; height: 60px; border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 24px; font-weight: bold; color: white; margin-right: 15px;
-      }
-
+      .student-avatar { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; color: white; margin-right: 15px; }
       .policy-section { margin-bottom: 20px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
-      .policy-header {
-        background-color: #f9fafb; padding: 15px 20px; cursor: pointer;
-        display: flex; justify-content: space-between; align-items: center; transition: background-color 0.3s;
-      }
+      .policy-header { background-color: #f9fafb; padding: 15px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.3s; }
       .policy-header:hover { background-color: #f3f4f6; }
       .policy-content { padding: 0; max-height: 0; overflow: hidden; transition: max-height 0.5s ease, padding 0.5s ease; }
       .policy-content.open { padding: 20px; max-height: 1000px; }
       .dark .policy-header { background-color: #374151; color: white; }
       .dark .policy-header:hover { background-color: #4b5563; }
-
-      .logout-btn {
-        display: flex; align-items: center; gap: 8px;
-        padding: 8px 16px; border-radius: 8px; transition: all 0.3s;
-        background-color: #fef2f2; color: #dc2626; font-weight: 500;
-      }
+      .logout-btn { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 8px; transition: all 0.3s; background-color: #fef2f2; color: #dc2626; font-weight: 500; }
       .logout-btn:hover { background-color: #fee2e2; transform: translateY(-1px); }
       .dark .logout-btn { background-color: #7f1d1d; color: #fca5a5; }
       .dark .logout-btn:hover { background-color: #991b1b; }
-
       .csv-actions { display: flex; gap: 10px; margin-bottom: 20px; }
       .csv-btn { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 8px; font-weight: 500; transition: all 0.3s; }
       .import-btn { background-color: #dbeafe; color: #1e40af; }
@@ -281,7 +152,6 @@
       .dark .import-btn:hover { background-color: #1e40af; }
       .dark .export-btn { background-color: #14532d; color: #86efac; }
       .dark .export-btn:hover { background-color: #166534; }
-
       @media (max-width: 768px) {
         .app-container { flex-direction: column; }
         .sidebar { width: 100%; height: auto; max-height: 200px; }
@@ -385,12 +255,25 @@
     <div id="appContainer" class="app-container hidden">
       <!-- Sidebar -->
       <aside class="sidebar bg-white dark:bg-darkCard border-r border-gray-200 dark:border-gray-700">
-        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-          <h1 class="text-xl font-bold text-primary dark:text-blue-400 flex items-center">
-            <i class="fas fa-users mr-2"></i> Smart Evaluator
-          </h1>
-          <div id="userInfo" class="mt-2 text-sm text-gray-600 dark:text-gray-400"></div>
+        <div class="p-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg rounded-b-2xl transition-colors duration-300 max-w-md mx-auto">
+          <div class="flex items-center space-x-4">
+            <div class="flex-shrink-0">
+              <div class="h-16 w-16 rounded-full bg-gradient-to-tr from-blue-400 to-blue-600 flex items-center justify-center text-white text-2xl font-bold shadow-md transform transition duration-500 hover:scale-105 hover:shadow-xl animate-pulse-slow">MR</div>
+            </div>
+            <div class="flex flex-col">
+              <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                Mustafa Rahman <span class="text-sm text-gray-500 dark:text-gray-400">(sir)</span>
+              </h1>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Software Engineer, Turkey</p>
+            </div>
+          </div>
+          <div id="userInfo" class="mt-4 text-xs text-gray-400 dark:text-gray-500 italic">Welcome back! Your latest dashboard is ready.</div>
         </div>
+        <style>
+          @keyframes pulse-slow { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+          .animate-pulse-slow { animation: pulse-slow 2.5s ease-in-out infinite; }
+          #userInfo, h1, p { transition: color 0.3s ease; }
+        </style>
 
         <nav class="p-4 space-y-2">
           <button data-page="dashboard" class="nav-btn w-full text-left px-3 py-3 rounded-lg flex items-center transition-colors bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
@@ -420,8 +303,6 @@
           <button data-page="export" class="nav-btn w-full text-left px-3 py-3 rounded-lg flex items-center transition-colors hover:bg-gray-100 dark:hover:bg-gray-700">
             <i class="fas fa-file-export mr-3"></i> এক্সপোর্ট
           </button>
-
-          <!-- Admin Management (Only for Super Admin) -->
           <div id="adminManagementSection" class="hidden">
             <button data-page="admin-management" class="nav-btn w-full text-left px-3 py-3 rounded-lg flex items-center transition-colors hover:bg-gray-100 dark:hover:bg-gray-700">
               <i class="fas fa-user-shield mr-3"></i> অ্যাডমিন ব্যবস্থাপনা
@@ -429,18 +310,23 @@
           </div>
         </nav>
 
-        <div class="absolute top-0 w-full p-4 border-t border-gray-200 dark:border-gray-700">
+        <div class="absolute top-0 right-0 p-1">
           <div class="flex justify-between items-center">
-            <button id="themeToggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700"><i class="fas fa-moon"></i></button>
-            <button id="logoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> লগআউট</button>
-            <span class="text-sm text-gray-500">v2.4</span>
+            <span class="text-sm font-medium text-gray-600 dark:text-gray-400 mr-2">Developed By Mustafa Rahman ( v2.6 )</span>
+            <div class="flex items-center space-x-5">
+              <button id="logoutBtn" class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-xl shadow-sm transition">
+                <i class="fas fa-sign-out-alt"></i><span>লগআউট</span>
+              </button>
+              <button id="themeToggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:scale-105 transition">
+                <i class="fas fa-moon text-gray-800 dark:text-yellow-400"></i>
+              </button>
+            </div>
           </div>
         </div>
       </aside>
 
       <!-- Main Content -->
       <div class="main-content">
-        <!-- Header -->
         <header class="bg-white dark:bg-darkCard border-b border-gray-200 dark:border-gray-700 p-4 flex justify-between items-center">
           <h2 id="pageTitle" class="text-xl font-bold">ড্যাশবোর্ড</h2>
           <button id="mobileMenuBtn" class="mobile-menu-btn p-2 rounded-lg bg-gray-100 dark:bg-gray-800 lg:hidden">
@@ -448,43 +334,35 @@
           </button>
         </header>
 
-        <!-- Page Content -->
         <div class="page-content">
           <!-- Dashboard Page -->
           <section id="page-dashboard" class="page fade-in">
-            <div class="mb-6">
-              <h2 class="text-2xl font-bold mb-2">ড্যাশবোর্ড</h2>
-              <p class="text-gray-600 dark:text-gray-400">গ্রুপ মূল্যায়ন সিস্টেমের সংক্ষিপ্ত তথ্য</p>
+            <div class="mb-6"><p class="text-gray-600 dark:text-gray-400">সারাংশ, র‌্যাঙ্কিং ও বিশদ ফলাফল</p></div>
+            <div id="statsSummary" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"></div>
+            <div id="academicGroupStats" class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5 mb-8">
+              <h3 class="text-lg font-semibold mb-4">একাডেমিক গ্রুপ ভিত্তিক শিক্ষার্থী</h3>
+              <div id="academicGroupStatsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
             </div>
-
             <div class="mb-8">
               <h3 class="text-lg font-semibold mb-4">শীর্ষ গ্রুপসমূহ</h3>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="topGroupsContainer"></div>
             </div>
-
             <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5">
               <h3 class="text-lg font-semibold mb-4">গ্রুপ র‌্যাঙ্কিং</h3>
               <div id="groupsRankingList" class="space-y-3"></div>
             </div>
-
             <div id="groupDetails" class="mt-8 hidden"></div>
           </section>
 
           <!-- Groups Page -->
           <section id="page-groups" class="page hidden">
-            <div class="mb-6">
-              <h2 class="text-2xl font-bold mb-2">গ্রুপ ব্যবস্থাপনা</h2>
-              <p class="text-gray-600 dark:text-gray-400">গ্রুপ যোগ, সম্পাদনা এবং ব্যবস্থাপনা করুন</p>
-            </div>
-
+            <div class="mb-6"><p class="text-gray-600 dark:text-gray-400">গ্রুপ যোগ, সম্পাদনা এবং ব্যবস্থাপনা করুন</p></div>
             <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5 mb-6">
-              <h3 class="text-lg font-semibold mb-4">নতুন গ্রুপ যোগ করুন</h3>
               <div class="flex gap-3">
                 <input id="groupNameInput" type="text" placeholder="গ্রুপের নাম লিখুন" class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                 <button id="addGroupBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">গ্রুপ যোগ করুন</button>
               </div>
             </div>
-
             <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5">
               <h3 class="text-lg font-semibold mb-4">গ্রুপ তালিকা</h3>
               <div class="search-container mb-4">
@@ -497,14 +375,10 @@
 
           <!-- Members Page -->
           <section id="page-members" class="page hidden">
-            <div class="mb-6">
-              <h2 class="text-2xl font-bold mb-2">শিক্ষার্থী ব্যবস্থাপনা</h2>
-              <p class="text-gray-600 dark:text-gray-400">শিক্ষার্থী যোগ, সম্পাদনা এবং ব্যবস্থাপনা করুন</p>
-            </div>
-
+            <div class="mb-6"><p class="text-gray-600 dark:text-gray-400">শিক্ষার্থী যোগ, সম্পাদনা, ফিল্টার, সার্চ ও CSV ইম্পোর্ট/এক্সপোর্ট</p></div>
             <div class="csv-actions">
               <button id="importCsvBtn" class="csv-btn import-btn"><i class="fas fa-file-import"></i> CSV ইম্পোর্ট</button>
-              <button id="exportCsvBtn" class="csv-btn export-btn"><i class="fas fa-file-export"></i> CSV এক্সপোর্ট</button>
+              <button class="exportCsvBtn csv-btn export-btn"><i class="fas fa-file-export"></i> CSV এক্সপোর্ট</button>
             </div>
 
             <div id="csvImportSection" class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5 mb-6 hidden">
@@ -578,10 +452,7 @@
 
           <!-- Group Members Page -->
           <section id="page-group-members" class="page hidden">
-            <div class="mb-6">
-              <h2 class="text-2xl font-bold mb-2">গ্রুপ সদস্য ব্যবস্থাপনা</h2>
-              <p class="text-gray-600 dark:text-gray-400">গ্রুপে সদস্য যোগ, সম্পাদনা এবং ব্যবস্থাপনা করুন</p>
-            </div>
+            <div class="mb-6"><p class="text-gray-600 dark:text-gray-400">গ্রুপে সদস্য দেখুন, দায়িত্ব দিন ও সরান</p></div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5">
@@ -608,10 +479,7 @@
 
           <!-- All Students Cards Page -->
           <section id="page-all-students" class="page hidden">
-            <div class="mb-6">
-              <h2 class="text-2xl font-bold mb-2">সকল গ্রুপ কার্ড</h2>
-              <p class="text-gray-600 dark:text-gray-400">সকল গ্রুপের শিক্ষার্থীদের কার্ড আকারে দেখুন</p>
-            </div>
+            <div class="mb-6"><p class="text-gray-600 dark:text-gray-400">সকল শিক্ষার্থীর কার্ড ভিউ</p></div>
 
             <div class="search-container mb-6">
               <div class="search-icon"><i class="fas fa-search"></i></div>
@@ -627,10 +495,7 @@
 
           <!-- Tasks Page -->
           <section id="page-tasks" class="page hidden">
-            <div class="mb-6">
-              <h2 class="text-2xl font-bold mb-2">টাস্ক ব্যবস্থাপনা</h2>
-              <p class="text-gray-600 dark:text-gray-400">টাস্ক যোগ, সম্পাদনা এবং ব্যবস্থাপনা করুন</p>
-            </div>
+            <div class="mb-6"><p class="text-gray-600 dark:text-gray-400">টাস্ক যোগ, সম্পাদনা এবং ব্যবস্থাপনা করুন</p></div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5">
@@ -641,7 +506,7 @@
                     <input id="taskNameInput" type="text" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="টাস্কের নাম লিখুন" />
                   </div>
                   <div>
-                    <label class="block text-sm font-medium mb-2">টাস্কের বিবরণ</label>
+                    <label class="block text_sm font-medium mb-2">টাস্কের বিবরণ</label>
                     <textarea id="taskDescriptionInput" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent" rows="3" placeholder="টাস্কের বিবরণ লিখুন"></textarea>
                   </div>
                   <div>
@@ -665,10 +530,7 @@
 
           <!-- Evaluation Page -->
           <section id="page-evaluation" class="page hidden">
-            <div class="mb-6">
-              <h2 class="text-2xl font-bold mb-2">মূল্যায়ন</h2>
-              <p class="text-gray-600 dark:text-gray-400">গ্রুপ এবং সদস্যদের মূল্যায়ন করুন</p>
-            </div>
+            <div class="mb-6"><p class="text-gray-600 dark:text-gray-400">গ্রুপ এবং সদস্যদের মূল্যায়ন করুন</p></div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5">
@@ -701,10 +563,7 @@
 
           <!-- Group Policy Page -->
           <section id="page-group-policy" class="page hidden">
-            <div class="mb-6">
-              <h2 class="text-2xl font-bold mb-2">গ্রুপ পলিসি</h2>
-              <p class="text-gray-600 dark:text-gray-400">গ্রুপের পলিসি এবং নিয়মাবলী দেখুন</p>
-            </div>
+            <div class="mb-6"><p class="text-gray-600 dark:text-gray-400">গ্রুপের পলিসি এবং নিয়মাবলী দেখুন</p></div>
 
             <div class="space-y-4">
               <div class="policy-section">
@@ -783,10 +642,7 @@
 
           <!-- Export Page -->
           <section id="page-export" class="page hidden">
-            <div class="mb-6">
-              <h2 class="text-2xl font-bold mb-2">এক্সপোর্ট</h2>
-              <p class="text-gray-600 dark:text-gray-400">তথ্য এক্সপোর্ট করুন</p>
-            </div>
+            <div class="mb-6"><p class="text-gray-600 dark:text-gray-400">তথ্য এক্সপোর্ট করুন</p></div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5">
@@ -800,7 +656,7 @@
               <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5">
                 <h3 class="text-lg font-semibold mb-4">শিক্ষার্থী তথ্য এক্সপোর্ট</h3>
                 <p class="text-gray-600 dark:text-gray-400 mb-4">সমস্ত শিক্ষার্থীর তথ্য CSV ফরম্যাটে এক্সপোর্ট করুন</p>
-                <button id="exportStudentsBtn" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition-colors flex items-center justify-center">
+                <button id="exportStudentsBtn" class="exportStudentsBtn w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition-colors flex items-center justify-center">
                   <i class="fas fa-file-export mr-2"></i> শিক্ষার্থী এক্সপোর্ট করুন
                 </button>
               </div>
@@ -825,10 +681,7 @@
 
           <!-- Admin Management Page -->
           <section id="page-admin-management" class="page hidden">
-            <div class="mb-6">
-              <h2 class="text-2xl font-bold mb-2">অ্যাডমিন ব্যবস্থাপনা</h2>
-              <p class="text-gray-600 dark:text-gray-400">অ্যাডমিন অ্যাকাউন্ট ব্যবস্থাপনা করুন</p>
-            </div>
+            <div class="mb-6"><p class="text-gray-600 dark:text-gray-400">অ্যাডমিন অ্যাকাউন্ট ব্যবস্থাপনা করুন</p></div>
 
             <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5 mb-6">
               <h3 class="text-lg font-semibold mb-4">নতুন অ্যাডমিন যোগ করুন</h3>
@@ -848,7 +701,7 @@
               <div class="mt-4">
                 <button id="addAdminBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">অ্যাডমিন যোগ করুন</button>
               </div>
-              <p class="text-xs text-gray-500 mt-2">নোট: ক্লায়েন্ট থেকে ইমেইল-ভিত্তিক অ্যাডমিন যোগ করলে সংশ্লিষ্ট ব্যক্তি তার ইমেইল দিয়ে অ্যাকাউন্ট তৈরি/লগইন করলেই সক্রিয় হবে।</p>
+              <p class="text-xs text-gray-500 mt-2">নোট: ইমেইল-ভিত্তিক অ্যাডমিন যোগ করলে সংশ্লিষ্ট ব্যক্তি তার ইমেইল দিয়ে অ্যাকাউন্ট তৈরি/লগইন করলেই সক্রিয় হবে।</p>
             </div>
 
             <div class="bg-white dark:bg-darkCard rounded-xl shadow-md p-5">
@@ -860,16 +713,38 @@
       </div>
     </div>
 
+    <!-- Logout Modal -->
+    <div id="logoutModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 max-w-sm w-full text-center">
+        <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">লগআউট নিশ্চিত করুন</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">আপনি কি সত্যিই লগআউট করতে চান?</p>
+
+        <div class="flex justify-center gap-3">
+          <button id="cancelLogout" class="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 transition">বাতিল</button>
+          <button id="confirmLogout" class="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white shadow transition">লগআউট</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Firebase Configuration -->
     <script>
-   const firebaseConfig = {
-    apiKey: "AIzaSyAkw1kL7AU73Y9FWrPZ-ERv5xFvXGGILBA",
-    authDomain: "claritybudget-6lnmd.firebaseapp.com",
-    projectId: "claritybudget-6lnmd",
-    storageBucket: "claritybudget-6lnmd.firebasestorage.app",
-    messagingSenderId: "40318182466",
-    appId: "1:40318182466:web:c2ce0637f8f23afa95b9db"
-  };
+    //  const firebaseConfig = {
+    //     apiKey: "AIzaSyDBmRyLNCeAFgk6ijMUf3YsnwyZTDCt8r8",
+    //     authDomain: "course-admission-system.firebaseapp.com",
+    //     projectId: "course-admission-system",
+    //     storageBucket: "course-admission-system.firebasestorage.app",
+    //     messagingSenderId: "133920238322",
+    //     appId: "1:133920238322:web:5de05e75c91b2f6d5d3e6b",
+    //   };
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAkw1kL7AU73Y9FWrPZ-ERv5xFvXGGILBA",
+        authDomain: "claritybudget-6lnmd.firebaseapp.com",
+        projectId: "claritybudget-6lnmd",
+        storageBucket: "claritybudget-6lnmd.firebasestorage.app",
+        messagingSenderId: "40318182466",
+        appId: "1:40318182466:web:c2ce0637f8f23afa95b9db",
+      };
 
       firebase.initializeApp(firebaseConfig);
       const auth = firebase.auth();
@@ -877,8 +752,17 @@
       const googleProvider = new firebase.auth.GoogleAuthProvider();
     </script>
 
-    <!-- Application Script -->
+    <!-- Application Script (Refactored for efficiency) -->
     <script>
+      // ---------- Update criteria (read first) ----------
+      // 1) Realtime sync: We use onSnapshot for groups, students, tasks, admins. Evaluations stay on-demand + cached.
+      // 2) Indexes: build groupById, studentById, taskById, membersCountByGroup after each snapshot.
+      // 3) Event delegation: one listener per container using [data-action] attributes.
+      // 4) Debounce searches: 200ms debounce to reduce re-renders.
+      // 5) Partial re-render: render only affected views when datasets change.
+      // 6) Admin docs: still support both admins/{uid} and admins/{email}. Prefer uid; comments included for future migration.
+      // ---------------------------------------------------
+
       // DOM Elements
       const authModal = document.getElementById("authModal");
       const appContainer = document.getElementById("appContainer");
@@ -900,40 +784,72 @@
       const pages = document.querySelectorAll(".page");
       const navBtns = document.querySelectorAll(".nav-btn");
 
-      // State
+      // Global state (arrays)
       let groups = [];
       let students = [];
       let tasks = [];
-      let evaluations = [];
+      let evaluations = []; // cached on demand
       let admins = [];
+
+      // Indexes/Maps for O(1) lookups
+      let groupById = new Map();
+      let studentById = new Map();
+      let taskById = new Map();
+      let membersCountByGroup = {};
+
+      // Filters/Search State
+      let membersFilterGroupId = "";
+      let membersSearchTerm = "";
+      let cardsFilterGroupId = "";
+      let cardsSearchTerm = "";
+
+      // Realtime unsubscribers
+      let unsub = { groups: null, students: null, tasks: null, admins: null };
+
+      // Debounce helper
+      const debounce = (fn, ms = 200) => {
+        let t;
+        return (...a) => {
+          clearTimeout(t);
+          t = setTimeout(() => fn(...a), ms);
+        };
+      };
 
       // Loading helpers
       function showLoading() { document.getElementById("loadingOverlay").style.display = "flex"; }
       function hideLoading() { document.getElementById("loadingOverlay").style.display = "none"; }
 
-      // Auth State Listener (single source of truth)
+      // Build indexes after datasets update
+      function rebuildIndexes() {
+        groupById = new Map(groups.map(g => [g.id, g]));
+        studentById = new Map(students.map(s => [s.id, s]));
+        taskById = new Map(tasks.map(t => [t.id, t]));
+        membersCountByGroup = students.reduce((m, s) => {
+          if (s.groupId) m[s.groupId] = (m[s.groupId] || 0) + 1;
+          return m;
+        }, {});
+      }
+
+      // Auth State
       auth.onAuthStateChanged(async (user) => {
+        cleanupListeners();
         if (user) {
           authModal.style.display = "none";
           appContainer.classList.remove("hidden");
 
-          // Try admin doc by uid first, then by email
+          // Resolve admin profile (prefer uid doc, then email doc)
           try {
-            const byUid = await db.collection("admins").doc(user.uid).get();
             let userData = null;
-
-            if (byUid.exists) {
-              userData = byUid.data();
-            } else {
-              const byEmailSnap = await db.collection("admins")
-                .where("email", "==", user.email)
-                .limit(1)
-                .get();
-              if (!byEmailSnap.empty) {
-                userData = byEmailSnap.docs[0].data();
+            const byUid = await db.collection("admins").doc(user.uid).get();
+            if (byUid.exists) userData = byUid.data();
+            else {
+              const byEmailDoc = await db.collection("admins").doc(user.email).get();
+              if (byEmailDoc.exists) userData = byEmailDoc.data();
+              else {
+                const q = await db.collection("admins").where("email", "==", user.email).limit(1).get();
+                if (!q.empty) userData = q.docs[0].data();
               }
             }
-
             if (userData) {
               userInfo.innerHTML = `
                 <div class="font-medium">${userData.email}</div>
@@ -941,9 +857,7 @@
                   ${userData.type === "super-admin" ? "সুপার অ্যাডমিন" : "অ্যাডমিন"}
                 </div>
               `;
-              if (userData.type === "super-admin") {
-                adminManagementSection.classList.remove("hidden");
-              }
+              if (userData.type === "super-admin") adminManagementSection.classList.remove("hidden");
             } else {
               userInfo.innerHTML = `<div class="text-xs text-red-500">আপনি এখনও অ্যাডমিন তালিকায় নেই</div>`;
             }
@@ -951,21 +865,56 @@
             console.error("Admin data fetch error:", e);
           }
 
-          // Initial data load
-          await Promise.all([loadGroups(), loadStudents(), loadTasks(), loadAdmins(), loadEvaluations()]);
+          startRealtimeListeners();
         } else {
           authModal.style.display = "flex";
           appContainer.classList.add("hidden");
         }
       });
 
+      function startRealtimeListeners() {
+        // Groups
+        unsub.groups = db.collection("groups").orderBy("name").onSnapshot((snap) => {
+          groups = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+          rebuildIndexes();
+          refreshGroupsRelatedUI();
+          if (isPage("dashboard")) loadDashboardParts("groups");
+        });
+
+        // Students
+        unsub.students = db.collection("students").orderBy("name").onSnapshot((snap) => {
+          students = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+          rebuildIndexes();
+          refreshStudentsRelatedUI();
+          if (isPage("dashboard")) loadDashboardParts("students");
+        });
+
+        // Tasks
+        unsub.tasks = db.collection("tasks").orderBy("date", "desc").onSnapshot((snap) => {
+          tasks = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+          rebuildIndexes();
+          if (isPage("tasks") || isPage("evaluation")) renderTasks();
+          if (isPage("dashboard")) loadDashboardParts("tasks");
+        });
+
+        // Admins
+        unsub.admins = db.collection("admins").onSnapshot((snap) => {
+          admins = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+          if (isPage("admin-management")) renderAdmins();
+        });
+
+        // Initial dashboard paint
+        if (isPage("dashboard")) loadDashboardParts("init");
+      }
+
+      function cleanupListeners() {
+        Object.values(unsub).forEach((u) => { try { u && u(); } catch (e) {} });
+        unsub = { groups: null, students: null, tasks: null, admins: null };
+      }
+
       // Auth UI
-      showRegister.addEventListener("click", () => {
-        loginForm.classList.add("hidden"); registerForm.classList.remove("hidden");
-      });
-      showLogin.addEventListener("click", () => {
-        registerForm.classList.add("hidden"); loginForm.classList.remove("hidden");
-      });
+      showRegister.addEventListener("click", () => { loginForm.classList.add("hidden"); registerForm.classList.remove("hidden"); });
+      showLogin.addEventListener("click", () => { registerForm.classList.add("hidden"); loginForm.classList.remove("hidden"); });
 
       loginBtn.addEventListener("click", () => {
         const email = document.getElementById("loginEmail").value.trim();
@@ -975,9 +924,7 @@
           auth.signInWithEmailAndPassword(email, password)
             .then(() => hideLoading())
             .catch((error) => { hideLoading(); alert("লগইন ব্যর্থ: " + error.message); });
-        } else {
-          alert("ইমেইল এবং পাসওয়ার্ড লিখুন");
-        }
+        } else { alert("ইমেইল এবং পাসওয়ার্ড লিখুন"); }
       });
 
       registerBtn.addEventListener("click", () => {
@@ -989,6 +936,7 @@
           auth.createUserWithEmailAndPassword(email, password)
             .then((userCredential) => {
               const user = userCredential.user;
+              // Prefer uid as doc id to unify structure
               return db.collection("admins").doc(user.uid).set({
                 email, type: adminType, createdAt: firebase.firestore.FieldValue.serverTimestamp(),
               });
@@ -999,30 +947,41 @@
               registerForm.classList.add("hidden"); loginForm.classList.remove("hidden");
             })
             .catch((error) => { hideLoading(); alert("রেজিস্ট্রেশন ব্যর্থ: " + error.message); });
-        } else {
-          alert("সঠিক ইমেইল এবং ন্যূনতম ৬ অক্ষরের পাসওয়ার্ড লিখুন");
-        }
+        } else { alert("সঠিক ইমেইল এবং ন্যূনতম ৬ অক্ষরের পাসওয়ার্ড লিখুন"); }
       });
 
       googleSignInBtn.addEventListener("click", () => {
         showLoading();
         auth.signInWithPopup(googleProvider)
-          .then((result) => {
+          .then(async (result) => {
             const user = result.user;
-            return db.collection("admins").doc(user.uid).get().then((doc) => {
-              if (!doc.exists) {
-                return db.collection("admins").doc(user.uid).set({
-                  email: user.email, type: "admin", createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                });
-              }
-            });
+            // If admin doc not present by uid, seed as admin
+            const ref = db.collection("admins").doc(user.uid);
+            const doc = await ref.get();
+            if (!doc.exists) {
+              await ref.set({
+                email: user.email, type: "admin", createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+              });
+            }
           })
           .then(() => hideLoading())
           .catch((error) => { hideLoading(); alert("Google লগইন ব্যর্থ: " + error.message); });
       });
 
+      // Logout Modal
+      const logoutModal = document.getElementById("logoutModal");
+      const cancelLogout = document.getElementById("cancelLogout");
+      const confirmLogout = document.getElementById("confirmLogout");
+
       logoutBtn.addEventListener("click", () => {
-        if (confirm("আপনি কি নিশ্চিত যে আপনি লগআউট করতে চান?")) { auth.signOut(); }
+        logoutModal.classList.remove("hidden");
+        logoutModal.classList.add("flex");
+      });
+      cancelLogout.addEventListener("click", () => { logoutModal.classList.add("hidden"); });
+      confirmLogout.addEventListener("click", () => { auth.signOut(); logoutModal.classList.add("hidden"); });
+
+      logoutModal.addEventListener("click", (e) => {
+        if (e.target === logoutModal) logoutModal.classList.add("hidden");
       });
 
       // Theme Toggle
@@ -1046,8 +1005,12 @@
       });
 
       // Navigation
+      function isPage(slug) {
+        const el = document.getElementById(`page-${slug}`);
+        return el && !el.classList.contains("hidden");
+      }
       navBtns.forEach((btn) => {
-        btn.addEventListener("click", () => {
+        btn.addEventListener("click", async () => {
           const pageId = btn.getAttribute("data-page");
           navBtns.forEach((navBtn) => {
             navBtn.classList.remove("bg-blue-50","dark:bg-blue-900/30","text-blue-600","dark:text-blue-400");
@@ -1063,14 +1026,14 @@
             selectedPage.classList.add("fade-in");
             pageTitle.textContent = btn.textContent.trim();
 
-            if (pageId === "dashboard") { loadDashboard(); }
-            else if (pageId === "groups") { loadGroups(); }
-            else if (pageId === "members") { loadStudents(); }
+            // Lazy actions per view
+            if (pageId === "members") { renderGroupFilters(); renderStudentsList(); }
             else if (pageId === "group-members") { renderGroups(); }
-            else if (pageId === "all-students") { loadAllStudentsCards(); }
-            else if (pageId === "tasks") { loadTasks(); }
+            else if (pageId === "all-students") { renderGroupFilters(); renderStudentCardsWithFilters(); }
+            else if (pageId === "tasks") { renderTasks(); }
             else if (pageId === "evaluation") { renderTasks(); renderGroups(); }
-            else if (pageId === "admin-management") { loadAdmins(); }
+            else if (pageId === "admin-management") { renderAdmins(); }
+            else if (pageId === "dashboard") { loadDashboardParts("nav"); }
           }
 
           if (window.innerWidth < 1024) {
@@ -1081,17 +1044,29 @@
       });
       document.querySelector('[data-page="dashboard"]').click();
 
-      // Data Loads
-      async function loadGroups() {
-        showLoading();
-        try {
-          const snap = await db.collection("groups").orderBy("name").get();
-          groups = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-          renderGroups();
-        } catch (e) { console.error("Error loading groups:", e); }
-        hideLoading();
+      // Refresh groups-related UI at once after groups/students change
+      function refreshGroupsRelatedUI() {
+        renderGroups();
+        renderGroupFilters();
+        // If group-members page active, keep selection state
+        if (isPage("group-members")) {
+          const activeBar = document.querySelector("#groupSelectionList .group-bar.active");
+          if (activeBar) loadGroupMembers(activeBar.getAttribute("data-id"));
+        }
       }
 
+      // Refresh students-related UI at once
+      function refreshStudentsRelatedUI() {
+        if (isPage("members")) renderStudentsList();
+        if (isPage("all-students")) renderStudentCardsWithFilters();
+        if (isPage("group-members")) {
+          const activeBar = document.querySelector("#groupSelectionList .group-bar.active");
+          if (activeBar) loadGroupMembers(activeBar.getAttribute("data-id"));
+        }
+        if (isPage("dashboard")) loadDashboardParts("students");
+      }
+
+      // ---------- Groups rendering + delegation ----------
       function renderGroups() {
         const groupsList = document.getElementById("groupsList");
         const groupSelectionList = document.getElementById("groupSelectionList");
@@ -1100,86 +1075,107 @@
 
         if (groupsList) groupsList.innerHTML = "";
         if (groupSelectionList) groupSelectionList.innerHTML = "";
-        if (studentGroupInput) studentGroupInput.innerHTML = '<option value="">নির্বাচন করুন</option>';
-        if (evaluationGroupSelect) evaluationGroupSelect.innerHTML = '<option value="">একটি গ্রুপ নির্বাচন করুন</option>';
+        if (studentGroupInput) {
+          studentGroupInput.innerHTML = '<option value="">নির্বাচন করুন</option>';
+        }
+        if (evaluationGroupSelect) {
+          evaluationGroupSelect.innerHTML = '<option value="">একটি গ্রুপ নির্বাচন করুন</option>';
+        }
 
-        groups.forEach((group) => {
-          if (groupsList) {
+        // Use DocumentFragment to minimize reflows
+        if (groupsList) {
+          const frag = document.createDocumentFragment();
+          groups.forEach((group) => {
             const el = document.createElement("div");
             el.className = "flex justify-between items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg";
             el.innerHTML = `
               <div>
                 <div class="font-medium">${group.name}</div>
-                <div class="text-sm text-gray-500">সদস্য: ${group.memberCount || 0} জন</div>
+                <div class="text-sm text-gray-500">সদস্য: ${membersCountByGroup[group.id] || 0} জন</div>
               </div>
               <div class="flex gap-2">
-                <button class="edit-group-btn px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm" data-id="${group.id}">সম্পাদনা</button>
-                <button class="delete-group-btn px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg text-sm" data-id="${group.id}">ডিলিট</button>
+                <button data-action="edit-group" data-id="${group.id}" class="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm">সম্পাদনা</button>
+                <button data-action="delete-group" data-id="${group.id}" class="px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg text-sm">ডিলিট</button>
               </div>
             `;
-            groupsList.appendChild(el);
-          }
+            frag.appendChild(el);
+          });
+          groupsList.appendChild(frag);
 
-          if (groupSelectionList) {
+          // Event delegation
+          groupsList.onclick = (e) => {
+            const btn = e.target.closest("button[data-action]");
+            if (!btn) return;
+            const id = btn.getAttribute("data-id");
+            if (btn.dataset.action === "edit-group") editGroup(id);
+            else if (btn.dataset.action === "delete-group") deleteGroup(id);
+          };
+        }
+
+        if (groupSelectionList) {
+          const frag = document.createDocumentFragment();
+          groups.forEach((group) => {
             const sel = document.createElement("div");
             sel.className = "group-bar p-3 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer";
             sel.setAttribute("data-id", group.id);
             sel.innerHTML = `
               <div class="font-medium">${group.name}</div>
-              <div class="text-sm text-gray-500">সদস্য: ${group.memberCount || 0} জন</div>
+              <div class="text-sm text-gray-500">সদস্য: ${membersCountByGroup[group.id] || 0} জন</div>
             `;
-            groupSelectionList.appendChild(sel);
-          }
+            frag.appendChild(sel);
+          });
+          groupSelectionList.appendChild(frag);
 
-          if (studentGroupInput) {
+          // Delegation for selection
+          groupSelectionList.onclick = (e) => {
+            const bar = e.target.closest(".group-bar");
+            if (!bar) return;
+            groupSelectionList.querySelectorAll(".group-bar").forEach((b) => b.classList.remove("active"));
+            bar.classList.add("active");
+            loadGroupMembers(bar.getAttribute("data-id"));
+          };
+        }
+
+        if (studentGroupInput) {
+          const frag = document.createDocumentFragment();
+          groups.forEach((group) => {
             const option = document.createElement("option");
             option.value = group.id; option.textContent = group.name;
-            studentGroupInput.appendChild(option);
-          }
-
-          if (evaluationGroupSelect) {
-            const evalOption = document.createElement("option");
-            evalOption.value = group.id; evalOption.textContent = group.name;
-            evaluationGroupSelect.appendChild(evalOption);
-          }
-        });
-
-        document.querySelectorAll(".group-bar").forEach((bar) => {
-          bar.addEventListener("click", () => {
-            document.querySelectorAll(".group-bar").forEach((b) => b.classList.remove("active"));
-            bar.classList.add("active");
-            const groupId = bar.getAttribute("data-id");
-            loadGroupMembers(groupId);
+            frag.appendChild(option);
           });
-        });
+          studentGroupInput.appendChild(frag);
+        }
 
-        document.querySelectorAll(".edit-group-btn").forEach((btn) => {
-          btn.addEventListener("click", () => editGroup(btn.getAttribute("data-id")));
-        });
-        document.querySelectorAll(".delete-group-btn").forEach((btn) => {
-          btn.addEventListener("click", () => deleteGroup(btn.getAttribute("data-id")));
-        });
-
-        renderGroupFilters();
+        if (evaluationGroupSelect) {
+          const frag = document.createDocumentFragment();
+          groups.forEach((group) => {
+            const opt = document.createElement("option");
+            opt.value = group.id; opt.textContent = group.name;
+            frag.appendChild(opt);
+          });
+          evaluationGroupSelect.appendChild(frag);
+        }
       }
 
+      // Group CRUD
       document.getElementById("addGroupBtn").addEventListener("click", async () => {
         const groupName = document.getElementById("groupNameInput").value.trim();
         if (!groupName) { alert("গ্রুপের নাম লিখুন"); return; }
         showLoading();
         try {
+          const exists = await db.collection("groups").where("name", "==", groupName).limit(1).get();
+          if (!exists.empty) { alert("এই নামে একটি গ্রুপ ইতিমধ্যে আছে"); hideLoading(); return; }
           await db.collection("groups").add({
-            name: groupName, memberCount: 0,
+            name: groupName,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
           });
           document.getElementById("groupNameInput").value = "";
-          await loadGroups();
         } catch (e) { alert("গ্রুপ যোগ করতে সমস্যা হয়েছে: " + e.message); }
         hideLoading();
       });
 
       function editGroup(groupId) {
-        const group = groups.find((g) => g.id === groupId);
+        const group = groupById.get(groupId);
         if (!group) return;
         document.getElementById("editModalTitle").textContent = "গ্রুপ সম্পাদনা করুন";
         document.getElementById("editModalContent").innerHTML = `
@@ -1194,25 +1190,27 @@
           if (!newName) { alert("গ্রুপের নাম লিখুন"); return; }
           showLoading();
           try {
+            const exists = await db.collection("groups").where("name", "==", newName).limit(1).get();
+            if (!exists.empty && exists.docs[0].id !== groupId) { alert("এই নামে অন্য একটি গ্রুপ আছে"); hideLoading(); return; }
             await db.collection("groups").doc(groupId).update({ name: newName });
             document.getElementById("editModal").style.display = "none";
-            await loadGroups();
           } catch (e) { alert("গ্রুপ সম্পাদনা করতে সমস্যা হয়েছে: " + e.message); }
           hideLoading();
         };
       }
 
       function deleteGroup(groupId) {
-        const group = groups.find((g) => g.id === groupId);
+        const group = groupById.get(groupId);
         if (!group) return;
         document.getElementById("deleteModalText").textContent = `আপনি কি নিশ্চিত যে আপনি "${group.name}" গ্রুপটি ডিলিট করতে চান?`;
         document.getElementById("deleteModal").style.display = "flex";
         document.getElementById("confirmDelete").onclick = async () => {
           showLoading();
           try {
+            const hasMembers = students.some(s => s.groupId === groupId);
+            if (hasMembers) { alert("এই গ্রুপে সদস্য আছে, আগে সদস্যদের সরান/স্থানান্তর করুন"); hideLoading(); return; }
             await db.collection("groups").doc(groupId).delete();
             document.getElementById("deleteModal").style.display = "none";
-            await loadGroups();
           } catch (e) { alert("গ্রুপ ডিলিট করতে সমস্যা হয়েছে: " + e.message); }
           hideLoading();
         };
@@ -1224,48 +1222,69 @@
         document.getElementById("editModal").style.display = "none";
       });
 
-      // Students
-      async function loadStudents() {
-        showLoading();
-        try {
-          const snap = await db.collection("students").orderBy("name").get();
-          students = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-          renderStudentsList();
-        } catch (e) { console.error("Error loading students:", e); }
-        hideLoading();
+      // Validate Unique Student
+      async function hasDuplicateStudent(roll, academicGroup, excludeId = null) {
+        const q = await db.collection("students")
+          .where("roll", "==", roll)
+          .where("academicGroup", "==", academicGroup)
+          .limit(2)
+          .get();
+        if (q.empty) return false;
+        return q.docs.some(doc => doc.id !== excludeId);
       }
 
-      function renderStudentsList() {
+      // Students: search and render
+      function getFilteredSearchedStudents() {
+        let arr = students;
+        if (membersFilterGroupId) arr = arr.filter(s => s.groupId === membersFilterGroupId);
+        if (membersSearchTerm) {
+          const term = membersSearchTerm;
+          arr = arr.filter((s) =>
+            [s.name, s.roll, s.contact, s.session, s.academicGroup]
+              .filter(Boolean)
+              .some((v) => v.toLowerCase().includes(term))
+          );
+        }
+        return arr;
+      }
+
+      function renderStudentsList(listOverride) {
         const studentsList = document.getElementById("studentsList");
         if (!studentsList) return;
+        const data = listOverride || getFilteredSearchedStudents();
         studentsList.innerHTML = "";
-        students.forEach((student) => {
-          const group = groups.find((g) => g.id === student.groupId);
-          const groupName = group ? group.name : "গ্রুপ নেই";
+        const frag = document.createDocumentFragment();
+        data.forEach((student) => {
+          const groupName = groupById.get(student.groupId)?.name || "গ্রুপ নেই";
           const el = document.createElement("div");
-          el.className = "flex justify-between items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg";
+          el.className = "flex justify_between items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg";
           el.innerHTML = `
             <div>
               <div class="font-medium">${student.name}</div>
-              <div class="text-sm text-gray-500">রোল: ${student.roll} | লিঙ্গ: ${student.gender} | গ্রুপ: ${groupName} | সেশন: ${student.session}</div>
+              <div class="text-sm text-gray-500">রোল: ${student.roll} | gender: ${student.gender} | গ্রুপ: ${groupName} | সেশন: ${student.session}</div>
               <div class="text-sm text-gray-500">একাডেমিক গ্রুপ: ${student.academicGroup || "তথ্য নেই"}</div>
               <div class="text-xs text-gray-500">${student.contact || ""}</div>
             </div>
             <div class="flex gap-2">
-              <button class="edit-student-btn px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm" data-id="${student.id}">সম্পাদনা</button>
-              <button class="delete-student-btn px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg text-sm" data-id="${student.id}">ডিলিট</button>
+              <button data-action="edit-student" data-id="${student.id}" class="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm">সম্পাদনা</button>
+              <button data-action="delete-student" data-id="${student.id}" class="px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg text-sm">ডিলিট</button>
             </div>
           `;
-          studentsList.appendChild(el);
+          frag.appendChild(el);
         });
-        document.querySelectorAll(".edit-student-btn").forEach((btn) => {
-          btn.addEventListener("click", () => editStudent(btn.getAttribute("data-id")));
-        });
-        document.querySelectorAll(".delete-student-btn").forEach((btn) => {
-          btn.addEventListener("click", () => deleteStudent(btn.getAttribute("data-id")));
-        });
+        studentsList.appendChild(frag);
+
+        // Delegation
+        studentsList.onclick = (e) => {
+          const btn = e.target.closest("button[data-action]");
+          if (!btn) return;
+          const id = btn.getAttribute("data-id");
+          if (btn.dataset.action === "edit-student") editStudent(id);
+          else if (btn.dataset.action === "delete-student") deleteStudent(id);
+        };
       }
 
+      // Student Add with validation
       document.getElementById("addStudentBtn").addEventListener("click", async () => {
         const name = document.getElementById("studentNameInput").value.trim();
         const roll = document.getElementById("studentRollInput").value.trim();
@@ -1274,31 +1293,39 @@
         const academicGroup = document.getElementById("studentAcademicGroupInput").value.trim();
         const contact = document.getElementById("studentContactInput").value.trim();
         const session = document.getElementById("studentSessionInput").value.trim();
-        if (name && roll && gender && groupId && contact && session) {
-          showLoading();
-          try {
-            await db.collection("students").add({
-              name, roll, gender, groupId, academicGroup, contact, session,
-              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            });
-            document.getElementById("studentNameInput").value = "";
-            document.getElementById("studentRollInput").value = "";
-            document.getElementById("studentGenderInput").value = "";
-            document.getElementById("studentGroupInput").value = "";
-            document.getElementById("studentContactInput").value = "";
-            document.getElementById("studentAcademicGroupInput").value = "";
-            document.getElementById("studentSessionInput").value = "";
-            await loadStudents();
-            loadAllStudentsCards();
-          } catch (e) { alert("শিক্ষার্থী যোগ করতে সমস্যা হয়েছে: " + e.message); }
-          hideLoading();
-        } else {
-          alert("সমস্ত তথ্য পূরণ করুন");
+
+        if (!name || !roll || !gender || !groupId || !contact || !session || !academicGroup) {
+          alert("সমস্ত তথ্য পূরণ করুন (একাডেমিক গ্রুপ সহ)"); return;
         }
+
+        showLoading();
+        try {
+          const dup = await hasDuplicateStudent(roll, academicGroup);
+          if (dup) {
+            alert("এই একাডেমিক গ্রুপে এই রোল নম্বরের শিক্ষার্থী আগে থেকেই আছে।");
+            hideLoading(); return;
+          }
+          await db.collection("students").add({
+            name, roll, gender, groupId, academicGroup, contact, session,
+            role: "",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          });
+          // Clear form
+          document.getElementById("studentNameInput").value = "";
+          document.getElementById("studentRollInput").value = "";
+          document.getElementById("studentGenderInput").value = "";
+          document.getElementById("studentGroupInput").value = "";
+          document.getElementById("studentContactInput").value = "";
+          document.getElementById("studentAcademicGroupInput").value = "";
+          document.getElementById("studentSessionInput").value = "";
+        } catch (e) {
+          alert("শিক্ষার্থী যোগ করতে সমস্যা হয়েছে: " + e.message);
+        }
+        hideLoading();
       });
 
       function editStudent(studentId) {
-        const student = students.find((s) => s.id === studentId);
+        const student = studentById.get(studentId);
         if (!student) return;
         const groupOptions = groups.map((g) => `<option value="${g.id}" ${g.id === student.groupId ? "selected" : ""}>${g.name}</option>`).join("");
         document.getElementById("editModalTitle").textContent = "শিক্ষার্থী সম্পাদনা করুন";
@@ -1343,21 +1370,20 @@
           const academicGroup = document.getElementById("editStudentAcademicGroup").value.trim();
           const contact = document.getElementById("editStudentContact").value.trim();
           const session = document.getElementById("editStudentSession").value.trim();
-          if (name && roll && gender && groupId && contact && session) {
-            showLoading();
-            try {
-              await db.collection("students").doc(studentId).update({ name, roll, gender, groupId, academicGroup, contact, session });
-              document.getElementById("editModal").style.display = "none";
-              await loadStudents();
-              loadAllStudentsCards();
-            } catch (e) { alert("শিক্ষার্থী সম্পাদনা করতে সমস্যা হয়েছে: " + e.message); }
-            hideLoading();
-          } else { alert("সমস্ত তথ্য পূরণ করুন"); }
+          if (!name || !roll || !gender || !groupId || !contact || !session || !academicGroup) { alert("সমস্ত তথ্য পূরণ করুন"); return; }
+          showLoading();
+          try {
+            const dup = await hasDuplicateStudent(roll, academicGroup, studentId);
+            if (dup) { alert("এই একাডেমিক গ্রুপে এই রোল নম্বরের শিক্ষার্থী আগে থেকেই আছে।"); hideLoading(); return; }
+            await db.collection("students").doc(studentId).update({ name, roll, gender, groupId, academicGroup, contact, session });
+            document.getElementById("editModal").style.display = "none";
+          } catch (e) { alert("শিক্ষার্থী সম্পাদনা করতে সমস্যা হয়েছে: " + e.message); }
+          hideLoading();
         };
       }
 
       function deleteStudent(studentId) {
-        const student = students.find((s) => s.id === studentId);
+        const student = studentById.get(studentId);
         if (!student) return;
         document.getElementById("deleteModalText").textContent = `আপনি কি নিশ্চিত যে আপনি "${student.name}" শিক্ষার্থীটি ডিলিট করতে চান?`;
         document.getElementById("deleteModal").style.display = "flex";
@@ -1366,94 +1392,85 @@
           try {
             await db.collection("students").doc(studentId).delete();
             document.getElementById("deleteModal").style.display = "none";
-            await loadStudents();
-            loadAllStudentsCards();
           } catch (e) { alert("শিক্ষার্থী ডিলিট করতে সমস্যা হয়েছে: " + e.message); }
           hideLoading();
         };
       }
 
+      // Members Filters
       function renderGroupFilters() {
         const filterContainer = document.querySelector("#page-members .flex-wrap");
         const allStudentsFilterContainer = document.querySelector("#page-all-students .flex-wrap");
         if (!filterContainer || !allStudentsFilterContainer) return;
 
-        const allFilter = filterContainer.querySelector('[data-group=""]');
-        const allStudentsAllFilter = allStudentsFilterContainer.querySelector('[data-group=""]');
-
         filterContainer.innerHTML = "";
         allStudentsFilterContainer.innerHTML = "";
 
-        filterContainer.appendChild(allFilter);
-        allStudentsFilterContainer.appendChild(allStudentsAllFilter);
+        const makeAllBtn = () => {
+          const b = document.createElement("button");
+          b.className = "filter-btn px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-sm";
+          b.setAttribute("data-group", "");
+          b.textContent = "সকল";
+          return b;
+        };
+
+        const membersAllBtn = makeAllBtn();
+        const cardsAllBtn = makeAllBtn();
+
+        filterContainer.appendChild(membersAllBtn);
+        allStudentsFilterContainer.appendChild(cardsAllBtn);
 
         groups.forEach((group) => {
-          const btn = document.createElement("button");
-          btn.className = "filter-btn px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm";
-          btn.setAttribute("data-group", group.id);
-          btn.textContent = group.name;
-          const btnClone = btn.cloneNode(true);
-          filterContainer.appendChild(btnClone);
-          allStudentsFilterContainer.appendChild(btn);
+          const mkBtn = () => {
+            const b = document.createElement("button");
+            b.className = "filter-btn px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm";
+            b.setAttribute("data-group", group.id);
+            b.textContent = group.name;
+            return b;
+          };
+          filterContainer.appendChild(mkBtn());
+          allStudentsFilterContainer.appendChild(mkBtn());
         });
 
-        document.querySelectorAll(".filter-btn").forEach((btn) => {
-          btn.addEventListener("click", () => {
-            const groupId = btn.getAttribute("data-group");
-            document.querySelectorAll(".filter-btn").forEach((b) => {
-              b.classList.remove("bg-blue-100","dark:bg-blue-900","text-blue-800","dark:text-blue-200");
-              b.classList.add("bg-gray-100","dark:bg-gray-800","text-gray-800","dark:text-gray-200");
-            });
-            btn.classList.add("bg-blue-100","dark:bg-blue-900","text-blue-800","dark:text-blue-200");
-            btn.classList.remove("bg-gray-100","dark:bg-gray-800","text-gray-800","dark:text-gray-200");
-
-            const filtered = groupId ? students.filter((s) => s.groupId === groupId) : students;
-            renderStudentsList();
-
-            // Also update cards page filters
-            renderStudentCards(filtered);
+        // Delegation
+        filterContainer.onclick = (e) => {
+          const btn = e.target.closest(".filter-btn");
+          if (!btn) return;
+          filterContainer.querySelectorAll(".filter-btn").forEach((b) => {
+            b.classList.remove("bg-blue-100","dark:bg-blue-900","text-blue-800","dark:text-blue-200");
+            b.classList.add("bg-gray-100","dark:bg-gray-800","text-gray-800","dark:text-gray-200");
           });
-        });
+          btn.classList.add("bg-blue-100","dark:bg-blue-900","text-blue-800","dark:text-blue-200");
+          btn.classList.remove("bg-gray-100","dark:bg-gray-800","text-gray-800","dark:text-gray-200");
+          membersFilterGroupId = btn.dataset.group || "";
+          renderStudentsList();
+        };
+
+        allStudentsFilterContainer.onclick = (e) => {
+          const btn = e.target.closest(".filter-btn");
+          if (!btn) return;
+          allStudentsFilterContainer.querySelectorAll(".filter-btn").forEach((b) => {
+            b.classList.remove("bg-blue-100","dark:bg-blue-900","text-blue-800","dark:text-blue-200");
+            b.classList.add("bg-gray-100","dark:bg-gray-800","text-gray-800","dark:text-gray-200");
+          });
+          btn.classList.add("bg-blue-100","dark:bg-blue-900","text-blue-800","dark:text-blue-200");
+          btn.classList.remove("bg-gray-100","dark:bg-gray-800","text-gray-800","dark:text-gray-200");
+          cardsFilterGroupId = btn.dataset.group || "";
+          renderStudentCardsWithFilters();
+        };
       }
 
-      document.getElementById("studentSearchInput").addEventListener("input", (e) => {
-        const term = e.target.value.toLowerCase();
-        const activeFilter = document.querySelector("#page-members .filter-btn.bg-blue-100, #page-members .filter-btn.dark\\:bg-blue-900");
-        const groupId = activeFilter ? activeFilter.getAttribute("data-group") : "";
-        const filtered = groupId ? students.filter((s) => s.groupId === groupId) : students;
-        const searched = filtered.filter((s) =>
-          [s.name, s.roll, s.contact, s.session].filter(Boolean).some((v) => v.toLowerCase().includes(term))
-        );
-        const list = document.getElementById("studentsList");
-        list.innerHTML = "";
-        searched.forEach((student) => {
-          const group = groups.find((g) => g.id === student.groupId);
-          const groupName = group ? group.name : "গ্রুপ নেই";
-          const el = document.createElement("div");
-          el.className = "flex justify-between items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg";
-          el.innerHTML = `
-            <div>
-              <div class="font-medium">${student.name}</div>
-              <div class="text-sm text-gray-500">রোল: ${student.roll} | লিঙ্গ: ${student.gender} | গ্রুপ: ${groupName} | সেশন: ${student.session}</div>
-              <div class="text-xs text-gray-500">${student.contact || ""}</div>
-            </div>
-            <div class="flex gap-2">
-              <button class="edit-student-btn px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm" data-id="${student.id}">সম্পাদনা</button>
-              <button class="delete-student-btn px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg text-sm" data-id="${student.id}">ডিলিট</button>
-            </div>
-          `;
-          list.appendChild(el);
-        });
-        document.querySelectorAll(".edit-student-btn").forEach((btn) => btn.addEventListener("click", () => editStudent(btn.getAttribute("data-id"))));
-        document.querySelectorAll(".delete-student-btn").forEach((btn) => btn.addEventListener("click", () => deleteStudent(btn.getAttribute("data-id"))));
-      });
+      // Search (debounced)
+      document.getElementById("studentSearchInput").addEventListener("input", debounce((e) => {
+        membersSearchTerm = e.target.value.toLowerCase();
+        renderStudentsList();
+      }, 200));
 
       // Group Members Page
-      function loadGroupMembersPage() { renderGroups(); }
       function loadGroupMembers(groupId) {
         const groupMembersList = document.getElementById("groupMembersList");
         const selectedGroupTitle = document.getElementById("selectedGroupTitle");
-        const group = groups.find((g) => g.id === groupId);
+        const group = groupById.get(groupId);
         if (!group || !groupMembersList) return;
         selectedGroupTitle.textContent = `${group.name} - গ্রুপ সদস্য`;
 
@@ -1463,84 +1480,38 @@
           groupMembersList.innerHTML = '<p class="text-center text-gray-500 py-8">এই গ্রুপে কোন সদস্য নেই</p>';
           return;
         }
+        const frag = document.createDocumentFragment();
         groupStudents.forEach((student) => {
           const memberElement = document.createElement("div");
           memberElement.className = "flex justify-between items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg";
           memberElement.innerHTML = `
             <div>
               <div class="font-medium">${student.name}</div>
-              <div class="text-sm text-gray-500">রোল: ${student.roll} | লিঙ্গ: ${student.gender} | সেশন: ${student.session}</div>
+              <div class="text-sm text-gray-500">রোল: ${student.roll} | gender: ${student.gender} | সেশন: ${student.session}</div>
               <div class="text-sm text-gray-500">একাডেমিক গ্রুপ: ${student.academicGroup || "তথ্য নেই"}</div>
               <div class="text-xs text-gray-500">${student.contact || ""}</div>
             </div>
             <div class="flex gap-2">
-              <button class="assign-role-btn px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm" data-id="${student.id}">দায়িত্ব নির্ধারণ</button>
-              <button class="remove-from-group-btn px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg text-sm" data-id="${student.id}">গ্রুপ থেকে সরান</button>
+              <button data-action="assign-role" data-id="${student.id}" data-group="${groupId}" class="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm">দায়িত্ব নির্ধারণ</button>
+              <button data-action="remove-from-group" data-id="${student.id}" data-group="${groupId}" class="px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg text-sm">গ্রুপ থেকে সরান</button>
             </div>
           `;
-          groupMembersList.appendChild(memberElement);
+          frag.appendChild(memberElement);
         });
+        groupMembersList.appendChild(frag);
 
-        document.querySelectorAll(".assign-role-btn").forEach((btn) => {
-          btn.addEventListener("click", () => assignRole(btn.getAttribute("data-id"), groupId));
-        });
-        document.querySelectorAll(".remove-from-group-btn").forEach((btn) => {
-          btn.addEventListener("click", () => removeFromGroup(btn.getAttribute("data-id"), groupId));
-        });
-      }
-
-      function assignRole(studentId, groupId) {
-        const student = students.find((s) => s.id === studentId);
-        if (!student) return;
-        document.getElementById("editModalTitle").textContent = "দায়িত্ব নির্ধারণ করুন";
-        document.getElementById("editModalContent").innerHTML = `
-          <div class="mb-4">
-            <p class="mb-2"><strong>শিক্ষার্থী:</strong> ${student.name}</p>
-            <label class="block text-sm font-medium mb-2">দায়িত্ব নির্বাচন করুন</label>
-            <select id="studentRole" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-              <option value="">কোন দায়িত্ব নেই</option>
-              <option value="team-leader" ${student.role === "team-leader" ? "selected" : ""}>টিম লিডার</option>
-              <option value="time-keeper" ${student.role === "time-keeper" ? "selected" : ""}>টাইম কিপার</option>
-              <option value="reporter" ${student.role === "reporter" ? "selected" : ""}>রিপোর্টার</option>
-              <option value="resource-manager" ${student.role === "resource-manager" ? "selected" : ""}>রিসোর্স ম্যানেজার</option>
-              <option value="peace-maker" ${student.role === "peace-maker" ? "selected" : ""}>পিস মেকার</option>
-            </select>
-          </div>
-        `;
-        document.getElementById("editModal").style.display = "flex";
-        document.getElementById("saveEdit").onclick = async () => {
-          const role = document.getElementById("studentRole").value;
-          showLoading();
-          try {
-            await db.collection("students").doc(studentId).update({ role });
-            document.getElementById("editModal").style.display = "none";
-            await loadStudents();
-            loadGroupMembers(groupId);
-            loadAllStudentsCards();
-          } catch (e) { alert("দায়িত্ব নির্ধারণ করতে সমস্যা হয়েছে: " + e.message); }
-          hideLoading();
+        // Delegation
+        groupMembersList.onclick = (e) => {
+          const btn = e.target.closest("button[data-action]");
+          if (!btn) return;
+          const sid = btn.dataset.id;
+          const gid = btn.dataset.group;
+          if (btn.dataset.action === "assign-role") assignRole(sid, gid);
+          else if (btn.dataset.action === "remove-from-group") removeFromGroup(sid, gid);
         };
       }
 
-      function removeFromGroup(studentId, groupId) {
-        const student = students.find((s) => s.id === studentId);
-        if (!student) return;
-        document.getElementById("deleteModalText").textContent = `আপনি কি নিশ্চিত যে আপনি "${student.name}" কে এই গ্রুপ থেকে সরাতে চান?`;
-        document.getElementById("deleteModal").style.display = "flex";
-        document.getElementById("confirmDelete").onclick = async () => {
-          showLoading();
-          try {
-            await db.collection("students").doc(studentId).update({ groupId: "" });
-            document.getElementById("deleteModal").style.display = "none";
-            await loadStudents();
-            loadGroupMembers(groupId);
-            loadAllStudentsCards();
-          } catch (e) { alert("শিক্ষার্থীকে গ্রুপ থেকে সরাতে সমস্যা হয়েছে: " + e.message); }
-          hideLoading();
-        };
-      }
-
-      document.getElementById("memberSearchInput").addEventListener("input", (e) => {
+      document.getElementById("memberSearchInput").addEventListener("input", debounce((e) => {
         const term = e.target.value.toLowerCase();
         const activeGroup = document.querySelector(".group-bar.active");
         if (!activeGroup) return;
@@ -1553,102 +1524,154 @@
           groupMembersList.innerHTML = '<p class="text-center text-gray-500 py-8">কোন সদস্য পাওয়া যায়নি</p>';
           return;
         }
+        const frag = document.createDocumentFragment();
         searched.forEach((student) => {
           const el = document.createElement("div");
           el.className = "flex justify-between items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg";
           el.innerHTML = `
             <div>
               <div class="font-medium">${student.name || "নাম নেই"}</div>
-              <div class="text-sm text-gray-500">রোল: ${student.roll || "তথ্য নেই"} | লিঙ্গ: ${student.gender || "অজানা"} | সেশন: ${student.session || "অজানা"}</div>
+              <div class="text-sm text-gray-500">রোল: ${student.roll || "তথ্য নেই"} | gender: ${student.gender || "অজানা"} | সেশন: ${student.session || "অজানা"}</div>
               <div class="text-xs text-gray-500">${student.contact || ""}</div>
             </div>
             <div class="flex gap-2">
-              <button class="assign-role-btn px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm" data-id="${student.id}">দায়িত্ব নির্ধারণ</button>
-              <button class="remove-from-group-btn px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg text-sm" data-id="${student.id}">গ্রুপ থেকে সরান</button>
+              <button data-action="assign-role" data-id="${student.id}" data-group="${groupId}" class="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm">দায়িত্ব নির্ধারণ</button>
+              <button data-action="remove-from-group" data-id="${student.id}" data-group="${groupId}" class="px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg text-sm">গ্রুপ থেকে সরান</button>
             </div>
           `;
-          groupMembersList.appendChild(el);
+          frag.appendChild(el);
         });
-        document.querySelectorAll(".assign-role-btn").forEach((btn) => btn.addEventListener("click", () => assignRole(btn.getAttribute("data-id"), groupId)));
-        document.querySelectorAll(".remove-from-group-btn").forEach((btn) => btn.addEventListener("click", () => removeFromGroup(btn.getAttribute("data-id"), groupId)));
-      });
+        groupMembersList.appendChild(frag);
+      }, 200));
+
+      // Assign Role
+      async function assignRole(studentId, groupId) {
+        const student = studentById.get(studentId);
+        if (!student) return;
+        const dup = await hasDuplicateStudent(student.roll, student.academicGroup, studentId);
+        if (dup) { alert("একই শিক্ষার্থীর ডুপ্লিকেট রেকর্ড রয়েছে। আগে ডুপ্লিকেট সরান।"); return; }
+
+        document.getElementById("editModalTitle").textContent = "দায়িত্ব নির্ধারণ করুন";
+        document.getElementById("editModalContent").innerHTML = `
+          <div class="mb-4">
+            <p class="mb-2"><strong>শিক্ষার্থী:</strong> ${student.name} (${student.roll})</p>
+            <label class="block text-sm font-medium mb-2">দায়িত্ব নির্বাচন করুন</label>
+            <select id="studentRole" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              <option value="">কোন দায়িত্ব নেই</option>
+              <option value="team-leader" ${student.role === "team-leader" ? "selected" : ""}>টিম লিডার</option>
+              <option value="time-keeper" ${student.role === "time-keeper" ? "selected" : ""}>টাইম কিপার</option>
+              <option value="reporter" ${student.role === "reporter" ? "selected" : ""}>রিপোর্টার</option>
+              <option value="resource-manager" ${student.role === "resource-manager" ? "selected" : ""}>রিসোর্স ম্যানেজার</option>
+              <option value="peace-maker" ${student.role === "peace-maker" ? "selected" : ""}>পিস মেকার</option>
+            </select>
+            <p class="text-xs text-gray-500 mt-2">একই শিক্ষার্থী একই সময়ে একাধিক দায়িত্ব নিতে পারবে না।</p>
+          </div>
+        `;
+        document.getElementById("editModal").style.display = "flex";
+        document.getElementById("saveEdit").onclick = async () => {
+          const role = document.getElementById("studentRole").value;
+          showLoading();
+          try {
+            await db.collection("students").doc(studentId).update({ role });
+            document.getElementById("editModal").style.display = "none";
+            loadGroupMembers(groupId);
+          } catch (e) { alert("দায়িত্ব নির্ধারণ করতে সমস্যা হয়েছে: " + e.message); }
+          hideLoading();
+        };
+      }
+
+      // Remove from group
+      function removeFromGroup(studentId, groupId) {
+        const student = studentById.get(studentId);
+        if (!student) return;
+        document.getElementById("deleteModalText").textContent = `আপনি কি নিশ্চিত যে আপনি "${student.name}" কে এই গ্রুপ থেকে সরাতে চান?`;
+        document.getElementById("deleteModal").style.display = "flex";
+        document.getElementById("confirmDelete").onclick = async () => {
+          showLoading();
+          try {
+            await db.collection("students").doc(studentId).update({ groupId: "", role: "" });
+            document.getElementById("deleteModal").style.display = "none";
+            loadGroupMembers(groupId);
+          } catch (e) { alert("শিক্ষার্থীকে গ্রুপ থেকে সরাতে সমস্যা হয়েছে: " + e.message); }
+          hideLoading();
+        };
+      }
 
       // All Students Cards
+      function getFilteredSearchedCards() {
+        let arr = students;
+        if (cardsFilterGroupId) arr = arr.filter(s => s.groupId === cardsFilterGroupId);
+        if (cardsSearchTerm) {
+          const term = cardsSearchTerm;
+          arr = arr.filter((s) => [s.name, s.roll, s.contact, s.session, s.academicGroup].filter(Boolean).some((v) => v.toLowerCase().includes(term)));
+        }
+        return arr;
+      }
+
       function renderStudentCards(studentsToRender) {
         const allStudentsCards = document.getElementById("allStudentsCards");
         if (!allStudentsCards) return;
         allStudentsCards.innerHTML = "";
-        studentsToRender.forEach((student) => {
-          const group = groups.find((g) => g.id === student.groupId);
+        const roleNames = {
+          "team-leader": "টিম লিডার",
+          "time-keeper": "টাইম কিপার",
+          reporter: "রিপোর্টার",
+          "resource-manager": "রিসোর্স ম্যানেজার",
+          "peace-maker": "পিস মেকার",
+        };
+        const frag = document.createDocumentFragment();
+
+        studentsToRender.forEach((student, idx) => {
+          const group = groupById.get(student.groupId);
           const groupName = group ? group.name : "গ্রুপ নেই";
           const groupIndex = groups.findIndex((g) => g.id === student.groupId);
           const cardColorClass = `group-card-${(groupIndex % 8 + 8) % 8 + 1}`;
-          const roleNames = {
-            "team-leader": "টিম লিডার",
-            "time-keeper": "টাইম কিপার",
-            reporter: "রিপোর্টার",
-            "resource-manager": "রিসোর্স ম্যানেজার",
-            "peace-maker": "পিস মেকার",
-          };
           const roleBadge = student.role
             ? `<span class="member-role-badge ${student.role}">${roleNames[student.role] || student.role}</span>`
-            : "";
+            : `<span class="px-2 py-1 text-xs font-medium rounded-md bg-yellow-100 text-yellow-800 dark:bg-yellow-600 dark:text-yellow-100">দায়িত্ব বাকি</span>`;
 
           const card = document.createElement("div");
-          card.className = `student-card ${cardColorClass} p-4 rounded-xl shadow-md relative overflow-hidden`;
+          card.className = `student-card ${cardColorClass} glass-card p-4 rounded-xl shadow-md relative overflow-hidden`;
           card.innerHTML = `
-            <div class="group-serial">${groupIndex + 1}</div>
-            <div class="flex items-center mb-3">
-              <div class="student-avatar bg-primary text-white">${(student.name || "?").charAt(0)}</div>
-              <div>
-                <h3 class="font-bold text-lg">${student.name || "নাম নেই"} ${roleBadge}</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-300">রোল: ${student.roll || "তথ্য নেই"}</p>
-              </div>
+            <span class="group-serial">${idx + 1}</span>
+            <div>
+              <h3 class="font-bold text-lg">${student.name || "নাম নেই"}</h3>
+              <p class="p-2">${roleBadge}</p>
+              <p class="text-sm text-gray-800 dark:text-gray-200"><i class="fa-regular fa-id-card mr-1"></i> রোল: ${student.roll || "তথ্য নেই"}</p>
             </div>
-            <div class="space-y-1 text-sm">
-              <p><i class="fas fa-venus-mars mr-2"></i> লিঙ্গ: ${student.gender || "অজানা"}</p>
+            <div class="grid grid-cols-1 gap-1 text-sm">
+              <p><i class="fas fa-venus-mars mr-2"></i> gender: ${student.gender || "অজানা"}</p>
               <p><i class="fas fa-users mr-2"></i> গ্রুপ: ${groupName}</p>
-              <p><i class="fas fa-envelope mr-2"></i> ${student.contact || ""}</p>
               <p><i class="fas fa-book mr-2"></i> একাডেমিক গ্রুপ: ${student.academicGroup || "তথ্য নেই"}</p>
               <p><i class="fas fa-calendar mr-2"></i> সেশন: ${student.session || "অজানা"}</p>
+              <p><i class="fas fa-envelope mr-2"></i> ${student.contact || ""}</p>
             </div>
           `;
-          allStudentsCards.appendChild(card);
+          frag.appendChild(card);
         });
+        allStudentsCards.appendChild(frag);
       }
 
-      function loadAllStudentsCards() { renderStudentCards(students); }
+      function renderStudentCardsWithFilters() {
+        const data = getFilteredSearchedCards();
+        renderStudentCards(data);
+      }
 
-      document.getElementById("allStudentsSearchInput").addEventListener("input", (e) => {
-        const term = e.target.value.toLowerCase();
-        const activeFilter = document.querySelector("#page-all-students .filter-btn.bg-blue-100, #page-all-students .filter-btn.dark\\:bg-blue-900");
-        const groupId = activeFilter ? activeFilter.getAttribute("data-group") : "";
-        const filtered = groupId ? students.filter((s) => s.groupId === groupId) : students;
-        const searched = filtered.filter((s) =>
-          [s.name, s.roll, s.contact, s.session].filter(Boolean).some((v) => v.toLowerCase().includes(term))
-        );
-        renderStudentCards(searched);
-      });
+      document.getElementById("allStudentsSearchInput").addEventListener("input", debounce((e) => {
+        cardsSearchTerm = e.target.value.toLowerCase();
+        renderStudentCardsWithFilters();
+      }, 200));
 
       // Tasks
-      async function loadTasks() {
-        showLoading();
-        try {
-          const snap = await db.collection("tasks").orderBy("date", "desc").get();
-          tasks = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-          renderTasks();
-        } catch (e) { console.error("Error loading tasks:", e); }
-        hideLoading();
-      }
-
       function renderTasks() {
         const tasksList = document.getElementById("tasksList");
         const evaluationTaskSelect = document.getElementById("evaluationTaskSelect");
         if (tasksList) tasksList.innerHTML = "";
         if (evaluationTaskSelect) evaluationTaskSelect.innerHTML = '<option value="">একটি টাস্ক নির্বাচন করুন</option>';
 
-        tasks.forEach((task) => {
-          if (tasksList) {
+        if (tasksList) {
+          const frag = document.createDocumentFragment();
+          tasks.forEach((task) => {
             const el = document.createElement("div");
             el.className = "border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden";
             const dateStr = task.date?.seconds ? new Date(task.date.seconds * 1000).toLocaleDateString("bn-BD") : (task.date instanceof Date ? task.date.toLocaleDateString("bn-BD") : "");
@@ -1659,26 +1682,38 @@
                   <p class="text-sm text-gray-500">তারিখ: ${dateStr} | সর্বোচ্চ স্কোর: ${task.maxScore}</p>
                 </div>
                 <div class="flex gap-2">
-                  <button class="edit-task-btn px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm" data-id="${task.id}">সম্পাদনা</button>
-                  <button class="delete-task-btn px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg text-sm" data-id="${task.id}">ডিলিট</button>
+                  <button data-action="edit-task" data-id="${task.id}" class="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm">সম্পাদনা</button>
+                  <button data-action="delete-task" data-id="${task.id}" class="px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg text-sm">ডিলিট</button>
                 </div>
               </div>
               <div class="p-4">
                 <p class="text-gray-600 dark:text-gray-300">${task.description}</p>
               </div>
             `;
-            tasksList.appendChild(el);
-          }
-          if (evaluationTaskSelect) {
+            frag.appendChild(el);
+          });
+          tasksList.appendChild(frag);
+
+          // Delegation
+          tasksList.onclick = (e) => {
+            const btn = e.target.closest("button[data-action]");
+            if (!btn) return;
+            const id = btn.dataset.id;
+            if (btn.dataset.action === "edit-task") editTask(id);
+            else if (btn.dataset.action === "delete-task") deleteTask(id);
+          };
+        }
+
+        if (evaluationTaskSelect) {
+          const frag = document.createDocumentFragment();
+          tasks.forEach((task) => {
             const option = document.createElement("option");
             const dateStr2 = task.date?.seconds ? new Date(task.date.seconds * 1000).toLocaleDateString("bn-BD") : "";
             option.value = task.id; option.textContent = `${task.name} (${dateStr2})`;
-            evaluationTaskSelect.appendChild(option);
-          }
-        });
-
-        document.querySelectorAll(".edit-task-btn").forEach((btn) => btn.addEventListener("click", () => editTask(btn.getAttribute("data-id"))));
-        document.querySelectorAll(".delete-task-btn").forEach((btn) => btn.addEventListener("click", () => deleteTask(btn.getAttribute("data-id"))));
+            frag.appendChild(option);
+          });
+          evaluationTaskSelect.appendChild(frag);
+        }
       }
 
       document.getElementById("addTaskBtn").addEventListener("click", async () => {
@@ -1686,27 +1721,24 @@
         const description = document.getElementById("taskDescriptionInput").value.trim();
         const maxScore = parseInt(document.getElementById("taskMaxScoreInput").value);
         const date = document.getElementById("taskDateInput").value;
-        if (name && description && maxScore && date) {
-          showLoading();
-          try {
-            await db.collection("tasks").add({
-              name, description, maxScore, date: new Date(date),
-              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            });
-            document.getElementById("taskNameInput").value = "";
-            document.getElementById("taskDescriptionInput").value = "";
-            document.getElementById("taskMaxScoreInput").value = "";
-            document.getElementById("taskDateInput").value = "";
-            await loadTasks();
-          } catch (e) { alert("টাস্ক যোগ করতে সমস্যা হয়েছে: " + e.message); }
-          hideLoading();
-        } else {
-          alert("সমস্ত তথ্য পূরণ করুন");
-        }
+
+        if (!name || !description || !maxScore || !date) { alert("সমস্ত তথ্য পূরণ করুন"); return; }
+        showLoading();
+        try {
+          await db.collection("tasks").add({
+            name, description, maxScore, date: new Date(date),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          });
+          document.getElementById("taskNameInput").value = "";
+          document.getElementById("taskDescriptionInput").value = "";
+          document.getElementById("taskMaxScoreInput").value = "";
+          document.getElementById("taskDateInput").value = "";
+        } catch (e) { alert("টাস্ক যোগ করতে সমস্যা হয়েছে: " + e.message); }
+        hideLoading();
       });
 
       function editTask(taskId) {
-        const task = tasks.find((t) => t.id === taskId);
+        const task = taskById.get(taskId);
         if (!task) return;
         const taskDate = task.date?.seconds ? new Date(task.date.seconds * 1000) : (task.date instanceof Date ? task.date : new Date());
         const formattedDate = taskDate.toISOString().split("T")[0];
@@ -1733,20 +1765,18 @@
           const description = document.getElementById("editTaskDescription").value.trim();
           const maxScore = parseInt(document.getElementById("editTaskMaxScore").value);
           const date = document.getElementById("editTaskDate").value;
-          if (name && description && maxScore && date) {
-            showLoading();
-            try {
-              await db.collection("tasks").doc(taskId).update({ name, description, maxScore, date: new Date(date) });
-              document.getElementById("editModal").style.display = "none";
-              await loadTasks();
-            } catch (e) { alert("টাস্ক সম্পাদনা করতে সমস্যা হয়েছে: " + e.message); }
-            hideLoading();
-          } else { alert("সমস্ত তথ্য পূরণ করুন"); }
+          if (!name || !description || !maxScore || !date) { alert("সমস্ত তথ্য পূরণ করুন"); return; }
+          showLoading();
+          try {
+            await db.collection("tasks").doc(taskId).update({ name, description, maxScore, date: new Date(date) });
+            document.getElementById("editModal").style.display = "none";
+          } catch (e) { alert("টাস্ক সম্পাদনা করতে সমস্যা হয়েছে: " + e.message); }
+          hideLoading();
         };
       }
 
       function deleteTask(taskId) {
-        const task = tasks.find((t) => t.id === taskId);
+        const task = taskById.get(taskId);
         if (!task) return;
         document.getElementById("deleteModalText").textContent = `আপনি কি নিশ্চিত যে আপনি "${task.name}" টাস্কটি ডিলিট করতে চান?`;
         document.getElementById("deleteModal").style.display = "flex";
@@ -1755,22 +1785,19 @@
           try {
             await db.collection("tasks").doc(taskId).delete();
             document.getElementById("deleteModal").style.display = "none";
-            await loadTasks();
           } catch (e) { alert("টাস্ক ডিলিট করতে সমস্যা হয়েছে: " + e.message); }
           hideLoading();
         };
       }
 
-      // Evaluation
-      function loadEvaluationPage() { renderTasks(); renderGroups(); }
-
+      // Evaluation (on-demand + cached)
       document.getElementById("startEvaluationBtn").addEventListener("click", async () => {
         const taskId = document.getElementById("evaluationTaskSelect").value;
         const groupId = document.getElementById("evaluationGroupSelect").value;
         if (!taskId || !groupId) { alert("একটি টাস্ক এবং গ্রুপ নির্বাচন করুন"); return; }
 
-        const task = tasks.find((t) => t.id === taskId);
-        const group = groups.find((g) => g.id === groupId);
+        const task = taskById.get(taskId);
+        const group = groupById.get(groupId);
         const groupStudents = students.filter((s) => s.groupId === groupId);
         if (!task || !group || groupStudents.length === 0) { alert("গ্রুপে কোন সদস্য নেই"); return; }
 
@@ -1782,10 +1809,11 @@
           const snap = await db.collection("evaluations")
             .where("taskId", "==", taskId)
             .where("groupId", "==", groupId)
+            .limit(1)
             .get();
 
-          let existingEvaluation = null;
           let existingEvaluationDocId = null;
+          let existingEvaluation = null;
           if (!snap.empty) {
             existingEvaluation = snap.docs[0].data();
             existingEvaluationDocId = snap.docs[0].id;
@@ -1799,9 +1827,10 @@
             </div>
           `;
           groupStudents.forEach((student) => {
-            const taskScore = existingEvaluation?.scores?.[student.id]?.taskScore ?? 0;
-            const teamworkScore = existingEvaluation?.scores?.[student.id]?.teamworkScore ?? 0;
-            const comments = existingEvaluation?.scores?.[student.id]?.comments ?? "";
+            const sv = existingEvaluation?.scores?.[student.id];
+            const taskScore = sv?.taskScore ?? 0;
+            const teamworkScore = sv?.teamworkScore ?? 0;
+            const comments = sv?.comments ?? "";
             formHTML += `
               <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                 <h4 class="font-semibold mb-2">${student.name} (${student.roll})</h4>
@@ -1850,39 +1879,107 @@
           taskId, groupId, scores,
           updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
         };
-        if (evaluationId) {
-          db.collection("evaluations").doc(evaluationId).update(payload)
-            .then(() => { hideLoading(); alert("মূল্যায়ন সফলভাবে আপডেট করা হয়েছে"); })
-            .catch((e) => { hideLoading(); alert("মূল্যায়ন সংরক্ষণ করতে সমস্যা হয়েছে: " + e.message); });
-        } else {
-          db.collection("evaluations").add({
-            ...payload,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          })
-          .then(() => { hideLoading(); alert("মূল্যায়ন সফলভাবে সংরক্ষণ করা হয়েছে"); })
-          .catch((e) => { hideLoading(); alert("মূল্যায়ন সংরক্ষণ করতে সমস্যা হয়েছে: " + e.message); });
-        }
+        const col = db.collection("evaluations");
+        const op = evaluationId ? col.doc(evaluationId).update(payload) : col.add({ ...payload, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        op.then(async () => {
+          hideLoading();
+          alert(evaluationId ? "মূল্যায়ন সফলভাবে আপডেট করা হয়েছে" : "মূল্যায়ন সফলভাবে সংরক্ষণ করা হয়েছে");
+          // Refresh cache for dashboard computations
+          evaluations = await loadEvaluationsOnce();
+          if (isPage("dashboard")) loadDashboardParts("evaluations");
+        }).catch((e) => { hideLoading(); alert("মূল্যায়ন সংরক্ষণ করতে সমস্যা হয়েছে: " + e.message); });
       }
 
-      // Dashboard
-      async function loadEvaluations() {
+      // On-demand evaluations fetch (cached)
+      async function loadEvaluationsOnce() {
         try {
           const snap = await db.collection("evaluations").get();
-          evaluations = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-        } catch (e) { console.error("Error loading evaluations:", e); }
+          return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        } catch (e) { console.error("Error loading evaluations:", e); return []; }
       }
 
-      async function loadDashboard() {
+      // ---------- Dashboard (partial recompute) ----------
+      let cachedGroupScores = null;
+
+      async function loadDashboardParts(trigger = "init") {
         try {
-          // Ensure tasks & evaluations are loaded
-          if (!tasks.length) { await loadTasks(); }
-          await loadEvaluations();
-          const groupScores = calculateGroupScores();
-          renderTopGroups(groupScores);
-          renderGroupsRanking(groupScores);
+          // Always update stats and academic groups from groups/students
+          renderStatsSummary();
+          renderAcademicGroupStats();
+
+          // Only touch evaluations when needed
+          if (!evaluations.length || trigger === "evaluations" || trigger === "init" || trigger === "nav") {
+            evaluations = await loadEvaluationsOnce();
+          }
+
+          // Recompute group scores when tasks/evaluations changed
+          cachedGroupScores = calculateGroupScores();
+          renderTopGroups(cachedGroupScores);
+          renderGroupsRanking(cachedGroupScores);
         } catch (e) {
           console.error("Dashboard load error:", e);
         }
+      }
+
+      function renderStatsSummary() {
+        const statsEl = document.getElementById("statsSummary");
+        if (!statsEl) return;
+        const totalGroups = groups.length;
+        const totalStudents = students.length;
+        const withoutRole = students.filter(s => !s.role).length;
+
+        // academic group counts
+        const agCountMap = {};
+        students.forEach(s => {
+          const k = s.academicGroup || "N/A";
+          agCountMap[k] = (agCountMap[k] || 0) + 1;
+        });
+        const academicGroups = Object.keys(agCountMap).length;
+
+        const card = (title, value, icon, color) => `
+          <div class="glass-card rounded-xl p-4 shadow-md flex items-center gap-3">
+            <div class="p-3 rounded-lg ${color} text-white"><i class="${icon}"></i></div>
+            <div>
+              <div class="text-xs text-gray-500 dark:text-gray-300">${title}</div>
+              <div class="text-2xl font-bold">${value}</div>
+            </div>
+          </div>
+        `;
+        statsEl.innerHTML = [
+          card("মোট গ্রুপ", totalGroups, "fas fa-layer-group", "bg-blue-500"),
+          card("মোট শিক্ষার্থী", totalStudents, "fas fa-user-graduate", "bg-green-500"),
+          card("একাডেমিক গ্রুপ সংখ্যা", academicGroups, "fas fa-book", "bg-purple-500"),
+          card("দায়িত্ব বাকি", withoutRole, "fas fa-hourglass-half", "bg-amber-500")
+        ].join("");
+      }
+
+      function renderAcademicGroupStats() {
+        const list = document.getElementById("academicGroupStatsList");
+        if (!list) return;
+        list.innerHTML = "";
+        const map = {};
+        students.forEach(s => {
+          const k = s.academicGroup || "N/A";
+          map[k] = (map[k] || 0) + 1;
+        });
+        const total = students.length || 1;
+        const frag = document.createDocumentFragment();
+        Object.entries(map).forEach(([ag, count]) => {
+          const percent = Math.round((count / total) * 100);
+          const item = document.createElement("div");
+          item.className = "glass-card rounded-lg p-4";
+          item.innerHTML = `
+            <div class="flex justify-between mb-1">
+              <div class="font-medium">${ag}</div>
+              <div class="text-sm text-gray-500">${count} (${percent}%)</div>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill bg-green-500" style="width:${percent}%"></div>
+            </div>
+          `;
+          frag.appendChild(item);
+        });
+        list.appendChild(frag);
       }
 
       function calculateGroupScores() {
@@ -1892,12 +1989,14 @@
         });
         evaluations.forEach((evaluation) => {
           const groupId = evaluation.groupId;
-          const task = tasks.find((t) => t.id === evaluation.taskId);
+          const task = taskById.get(evaluation.taskId);
           if (!task || !groupScores[groupId]) return;
           let totalTaskScore = 0, totalTeamworkScore = 0, studentCount = 0;
           if (evaluation.scores) {
             Object.values(evaluation.scores).forEach((score) => {
-              totalTaskScore += score.taskScore; totalTeamworkScore += score.teamworkScore; studentCount++;
+              totalTaskScore += score.taskScore || 0;
+              totalTeamworkScore += score.teamworkScore || 0;
+              studentCount++;
             });
             if (studentCount > 0) {
               const avgTask = totalTaskScore / studentCount;
@@ -1929,6 +2028,7 @@
         const rankTitles = ["১ম", "২য়", "৩য়"];
         const rankClasses = ["rank-1-card", "rank-2-card", "rank-3-card"];
         const rankTitleClasses = ["rank-1-title", "rank-2-title", "rank-3-title"];
+        const frag = document.createDocumentFragment();
         sorted.forEach((group, index) => {
           const isPlaceholder = `${group.groupId}`.startsWith("placeholder");
           const card = document.createElement("div");
@@ -1945,8 +2045,9 @@
               <div class="progress-fill bg-blue-500" style="width: ${isPlaceholder ? 0 : group.averageScore}%"></div>
             </div>
           `;
-          container.appendChild(card);
+          frag.appendChild(card);
         });
+        container.appendChild(frag);
       }
 
       function renderGroupsRanking(groupScores) {
@@ -1958,11 +2059,13 @@
           list.innerHTML = '<p class="text-center text-gray-500 py-4">কোন মূল্যায়ন তথ্য পাওয়া যায়নি</p>';
           return;
         }
+        const frag = document.createDocumentFragment();
         sorted.forEach((group, index) => {
           const rank = index + 1;
           const badgeClass = rank === 1 ? "rank-1" : rank === 2 ? "rank-2" : rank === 3 ? "rank-3" : "rank-other";
           const el = document.createElement("div");
-          el.className = "flex items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg group-bar";
+          el.className = "flex items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg group-bar cursor-pointer";
+          el.setAttribute("data-group-id", group.groupId);
           el.innerHTML = `
             <div class="rank-badge ${badgeClass} mr-3">${rank}</div>
             <div class="flex-1">
@@ -1973,8 +2076,67 @@
               <div class="progress-bar"><div class="progress-fill bg-blue-500" style="width: ${group.averageScore}%"></div></div>
             </div>
           `;
-          list.appendChild(el);
+          frag.appendChild(el);
         });
+        list.appendChild(frag);
+
+        list.onclick = (e) => {
+          const row = e.target.closest(".group-bar[data-group-id]");
+          if (!row) return;
+          showGroupDetails(row.getAttribute("data-group-id"));
+        };
+      }
+
+      function showGroupDetails(groupId) {
+        const detailsEl = document.getElementById("groupDetails");
+        const group = groupById.get(groupId);
+        if (!group) return;
+        const related = evaluations.filter(ev => ev.groupId === groupId);
+        detailsEl.classList.remove("hidden");
+        if (!related.length) {
+          detailsEl.innerHTML = `<div class="glass-card rounded-xl p-5 shadow-md"><p class="text-gray-600">এই গ্রুপের কোন মূল্যায়ন পাওয়া যায়নি।</p></div>`;
+          return;
+        }
+        let html = `<div class="glass-card rounded-xl p-5 shadow-md"><h3 class="text-lg font-semibold mb-3">${group.name} - বিশদ ফলাফল</h3>`;
+        related.forEach(ev => {
+          const task = taskById.get(ev.taskId);
+          if (!task) return;
+          let totalTask = 0, totalTeam = 0, count = 0;
+          Object.values(ev.scores || {}).forEach(score => {
+            totalTask += score.taskScore || 0;
+            totalTeam += score.teamworkScore || 0;
+            count++;
+          });
+          const avgTask = count ? totalTask / count : 0;
+          const avgTeam = count ? totalTeam / count : 0;
+          const taskPct = Math.round((avgTask / task.maxScore) * 100);
+          const teamPct = Math.round((avgTeam / 10) * 100);
+          const totalPct = Math.round((taskPct + teamPct) / 2);
+          const dateStr = ev.createdAt?.seconds ? new Date(ev.createdAt.seconds * 1000).toLocaleDateString("bn-BD") : "";
+          html += `
+            <div class="mb-4">
+              <div class="flex justify-between">
+                <div class="font-medium">${task.name}</div>
+                <div class="text-sm text-gray-500">${dateStr}</div>
+              </div>
+              <div class="mt-2">
+                <div class="text-xs mb-1">টাস্ক স্কোর: ${taskPct}%</div>
+                <div class="progress-bar"><div class="progress-fill bg-green-500" style="width:${taskPct}%"></div></div>
+              </div>
+              <div class="mt-2">
+                <div class="text-xs mb-1">টিমওয়ার্ক স্কোর: ${teamPct}%</div>
+                <div class="progress-bar"><div class="progress-fill bg-purple-500" style="width:${teamPct}%"></div></div>
+              </div>
+              <div class="mt-2">
+                <div class="text-xs mb-1">মোট শতাংশ: ${totalPct}%</div>
+                <div class="progress-bar"><div class="progress-fill bg-blue-500" style="width:${totalPct}%"></div></div>
+              </div>
+            </div>
+          `;
+        });
+        html += `</div>`;
+        detailsEl.innerHTML = html;
+        detailsEl.scrollIntoView({ behavior: "smooth", block: "start" });
       }
 
       // Policy toggles
@@ -2028,6 +2190,7 @@
           if (cells.length < headers.length) continue;
           const studentData = {};
           headers.forEach((h, idx) => { studentData[h] = cells[idx] || ""; });
+
           const group = groups.find((g) => g.name === studentData.Group);
           if (!group) { errorCount++; continue; }
 
@@ -2039,12 +2202,14 @@
             academicGroup: studentData["Academic Group"] || "",
             contact: studentData["Email/Phone"],
             session: studentData.Session,
+            role: "",
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
           };
 
           const p = db.collection("students")
-            .where("groupId", "==", group.id)
             .where("roll", "==", student.roll)
+            .where("academicGroup", "==", student.academicGroup)
+            .limit(1)
             .get()
             .then((snap) => {
               if (!snap.empty) { errorCount++; return null; }
@@ -2053,81 +2218,86 @@
             .catch(() => { errorCount++; });
           promises.push(p);
         }
-        Promise.all(promises).then(async () => {
+        Promise.all(promises).then(() => {
           hideLoading();
           document.getElementById("csvImportSection").classList.add("hidden");
           document.getElementById("csvFileInput").value = "";
           alert(`CSV ইম্পোর্ট সম্পন্ন: ${importedCount} জন শিক্ষার্থী সফলভাবে ইম্পোর্ট হয়েছে, ${errorCount} টি ত্রুটি`);
-          await loadStudents();
-          loadAllStudentsCards();
         }).catch((e) => { hideLoading(); alert("CSV ইম্পোর্ট করতে সমস্যা হয়েছে: " + e.message); });
       }
 
-      document.getElementById("exportCsvBtn").addEventListener("click", () => exportStudentsToCSV());
+      // Exports (optimized building via joins, scheduled during idle if available)
+      const idle = (fn) => window.requestIdleCallback ? window.requestIdleCallback(fn) : setTimeout(fn, 0);
+
+      document.querySelector(".exportCsvBtn").addEventListener("click", () => exportStudentsToCSV());
       function exportStudentsToCSV() {
-        const headers = ["Name","Roll","Gender","Group","Academic Group","Email/Phone","Session","Role"];
-        let csvContent = headers.join(",") + "\n";
-        const roleNames = {
-          "team-leader": "টিম লিডার", "time-keeper": "টাইম কিপার", reporter: "রিপোর্টার",
-          "resource-manager": "রিসোর্স ম্যানেজার", "peace-maker": "পিস মেকার",
-        };
-        students.forEach((student) => {
-          const group = groups.find((g) => g.id === student.groupId);
-          const groupName = group ? group.name : "";
-          const row = [
-            student.name, student.roll, student.gender, groupName,
-            student.academicGroup || "", student.contact || "", student.session || "",
-            student.role ? roleNames[student.role] || student.role : "",
-          ].map((f) => `"${f}"`).join(",");
-          csvContent += row + "\n";
+        idle(() => {
+          const headers = ["Name","Roll","Gender","Group","Academic Group","Email/Phone","Session","Role"];
+          const roleNames = {
+            "team-leader": "টিম লিডার", "time-keeper": "টাইম কিপার", "reporter": "রিপোর্টার",
+            "resource-manager": "রিসোর্স ম্যানেজার", "peace-maker": "পিস মেকার",
+          };
+          const rows = [headers.join(",")];
+          students.forEach((student) => {
+            const groupName = groupById.get(student.groupId)?.name || "";
+            const row = [
+              student.name, student.roll, student.gender, groupName,
+              student.academicGroup || "", student.contact || "", student.session || "",
+              student.role ? roleNames[student.role] || student.role : "",
+            ].map((f) => `"${f ?? ""}"`).join(",");
+            rows.push(row);
+          });
+          downloadCSV(rows.join("\n"), "students.csv");
         });
-        downloadCSV(csvContent, "students.csv");
       }
 
       document.getElementById("exportGroupsBtn").addEventListener("click", () => exportGroupsToCSV());
       function exportGroupsToCSV() {
-        const headers = ["Group Name","Member Count","Created At"];
-        let csvContent = headers.join(",") + "\n";
-        groups.forEach((group) => {
-          const createdAt = group.createdAt?.seconds ? new Date(group.createdAt.seconds * 1000).toLocaleDateString("bn-BD") : "";
-          const row = [group.name, group.memberCount || 0, createdAt].map((f) => `"${f}"`).join(",");
-          csvContent += row + "\n";
+        idle(() => {
+          const headers = ["Group Name","Member Count","Created At"];
+          const rows = [headers.join(",")];
+          groups.forEach((group) => {
+            const createdAt = group.createdAt?.seconds ? new Date(group.createdAt.seconds * 1000).toLocaleDateString("bn-BD") : "";
+            const row = [group.name, membersCountByGroup[group.id] || 0, createdAt].map((f) => `"${f ?? ""}"`).join(",");
+            rows.push(row);
+          });
+          downloadCSV(rows.join("\n"), "groups.csv");
         });
-        downloadCSV(csvContent, "groups.csv");
       }
 
       document.getElementById("exportEvaluationsBtn").addEventListener("click", async () => {
-        // Ensure evaluations, tasks, groups, students are loaded
-        await Promise.all([loadEvaluations(), tasks.length ? Promise.resolve() : loadTasks(), groups.length ? Promise.resolve() : loadGroups(), students.length ? Promise.resolve() : loadStudents()]);
+        evaluations = await loadEvaluationsOnce();
         exportEvaluationsToCSV();
       });
       function exportEvaluationsToCSV() {
-        const headers = ["Task","Group","Student","Task Score","Teamwork Score","Comments","Evaluation Date"];
-        let csvContent = headers.join(",") + "\n";
-        evaluations.forEach((evaluation) => {
-          const task = tasks.find((t) => t.id === evaluation.taskId);
-          const group = groups.find((g) => g.id === evaluation.groupId);
-          if (!task || !group || !evaluation.scores) return;
-          Object.keys(evaluation.scores).forEach((studentId) => {
-            const student = students.find((s) => s.id === studentId);
-            if (!student) return;
-            const score = evaluation.scores[studentId];
-            const evalDate = evaluation.createdAt?.seconds ? new Date(evaluation.createdAt.seconds * 1000).toLocaleDateString("bn-BD") : "";
-            const row = [task.name, group.name, student.name, score.taskScore, score.teamworkScore, score.comments, evalDate].map((f) => `"${f}"`).join(",");
-            csvContent += row + "\n";
+        idle(() => {
+          const headers = ["Task","Group","Student","Task Score","Teamwork Score","Comments","Evaluation Date"];
+          const rows = [headers.join(",")];
+          evaluations.forEach((evaluation) => {
+            const task = taskById.get(evaluation.taskId);
+            const group = groupById.get(evaluation.groupId);
+            if (!task || !group || !evaluation.scores) return;
+            Object.keys(evaluation.scores).forEach((studentId) => {
+              const student = studentById.get(studentId);
+              if (!student) return;
+              const score = evaluation.scores[studentId];
+              const evalDate = evaluation.createdAt?.seconds ? new Date(evaluation.createdAt.seconds * 1000).toLocaleDateString("bn-BD") : "";
+              const row = [task.name, group.name, student.name, score.taskScore, score.teamworkScore, score.comments, evalDate].map((f) => `"${f ?? ""}"`).join(",");
+              rows.push(row);
+            });
           });
+          downloadCSV(rows.join("\n"), "evaluations.csv");
         });
-        downloadCSV(csvContent, "evaluations.csv");
       }
 
       document.getElementById("exportAllBtn").addEventListener("click", async () => {
-        await Promise.all([loadEvaluations(), tasks.length ? Promise.resolve() : loadTasks(), groups.length ? Promise.resolve() : loadGroups(), students.length ? Promise.resolve() : loadStudents()]);
+        evaluations = await loadEvaluationsOnce();
         const zip = new JSZip();
         zip.file("students.csv", exportStudentsToCSVString());
         zip.file("groups.csv", exportGroupsToCSVString());
         zip.file("evaluations.csv", exportEvaluationsToCSVString());
         zip.file("tasks.csv", exportTasksToCSVString());
-        zip.generateAsync({ type: "blob" }).then((content) => {
+        zip.generateAsync({ type: "blob", compression: "DEFLATE" }).then((content) => {
           const a = document.createElement("a");
           const url = URL.createObjectURL(content);
           a.href = url; a.download = "smart_evaluator_data.zip";
@@ -2152,181 +2322,101 @@
 
       function exportStudentsToCSVString() {
         const headers = ["Name","Roll","Gender","Group","Email/Phone","Session","Role"];
-        let csvContent = headers.join(",") + "\n";
         const roleNames = {
           "team-leader": "টিম লিডার", "time-keeper": "টাইম কিপার", reporter: "রিপোর্টার",
           "resource-manager": "রিসোর্স ম্যানেজার", "peace-maker": "পিস মেকার",
         };
+        const rows = [headers.join(",")];
         students.forEach((student) => {
-          const group = groups.find((g) => g.id === student.groupId);
-          const groupName = group ? group.name : "";
+          const groupName = groupById.get(student.groupId)?.name || "";
           const role = student.role ? roleNames[student.role] || student.role : "";
-          const row = [student.name, student.roll, student.gender, groupName, student.contact || "", student.session || "", role].map((f) => `"${f}"`).join(",");
-          csvContent += row + "\n";
+          rows.push([student.name, student.roll, student.gender, groupName, student.contact || "", student.session || "", role].map((f) => `"${f ?? ""}"`).join(","));
         });
-        return csvContent;
+        return rows.join("\n");
       }
 
       function exportGroupsToCSVString() {
         const headers = ["Group Name","Member Count","Created At"];
-        let csvContent = headers.join(",") + "\n";
+        const rows = [headers.join(",")];
         groups.forEach((group) => {
           const createdAt = group.createdAt?.seconds ? new Date(group.createdAt.seconds * 1000).toLocaleDateString("bn-BD") : "";
-          const row = [group.name, group.memberCount || 0, createdAt].map((f) => `"${f}"`).join(",");
-          csvContent += row + "\n";
+          rows.push([group.name, membersCountByGroup[group.id] || 0, createdAt].map((f) => `"${f ?? ""}"`).join(","));
         });
-        return csvContent;
+        return rows.join("\n");
       }
 
       function exportEvaluationsToCSVString() {
         const headers = ["Task","Group","Student","Task Score","Teamwork Score","Comments","Evaluation Date"];
-        let csvContent = headers.join(",") + "\n";
+        const rows = [headers.join(",")];
         evaluations.forEach((evaluation) => {
-          const task = tasks.find((t) => t.id === evaluation.taskId);
-          const group = groups.find((g) => g.id === evaluation.groupId);
+          const task = taskById.get(evaluation.taskId);
+          const group = groupById.get(evaluation.groupId);
           if (!task || !group || !evaluation.scores) return;
           Object.keys(evaluation.scores).forEach((studentId) => {
-            const student = students.find((s) => s.id === studentId);
+            const student = studentById.get(studentId);
             if (!student) return;
             const score = evaluation.scores[studentId];
             const evalDate = evaluation.createdAt?.seconds ? new Date(evaluation.createdAt.seconds * 1000).toLocaleDateString("bn-BD") : "";
-            const row = [task.name, group.name, student.name, score.taskScore, score.teamworkScore, score.comments, evalDate].map((f) => `"${f}"`).join(",");
-            csvContent += row + "\n";
+            rows.push([task.name, group.name, student.name, score.taskScore, score.teamworkScore, score.comments, evalDate].map((f) => `"${f ?? ""}"`).join(","));
           });
         });
-        return csvContent;
+        return rows.join("\n");
       }
 
       function exportTasksToCSVString() {
         const headers = ["Task Name","Description","Max Score","Date"];
-        let csvContent = headers.join(",") + "\n";
+        const rows = [headers.join(",")];
         tasks.forEach((task) => {
           const date = task.date?.seconds ? new Date(task.date.seconds * 1000).toLocaleDateString("bn-BD") : "";
-          const row = [task.name, task.description, task.maxScore, date].map((f) => `"${f}"`).join(",");
-          csvContent += row + "\n";
+          rows.push([task.name, task.description, task.maxScore, date].map((f) => `"${f ?? ""}"`).join(","));
         });
-        return csvContent;
+        return rows.join("\n");
       }
 
-      // Admins
-      async function loadAdmins() {
-        showLoading();
-        try {
-          const snap = await db.collection("admins").get();
-          admins = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-          renderAdmins();
-        } catch (e) { console.error("Error loading admins:", e); }
-        hideLoading();
-      }
-
-      function renderAdmins() {
-        const adminList = document.getElementById("adminList");
-        if (!adminList) return;
-        adminList.innerHTML = "";
-        admins.forEach((admin) => {
-          const createdAt = admin.createdAt?.seconds ? new Date(admin.createdAt.seconds * 1000).toLocaleDateString("bn-BD") : "N/A";
-          const el = document.createElement("div");
-          el.className = "flex justify-between items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg";
-          el.innerHTML = `
-            <div>
-              <div class="font-medium">${admin.email}</div>
-              <div class="text-sm text-gray-500">টাইপ: ${admin.type === "super-admin" ? "সুপার অ্যাডমিন" : "অ্যাডমিন"} | তৈরি: ${createdAt}</div>
-            </div>
-            <div class="flex gap-2">
-              ${admin.type !== "super-admin" ? `<button class="delete-admin-btn px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg text-sm" data-id="${admin.id}">ডিলিট</button>` : ""}
-            </div>
-          `;
-          adminList.appendChild(el);
-        });
-        document.querySelectorAll(".delete-admin-btn").forEach((btn) => {
-          btn.addEventListener("click", () => deleteAdmin(btn.getAttribute("data-id")));
-        });
-      }
-
-      document.getElementById("addAdminBtn").addEventListener("click", async () => {
-        const email = document.getElementById("adminEmailInput").value.trim();
-        const adminType = document.getElementById("newAdminType").value;
-        if (!email) { alert("ইমেইল লিখুন"); return; }
-        showLoading();
-        try {
-          await db.collection("admins").doc(email).set({
-            email, type: adminType,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          });
-          document.getElementById("adminEmailInput").value = "";
-          alert("অ্যাডমিন সফলভাবে যোগ করা হয়েছে। অনুগ্রহ করে ওই ইমেইল দিয়ে লগইন/রেজিস্টার করে সক্রিয় করুন।");
-          await loadAdmins();
-        } catch (e) { alert("অ্যাডমিন যোগ করতে সমস্যা হয়েছে: " + e.message); }
-        hideLoading();
-      });
-
-      function deleteAdmin(adminId) {
-        const admin = admins.find((a) => a.id === adminId);
-        if (!admin) return;
-        document.getElementById("deleteModalText").textContent = `আপনি কি নিশ্চিত যে আপনি "${admin.email}" অ্যাডমিনটি ডিলিট করতে চান?`;
-        document.getElementById("deleteModal").style.display = "flex";
-        document.getElementById("confirmDelete").onclick = async () => {
-          showLoading();
-          try {
-            await db.collection("admins").doc(adminId).delete();
-            document.getElementById("deleteModal").style.display = "none";
-            await loadAdmins();
-            alert("নোট: ক্লায়েন্ট থেকে Firebase ইউজার অ্যাকাউন্ট ডিলিট করা যায় না; কেবল অ্যাডমিন তালিকা থেকে সরানো হয়েছে।");
-          } catch (e) { alert("অ্যাডমিন ডিলিট করতে সমস্যা হয়েছে: " + e.message); }
-          hideLoading();
-        };
-      }
-
-      // Search groups
-      document.getElementById("groupSearchInput").addEventListener("input", (e) => {
+      // Search groups (debounced)
+      document.getElementById("groupSearchInput").addEventListener("input", debounce((e) => {
         const term = e.target.value.toLowerCase();
         const groupsList = document.getElementById("groupsList");
+        if (!groupsList) return;
         groupsList.innerHTML = "";
         const searched = groups.filter((g) => g.name.toLowerCase().includes(term));
+        const frag = document.createDocumentFragment();
         searched.forEach((group) => {
           const el = document.createElement("div");
           el.className = "flex justify-between items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg";
           el.innerHTML = `
             <div>
               <div class="font-medium">${group.name}</div>
-              <div class="text-sm text-gray-500">সদস্য: ${group.memberCount || 0} জন</div>
+              <div class="text-sm text-gray-500">সদস্য: ${membersCountByGroup[group.id] || 0} জন</div>
             </div>
             <div class="flex gap-2">
-              <button class="edit-group-btn px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm" data-id="${group.id}">সম্পাদনা</button>
-              <button class="delete-group-btn px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg text-sm" data-id="${group.id}">ডিলিট</button>
+              <button data-action="edit-group" data-id="${group.id}" class="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm">সম্পাদনা</button>
+              <button data-action="delete-group" data-id="${group.id}" class="px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg text-sm">ডিলিট</button>
             </div>
           `;
-          groupsList.appendChild(el);
+          frag.appendChild(el);
         });
-        document.querySelectorAll(".edit-group-btn").forEach((btn) => btn.addEventListener("click", () => editGroup(btn.getAttribute("data-id"))));
-        document.querySelectorAll(".delete-group-btn").forEach((btn) => btn.addEventListener("click", () => deleteGroup(btn.getAttribute("data-id"))));
-      });
+        groupsList.appendChild(frag);
+      }, 200));
 
-      // Search Group selection list
-      document.getElementById("groupMemberSearchInput").addEventListener("input", (e) => {
+      document.getElementById("groupMemberSearchInput").addEventListener("input", debounce((e) => {
         const term = e.target.value.toLowerCase();
         const list = document.getElementById("groupSelectionList");
+        if (!list) return;
         list.innerHTML = "";
-        const searched = groups.filter((g) => g.name.toLowerCase().includes(term));
-        searched.forEach((group) => {
+        const frag = document.createDocumentFragment();
+        groups.filter((g) => g.name.toLowerCase().includes(term)).forEach((group) => {
           const sel = document.createElement("div");
           sel.className = "group-bar p-3 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer";
           sel.setAttribute("data-id", group.id);
           sel.innerHTML = `
             <div class="font-medium">${group.name}</div>
-            <div class="text-sm text-gray-500">সদস্য: ${group.memberCount || 0} জন</div>
+            <div class="text-sm text-gray-500">সদস্য: ${membersCountByGroup[group.id] || 0} জন</div>
           `;
-          list.appendChild(sel);
+          frag.appendChild(sel);
         });
-        document.querySelectorAll(".group-bar").forEach((bar) => {
-          bar.addEventListener("click", () => {
-            document.querySelectorAll(".group-bar").forEach((b) => b.classList.remove("active"));
-            bar.classList.add("active");
-            const groupId = bar.getAttribute("data-id");
-            loadGroupMembers(groupId);
-          });
-        });
-      });
+        list.appendChild(frag);
+      }, 200));
     </script>
 
     <!-- JSZip for exporting all data as zip -->

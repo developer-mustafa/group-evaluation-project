@@ -1,0 +1,49 @@
+
+app.js:2221 Uncaught TypeError: this.editStudent is not a function
+    at HTMLButtonElement.<anonymous> (app.js:2221:54)
+(anonymous) @ app.js:2221
+
+
+
+
+app.js:2224 Uncaught TypeError: this.deleteStudent is not a function
+    at HTMLButtonElement.<anonymous> (app.js:2224:54)
+(anonymous) @ app.js:2224
+
+
+
+app.js:1260 Uncaught (in promise) TypeError: this.dom.groupAnalysisChart.getContext is not a function
+    at SmartGroupEvaluator.renderGroupAnalysis (app.js:1260:49)
+    at SmartGroupEvaluator.handleNavigation (app.js:1945:26)
+    at HTMLButtonElement.<anonymous> (app.js:249:55)
+Warning: Don’t paste code into the DevTools Console that you don’t understand or haven’t reviewed yourself. This could allow attackers to steal your identity or take control of your computer. Please type ‘allow pasting’ below and press Enter to allow pasting.
+
+
+Uncaught TypeError: this.editTask is not a function
+    at HTMLButtonElement.<anonymous> (app.js:2230:54)
+
+
+app.js:2233 Uncaught TypeError: this.deleteTask is not a function
+    at HTMLButtonElement.<anonymous> (app.js:2233:54)
+(anonymous) @ app.js:2233
+
+
+#গ্রুপ বিশ্লেষণ: ট্যাব এর ফিচার কাজ করছেনা অর্থাৎ চার্ট ডাটা
+#ডেটা এক্সপোর্ট: যদি কোন মিসটেক ও এরর থাকে তা ঠিক কর। সকল ডাটশীট জিপে এক্সপোর্ট হয়নি তা ঠিক কর।
+#টাস্ক ব্যবস্থাপনা: এখানে টাস্ক ডাটা এড, আপডেট ও ডিলেট ঠিক আছে কিনা চ্যাক কর ও এরর ঠিক কর
+#শিক্ষার্থী ব্যবস্থাপনা: শিক্ষার্থী ডাটা এড, আপডেট ও ডিলেট ঠিক আছে কিনা চ্যাক কর ও এরর ঠিক কর
+#গ্রুপ সদস্য ব্যবস্থাপনা (প্লেসহোল্ডার রিপ্লেস করে) : শিক্ষার্থীদের গ্রুপ ভিত্তিক দায়িত্ব ব্যবস্থাপনা ফিচার প্রফেশনালভাবে সঠিকভাবে আপডেট করার ব্যবস্থা কর।
+
+#সকল ত্রুটি ঠিক কর এবং প্রয়োজনী ডম আপারেশন এর পর UI update কর ও টোস্ট ম্যাসেজ দেখাও
+
+
+#যেকোন ব্যবহারকরী লগইন ছাড়াই দেখতে পারবে:(নিচের ট্যাবগুলো)
+১.ডেসবোর্ড 
+২.সকল গ্রুপ কার্ড
+৩.শিক্ষার্থী র‌্যাঙ্কিং
+৪.গ্রুপ বিশ্লেষণ
+৫.গ্রুপ পলিসি
+৬.এক্সপোর্ট
+
+সঠিকভাবে ফায়ারবেজ রুলস দাও বা কোডে যদি এই এক্সেস রোল বিষয়ে কোন কিছু আপডেট করা লাগে কর:
+আমাকে সকল সমাধান ও আপডেট ফিচারসহ পূর্বের সকল ফিচার এর সম্পূর্ণ javascript code দাও, যদি html বা CSS পরিবর্তন করা লাগে তবে- সম্পূর্ণ  code দাও,

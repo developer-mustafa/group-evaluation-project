@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>স্মার্ট গ্রুপ ইভ্যালুয়েটর</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script> <!-- Font Awesome যোগ করুন -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+    <script>
+        // Firebase Config (আপনার প্রজেক্টের কনফিগ দিন)
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const googleProvider = new firebase.auth.GoogleAuthProvider();
+    </script>
+</head>
+<body class="bg-gray-50 dark:bg-darkBg">
+    <div id="authModal" class="modal" style="display: flex;">
+        <div class="modal-content">
+            <div id="loginForm">
+                <h2>লগইন করুন</h2>
+                <input id="loginEmail" type="email" placeholder="ইমেইল">
+                <input id="loginPassword" type="password" placeholder="পাসওয়ার্ড">
+                <button id="loginBtn">লগইন</button>
+                <p>অথবা</p>
+                <button id="googleSignInBtn">Google দিয়ে লগইন করুন</button>
+                <p>অ্যাকাউন্ট নেই? <a id="showRegister">রেজিস্টার করুন</a></p>
+            </div>
+            <div id="registerForm" class="hidden">
+                <h2>রেজিস্টার করুন</h2>
+                <input id="registerEmail" type="email" placeholder="ইমেইল">
+                <input id="registerPassword" type="password" placeholder="পাসওয়ার্ড">
+                <select id="adminType">
+                    <option value="admin">সাধারণ অ্যাডমিন</option>
+                    <option value="super-admin">সুপার অ্যাডমিন</option>
+                </select>
+                <button id="registerBtn">রেজিস্টার</button>
+                <p>ইতিমধ্যে অ্যাকাউন্ট আছে? <a id="showLogin">লগইন করুন</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="appContainer" class="app-container hidden">
+        <aside class="sidebar gradient-bg text-white">
+            <div id="userInfo"></div>
+            <nav>
+                <button class="nav-btn" data-page="dashboard">ড্যাশবোর্ড</button>
+                <button class="nav-btn" data-page="groups">গ্রুপ ব্যবস্থাপনা</button>
+                <button class="nav-btn" data-page="students">শিক্ষার্থী ব্যবস্থাপনা</button>
+                <button class="nav-btn" data-page="tasks">টাস্ক ব্যবস্থাপনা</button>
+                <button class="nav-btn" data-page="evaluation">মূল্যায়ন</button>
+                <button id="adminManagementSection" class="nav-btn hidden" data-page="admin-management">অ্যাডমিন ব্যবস্থাপনা</button>
+                <button id="logoutBtn" class="logout-btn">লগআউট</button>
+            </nav>
+        </aside>
+        <main class="main-content">
+            <header>
+                <h1 id="pageTitle">ড্যাশবোর্ড</h1>
+                <button id="themeToggle"><i class="fas fa-moon"></i></button>
+                <button id="mobileMenuBtn" class="mobile-menu-btn"><i class="fas fa-bars"></i></button>
+            </header>
+            <div class="page-content">
+                <div id="page-dashboard" class="page">
+                    <!-- ড্যাশবোর্ড কন্টেন্ট -->
+                    <div id="statsSummary"></div>
+                    <div id="genderStats"></div>
+                    <div id="problemSolvingStats"></div>
+                    <div id="topGroups"></div>
+                    <div id="groupRanking"></div>
+                </div>
+                <div id="page-groups" class="page hidden">
+                    <input id="groupNameInput" placeholder="গ্রুপ নাম">
+                    <button id="addGroupBtn">গ্রুপ যোগ করুন</button>
+                    <div id="groupsList"></div>
+                </div>
+                <div id="page-students" class="page hidden">
+                    <input id="studentSearchInput" placeholder="সার্চ শিক্ষার্থী">
+                    <input id="studentNameInput" placeholder="নাম">
+                    <input id="studentRollInput" placeholder="রোল">
+                    <select id="studentGenderInput">
+                        <option value="পুরুষ">পুরুষ</option>
+                        <option value="মহিলা">মহিলা</option>
+                    </select>
+                    <select id="studentGroupInput"></select> <!-- গ্রুপ অপশন লোড হবে -->
+                    <input id="studentContactInput" placeholder="যোগাযোগ">
+                    <input id="studentAcademicGroupInput" placeholder="একাডেমিক গ্রুপ">
+                    <input id="studentSessionInput" placeholder="সেশন">
+                    <button id="addStudentBtn">শিক্ষার্থী যোগ করুন</button>
+                    <div id="studentsList"></div>
+                </div>
+                <div id="page-tasks" class="page hidden">
+                    <input id="taskNameInput" placeholder="টাস্ক নাম">
+                    <textarea id="taskDescriptionInput" placeholder="বর্ণনা"></textarea>
+                    <input id="taskMaxScoreInput" type="number" placeholder="সর্বোচ্চ স্কোর">
+                    <input id="taskDateInput" type="date">
+                    <button id="addTaskBtn">টাস্ক যোগ করুন</button>
+                    <div id="tasksList"></div>
+                </div>
+                <div id="page-evaluation" class="page hidden">
+                    <select id="evaluationTaskSelect"></select>
+                    <select id="evaluationGroupSelect"></select>
+                    <button id="startEvaluationBtn">মূল্যায়ন শুরু করুন</button>
+                    <div id="evaluationForm"></div>
+                </div>
+                <div id="page-admin-management" class="page hidden">
+                    <!-- অ্যাডমিন ম্যানেজমেন্ট কন্টেন্ট -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="loadingOverlay" class="modal" style="display: none;">
+        <div class="loader"></div>
+    </div>
+    <div id="deleteModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <p id="deleteModalText"></p>
+            <div class="modal-buttons">
+                <button id="cancelDelete">বাতিল</button>
+                <button id="confirmDelete">ডিলিট</button>
+            </div>
+        </div>
+    </div>
+    <div id="editModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2 id="editModalTitle"></h2>
+            <div id="editModalContent"></div>
+            <div class="modal-buttons">
+                <button id="cancelEdit">বাতিল</button>
+                <button id="saveEdit">সংরক্ষণ</button>
+            </div>
+        </div>
+    </div>
+    <div id="logoutModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <p>আপনি কি সত্যিই লগআউট করতে চান?</p>
+            <div class="modal-buttons">
+                <button id="cancelLogout">বাতিল</button>
+                <button id="confirmLogout">লগআউট</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

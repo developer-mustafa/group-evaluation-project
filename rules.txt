@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isSuperAdmin() {
+      return request.auth != null && 
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.type == 'super-admin';
+    }
+    
+    function isAdmin() {
+      return request.auth != null && 
+        (exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email)));
+    }
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Public pages can be accessed by anyone
+    function allowPublicRead() {
+      return true; // Allow anyone to read data for public pages
+    }
+    
+    function canRead() {
+      return isAuthenticated() || allowPublicRead();
+    }
+    
+    function canCreate() {
+      return isAdmin();
+    }
+    
+    function canUpdate() {
+      return isAdmin();
+    }
+    
+    function canDelete() {
+      return isSuperAdmin();
+    }
+    
+    function canManageAdmins() {
+      return isSuperAdmin();
+    }
+
+    // Admins collection - Only super admin can manage
+    match /admins/{adminId} {
+      allow read: if canManageAdmins();
+      allow create: if canManageAdmins();
+      allow update: if canManageAdmins();
+      allow delete: if canManageAdmins();
+    }
+
+    // Groups collection - Admin can CRUD, public can read
+    match /groups/{groupId} {
+      allow read: if allowPublicRead(); // Public access
+      allow create: if canCreate();
+      allow update: if canUpdate();
+      allow delete: if canDelete();
+    }
+
+    // Students collection - Admin can CRUD, public can read (for group cards)
+    match /students/{studentId} {
+      allow read: if allowPublicRead(); // Public access
+      allow create: if canCreate();
+      allow update: if canUpdate();
+      allow delete: if canDelete();
+    }
+
+    // Tasks collection - Admin can CRUD, authenticated users can read
+    match /tasks/{taskId} {
+      allow read: if canRead();
+      allow create: if canCreate();
+      allow update: if canUpdate();
+      allow delete: if canDelete();
+    }
+
+    // Evaluations collection - Admin can CRUD, authenticated users can read
+    match /evaluations/{evaluationId} {
+      allow read: if canRead();
+      allow create: if canCreate();
+      allow update: if canUpdate();
+      allow delete: if canDelete();
+    }
+
+    // Deny all other operations by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
