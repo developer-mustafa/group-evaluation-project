@@ -1,4 +1,4 @@
-// app2.js - COMPLETE FIXED VERSION
+// app2.js - COMPLETE FIXED VERSION WITH ALL FEATURES
 class CacheManager {
     constructor() {
         this.CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
@@ -85,7 +85,8 @@ class SmartGroupEvaluator {
             cardsFilterGroupId: "",
             cardsSearchTerm: "",
             groupMembersFilterGroupId: "",
-            analysisFilterGroupIds: []
+            analysisFilterGroupIds: [],
+            adminSearchTerm: ""
         };
 
         this.PUBLIC_PAGES = ['dashboard', 'all-students', 'group-policy', 'export', 'student-ranking', 'group-analysis'];
@@ -110,15 +111,23 @@ class SmartGroupEvaluator {
         this.policySections = [
             {
                 title: "গ্রুপ সদস্য নিয়মাবলী",
-                content: "১. প্রতিটি গ্রুপে সর্বোচ্চ ৫ জন সদস্য থাকবে।\n২. প্রত্যেক সদস্যের একটি নির্দিষ্ট দায়িত্ব থাকবে।\n৩. গ্রুপ লিডার দায়িত্ব পালন নিশ্চিত করবে।"
+                content: "১. প্রতিটি গ্রুপে সর্বোচ্চ ৫ জন সদস্য থাকবে।\n২. প্রত্যেক সদস্যের একটি নির্দিষ্ট দায়িত্ব থাকবে।\n৩. গ্রুপ লিডার দায়িত্ব পালন নিশ্চিত করবে।\n৪. সকল সদস্যকে সাপ্তাহিক মিটিং এ উপস্থিত থাকতে হবে।\n৫. গ্রুপ কাজ সময়মতো জমা দিতে হবে।"
             },
             {
                 title: "মূল্যায়ন পদ্ধতি",
-                content: "১. টাস্ক সম্পূর্ণতা - ৪০%\n২. টিমওয়ার্ক - ৩০%\n৩. সময়ানুবর্তিতা - ২০%\n৪. অতিরিক্ত কাজ - ১০%"
+                content: "১. টাস্ক সম্পূর্ণতা - ৪০%\n২. টিমওয়ার্ক - ৩০%\n৩. সময়ানুবর্তিতা - ২০%\n৪. অতিরিক্ত কাজ - ১০%\n৫. উপস্থিতি - বোনাস পয়েন্ট\n৬. বাড়ির কাজ - বোনাস পয়েন্ট"
             },
             {
                 title: "স্কোরিং সিস্টেম",
-                content: "টাস্ক স্কোর: ০-১০০ পয়েন্ট\nটিমওয়ার্ক: ০-১০ পয়েন্ট\nঅতিরিক্ত পয়েন্ট: বিশেষ কৃতিত্বের জন্য"
+                content: "টাস্ক স্কোর: ০-১০০ পয়েন্ট\nটিমওয়ার্ক: ০-১০ পয়েন্ট\nঅতিরিক্ত পয়েন্ট: বিশেষ কৃতিত্বের জন্য\nনেগেটিভ পয়েন্ট: দায়িত্ব পালনে ব্যর্থতা\nবোনাস পয়েন্ট: অতিরিক্ত কাজের জন্য"
+            },
+            {
+                title: "গ্রুপ লিডারের দায়িত্ব",
+                content: "১. গ্রুপ মিটিং পরিচালনা\n২. কাজ বণ্টন করা\n৩. প্রোগ্রেস ট্র্যাক করা\n৪. সমস্যা সমাধান করা\n৫. রিপোর্ট তৈরি করা"
+            },
+            {
+                title: "সদস্যদের দায়িত্ব",
+                content: "১. নির্দিষ্ট কাজ সময়মতো করা\n২. গ্রুপ মিটিং এ উপস্থিত থাকা\n৩. অন্যান্য সদস্যদের সহযোগিতা করা\n৪. সমস্যা হলে লিডারকে জানানো\n৫. গ্রুপের উন্নতির জন্য পরামর্শ দেওয়া"
             }
         ];
 
@@ -126,6 +135,7 @@ class SmartGroupEvaluator {
         this.editCallback = null;
         this.currentEditingAdmin = null;
         this.currentEvaluation = null;
+        this.csvImportData = null;
 
         // Initialize debouncers
         this.searchDebouncer = this.createDebouncer(300);
@@ -148,13 +158,6 @@ class SmartGroupEvaluator {
         this.setupAuthStateListener();
         this.applySavedTheme();
         this.isInitialized = true;
-        
-        // Load initial data based on auth state
-        if (this.currentUser) {
-            await this.loadInitialData();
-        } else {
-            await this.loadPublicData();
-        }
     }
 
     async initializeFirebase() {
@@ -243,7 +246,9 @@ class SmartGroupEvaluator {
             evaluationForm: document.getElementById("evaluationForm"),
             csvFileInput: document.getElementById("csvFileInput"),
             importStudentsBtn: document.getElementById("importStudentsBtn"),
-            exportStudentsBtn: document.getElementById("exportStudentsBtn"),
+            processImportBtn: document.getElementById("processImportBtn"),
+            csvFileName: document.getElementById("csvFileName"),
+            downloadTemplateBtn: document.getElementById("downloadTemplateBtn"),
             membersFilterGroup: document.getElementById("membersFilterGroup"),
             studentSearchInput: document.getElementById("studentSearchInput"),
             cardsFilterGroup: document.getElementById("cardsFilterGroup"),
@@ -335,8 +340,9 @@ class SmartGroupEvaluator {
 
         // CSV Operations
         this.addListener(this.dom.importStudentsBtn, 'click', () => this.importCSV());
-        this.addListener(this.dom.exportStudentsBtn, 'click', () => this.exportStudentsCSV());
-        this.addListener(this.dom.csvFileInput, 'change', (e) => this.handleCSVImport(e));
+        this.addListener(this.dom.processImportBtn, 'click', () => this.processCSVImport());
+        this.addListener(this.dom.csvFileInput, 'change', (e) => this.handleCSVFileSelect(e));
+        this.addListener(this.dom.downloadTemplateBtn, 'click', () => this.downloadCSVTemplate());
 
         // Export Operations
         this.addListener(this.dom.exportAllData, 'click', () => this.exportAllData());
@@ -1054,16 +1060,15 @@ class SmartGroupEvaluator {
         
         this.dom.allStudentsCards.innerHTML = filteredStudents.map((student, index) => {
             const group = this.state.groups.find(g => g.id === student.groupId);
-            const groupIndex = this.state.groups.findIndex(g => g.id === student.groupId);
-            const cardColorClass = `group-card-${((groupIndex % 8) + 8) % 8 + 1}`;
+            const bgClass = `student-card-bg-${(index % 8) + 1}`;
             
             const roleBadge = student.role ? 
                 `<span class="member-role-badge ${student.role}">${this.roleNames[student.role] || student.role}</span>` :
-                `<span class="px-2 py-1 text-xs rounded-md bg-yellow-100 text-yellow-800">দায়িত্ব বাকি</span>`;
+                `<span class="px-2 py-1 text-xs rounded-md bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">দায়িত্ব বাকি</span>`;
 
             return `
-                <div class="student-card ${cardColorClass} glass-card p-4 rounded-xl shadow-md relative overflow-hidden">
-                    <span class="group-serial">${index + 1}</span>
+                <div class="student-card ${bgClass} rounded-xl p-4 shadow-md relative overflow-hidden">
+                    <span class="serial-number">${index + 1}</span>
                     <div class="flex items-start mb-3">
                         <div class="student-avatar ${student.gender === 'মেয়ে' ? 'bg-pink-500' : 'bg-blue-500'}">
                             ${student.name.charAt(0)}
@@ -1155,7 +1160,7 @@ class SmartGroupEvaluator {
                     <h4 class="font-semibold">${section.title}</h4>
                     <i class="fas fa-chevron-down transform transition-transform" id="policyIcon-${index}"></i>
                 </div>
-                <div class="policy-content hidden" id="policyContent-${index}">
+                <div class="policy-content" id="policyContent-${index}">
                     <div class="whitespace-pre-line">${section.content}</div>
                 </div>
             </div>
@@ -1409,9 +1414,9 @@ class SmartGroupEvaluator {
 
         // Update navigation
         this.dom.navBtns.forEach(navBtn => {
-            navBtn.classList.remove("bg-blue-50", "dark:bg-blue-900/30", "text-blue-600", "dark:text-blue-400");
+            navBtn.classList.remove("active");
         });
-        btn.classList.add("bg-blue-50", "dark:bg-blue-900/30", "text-blue-600", "dark:text-blue-400");
+        btn.classList.add("active");
 
         // Show page
         this.dom.pages.forEach(page => page.classList.add("hidden"));
@@ -1477,6 +1482,9 @@ class SmartGroupEvaluator {
             // Show logout button
             this.dom.logoutBtn.classList.remove('hidden');
             
+            // Add user-logged-in class to body for CSS
+            document.body.classList.add('user-logged-in');
+            
             // Show admin section if super admin
             if (userData.type === "super-admin") {
                 if (this.dom.adminManagementSection) this.dom.adminManagementSection.classList.remove("hidden");
@@ -1489,6 +1497,9 @@ class SmartGroupEvaluator {
             
             // Hide logout button
             this.dom.logoutBtn.classList.add('hidden');
+            
+            // Remove user-logged-in class
+            document.body.classList.remove('user-logged-in');
             
             // Hide admin section
             if (this.dom.adminManagementSection) this.dom.adminManagementSection.classList.add("hidden");
@@ -1551,12 +1562,12 @@ class SmartGroupEvaluator {
         const content = document.getElementById(`policyContent-${index}`);
         const icon = document.getElementById(`policyIcon-${index}`);
         
-        if (content.classList.contains('hidden')) {
-            content.classList.remove('hidden');
-            icon.classList.add('rotate-180');
-        } else {
-            content.classList.add('hidden');
+        if (content.classList.contains('open')) {
+            content.classList.remove('open');
             icon.classList.remove('rotate-180');
+        } else {
+            content.classList.add('open');
+            icon.classList.add('rotate-180');
         }
     }
 
@@ -1932,32 +1943,28 @@ class SmartGroupEvaluator {
         if (!evaluation) return;
 
         this.dom.editModalTitle.textContent = 'মূল্যায়ন সম্পাদনা';
+        
+        // Find task and group
+        const task = this.state.tasks.find(t => t.id === evaluation.taskId);
+        const group = this.state.groups.find(g => g.id === evaluation.groupId);
+        
         this.dom.editModalContent.innerHTML = `
-            <div class="text-center p-4">
-                <p class="text-gray-600 dark:text-gray-400">মূল্যায়ন সম্পাদনা করতে, মূল্যায়ন পৃষ্ঠা থেকে সংশ্লিষ্ট টাস্ক এবং গ্রুপ নির্বাচন করুন।</p>
+            <div class="mb-4">
+                <p><strong>টাস্ক:</strong> ${task?.name || 'Unknown'}</p>
+                <p><strong>গ্রুপ:</strong> ${group?.name || 'Unknown'}</p>
             </div>
+            <p class="text-gray-600 dark:text-gray-400">মূল্যায়ন সম্পাদনা করতে মূল্যায়ন পৃষ্ঠায় যান এবং সংশ্লিষ্ট টাস্ক ও গ্রুপ নির্বাচন করুন।</p>
         `;
 
-        this.editCallback = async () => {
+        this.editCallback = () => {
             // Navigate to evaluation page with pre-selected values
-            const evaluationBtn = document.querySelector('[data-page="evaluation"]');
-            if (evaluationBtn) {
-                evaluationBtn.click();
-                
-                // Set the selected values after a short delay
-                setTimeout(() => {
-                    if (this.dom.evaluationTaskSelect) {
-                        this.dom.evaluationTaskSelect.value = evaluation.taskId;
-                    }
-                    if (this.dom.evaluationGroupSelect) {
-                        this.dom.evaluationGroupSelect.value = evaluation.groupId;
-                    }
-                    // Trigger evaluation start
-                    if (this.dom.startEvaluationBtn) {
-                        this.dom.startEvaluationBtn.click();
-                    }
-                }, 500);
-            }
+            this.handleNavigation({ currentTarget: document.querySelector('[data-page="evaluation"]') });
+            setTimeout(() => {
+                if (this.dom.evaluationTaskSelect) this.dom.evaluationTaskSelect.value = evaluation.taskId;
+                if (this.dom.evaluationGroupSelect) this.dom.evaluationGroupSelect.value = evaluation.groupId;
+                this.startEvaluation();
+            }, 500);
+            this.hideEditModal();
         };
 
         this.showEditModal();
@@ -2947,18 +2954,130 @@ class SmartGroupEvaluator {
         this.dom.csvFileInput.click();
     }
 
-    async handleCSVImport(event) {
+    async handleCSVFileSelect(event) {
         const file = event.target.files[0];
         if (!file) return;
 
-        // Basic CSV import implementation
-        this.showToast('CSV ইম্পোর্ট ফিচারটি শীঘ্রই আসছে', 'info');
+        this.dom.csvFileName.textContent = file.name;
+        this.dom.processImportBtn.classList.remove('hidden');
+
+        // Parse CSV file
+        Papa.parse(file, {
+            header: true,
+            complete: (results) => {
+                this.csvImportData = results.data;
+                this.showToast(`${results.data.length}টি শিক্ষার্থীর ডেটা লোড হয়েছে`, 'success');
+            },
+            error: (error) => {
+                this.showToast('CSV ফাইল পার্স করতে সমস্যা: ' + error.message, 'error');
+            }
+        });
+    }
+
+    async processCSVImport() {
+        if (!this.csvImportData || this.csvImportData.length === 0) {
+            this.showToast('প্রথমে CSV ফাইল নির্বাচন করুন', 'error');
+            return;
+        }
+
+        this.showLoading('শিক্ষার্থী ইম্পোর্ট হচ্ছে...');
+        let successCount = 0;
+        let errorCount = 0;
+
+        try {
+            for (const studentData of this.csvImportData) {
+                try {
+                    // Validate required fields
+                    if (!studentData.নাম || !studentData.রোল || !studentData.গ্রুপ) {
+                        errorCount++;
+                        continue;
+                    }
+
+                    // Find group by name
+                    const group = this.state.groups.find(g => g.name === studentData.গ্রুপ);
+                    if (!group) {
+                        errorCount++;
+                        continue;
+                    }
+
+                    // Check for duplicates
+                    const isDuplicate = await this.checkStudentUniqueness(studentData.রোল, studentData.একাডেমিক_গ্রুপ || '');
+                    if (isDuplicate) {
+                        errorCount++;
+                        continue;
+                    }
+
+                    // Prepare student data
+                    const student = {
+                        name: studentData.নাম,
+                        roll: studentData.রোল,
+                        gender: studentData.লিঙ্গ || 'ছেলে',
+                        groupId: group.id,
+                        contact: studentData.যোগাযোগ || '',
+                        academicGroup: studentData.একাডেমিক_গ্রুপ || '',
+                        session: studentData.সেশন || '',
+                        role: this.getRoleKey(studentData.দায়িত্ব || '')
+                    };
+
+                    await db.collection("students").add({
+                        ...student,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    });
+
+                    successCount++;
+                } catch (error) {
+                    errorCount++;
+                }
+            }
+
+            // Clear cache and reload data
+            this.cache.clear('students_data');
+            await this.loadStudents();
+
+            // Reset form
+            this.dom.csvFileInput.value = '';
+            this.dom.csvFileName.textContent = 'কোন ফাইল নির্বাচন করা হয়নি';
+            this.dom.processImportBtn.classList.add('hidden');
+            this.csvImportData = null;
+
+            this.showToast(`${successCount}টি শিক্ষার্থী সফলভাবে ইম্পোর্ট হয়েছে, ${errorCount}টি ব্যর্থ`, 'success');
+        } catch (error) {
+            this.showToast('ইম্পোর্ট প্রসেস করতে সমস্যা: ' + error.message, 'error');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    getRoleKey(roleName) {
+        const roleMap = {
+            'টিম লিডার': 'team-leader',
+            'টাইম কিপার': 'time-keeper',
+            'রিপোর্টার': 'reporter',
+            'রিসোর্স ম্যানেজার': 'resource-manager',
+            'পিস মেকার': 'peace-maker'
+        };
+        return roleMap[roleName] || '';
+    }
+
+    downloadCSVTemplate() {
+        const headers = ['নাম', 'রোল', 'লিঙ্গ', 'গ্রুপ', 'একাডেমিক_গ্রুপ', 'সেশন', 'দায়িত্ব', 'যোগাযোগ'];
+        const sampleData = [
+            ['আব্দুল্লাহ আল মামুন', '101', 'ছেলে', 'গ্রুপ এ', 'বিজ্ঞান', '২০২৩-২৪', 'টিম লিডার', 'example@email.com'],
+            ['সাদিয়া ইসলাম', '102', 'মেয়ে', 'গ্রুপ এ', 'বিজ্ঞান', '২০২৩-২৪', 'রিপোর্টার', '']
+        ];
+
+        const csvContent = [headers, ...sampleData]
+            .map(row => row.map(field => `"${field}"`).join(','))
+            .join('\n');
+
+        this.downloadCSV(csvContent, 'student_template.csv');
+        this.showToast('CSV টেমপ্লেট ডাউনলোড হয়েছে', 'success');
     }
 
     async exportStudentsCSV() {
         this.showLoading();
         try {
-            const headers = ['নাম', 'রোল', 'লিঙ্গ', 'গ্রুপ', 'একাডেমিক গ্রুপ', 'সেশন', 'দায়িত্ব', 'যোগাযোগ'];
+            const headers = ['নাম', 'রোল', 'লিঙ্গ', 'গ্রুপ', 'একাডেমিক_গ্রুপ', 'সেশন', 'দায়িত্ব', 'যোগাযোগ'];
             const data = this.state.students.map(student => {
                 const group = this.state.groups.find(g => g.id === student.groupId);
                 return [
@@ -2989,11 +3108,14 @@ class SmartGroupEvaluator {
     async exportGroupsCSV() {
         this.showLoading();
         try {
-            const headers = ['গ্রুপ নাম', 'সদস্য সংখ্যা'];
+            const headers = ['গ্রুপ নাম', 'সদস্য সংখ্যা', 'গড় স্কোর'];
             const memberCountMap = this.computeMemberCountMap();
+            const groupScores = this.calculateGroupScores();
+            
             const data = this.state.groups.map(group => [
                 group.name,
-                memberCountMap[group.id] || 0
+                memberCountMap[group.id] || 0,
+                groupScores[group.id]?.score.toFixed(2) || '0.00'
             ]);
 
             const csvContent = [headers, ...data]
@@ -3012,7 +3134,7 @@ class SmartGroupEvaluator {
     async exportEvaluationsCSV() {
         this.showLoading();
         try {
-            const headers = ['টাস্ক', 'গ্রুপ', 'শিক্ষার্থী', 'টাস্ক স্কোর', 'টিমওয়ার্ক স্কোর', 'মোট স্কোর', 'মন্তব্য'];
+            const headers = ['টাস্ক', 'গ্রুপ', 'শিক্ষার্থী', 'টাস্ক স্কোর', 'টিমওয়ার্ক স্কোর', 'অতিরিক্ত পয়েন্ট', 'মোট স্কোর', 'মন্তব্য'];
             const data = [];
 
             this.state.evaluations.forEach(evalItem => {
@@ -3041,6 +3163,7 @@ class SmartGroupEvaluator {
                                 student.name,
                                 score.taskScore || 0,
                                 score.teamworkScore || 0,
+                                additionalMarks,
                                 total,
                                 score.comments || ''
                             ]);
@@ -3073,7 +3196,7 @@ class SmartGroupEvaluator {
             const studentsCSV = await this.generateStudentsCSV();
             zip.file("students.csv", studentsCSV);
             
-            // Add groups CSV
+            // Add groups CSV with average scores
             const groupsCSV = await this.generateGroupsCSV();
             zip.file("groups.csv", groupsCSV);
             
@@ -3084,6 +3207,10 @@ class SmartGroupEvaluator {
             // Add tasks CSV
             const tasksCSV = await this.generateTasksCSV();
             zip.file("tasks.csv", tasksCSV);
+            
+            // Add group performance report
+            const performanceCSV = await this.generatePerformanceReport();
+            zip.file("performance_report.csv", performanceCSV);
             
             // Generate and download ZIP
             const content = await zip.generateAsync({type: "blob"});
@@ -3118,7 +3245,7 @@ class SmartGroupEvaluator {
 
     // Helper methods for CSV generation
     async generateStudentsCSV() {
-        const headers = ['নাম', 'রোল', 'লিঙ্গ', 'গ্রুপ', 'একাডেমিক গ্রুপ', 'সেশন', 'দায়িত্ব', 'যোগাযোগ'];
+        const headers = ['নাম', 'রোল', 'লিঙ্গ', 'গ্রুপ', 'একাডেমিক_গ্রুপ', 'সেশন', 'দায়িত্ব', 'যোগাযোগ'];
         const data = this.state.students.map(student => {
             const group = this.state.groups.find(g => g.id === student.groupId);
             return [
@@ -3139,11 +3266,14 @@ class SmartGroupEvaluator {
     }
 
     async generateGroupsCSV() {
-        const headers = ['গ্রুপ নাম', 'সদস্য সংখ্যা'];
+        const headers = ['গ্রুপ নাম', 'সদস্য সংখ্যা', 'গড় স্কোর'];
         const memberCountMap = this.computeMemberCountMap();
+        const groupScores = this.calculateGroupScores();
+        
         const data = this.state.groups.map(group => [
             group.name,
-            memberCountMap[group.id] || 0
+            memberCountMap[group.id] || 0,
+            groupScores[group.id]?.score.toFixed(2) || '0.00'
         ]);
 
         return [headers, ...data]
@@ -3152,7 +3282,7 @@ class SmartGroupEvaluator {
     }
 
     async generateEvaluationsCSV() {
-        const headers = ['টাস্ক', 'গ্রুপ', 'শিক্ষার্থী', 'টাস্ক স্কোর', 'টিমওয়ার্ক স্কোর', 'মোট স্কোর', 'মন্তব্য'];
+        const headers = ['টাস্ক', 'গ্রুপ', 'শিক্ষার্থী', 'টাস্ক স্কোর', 'টিমওয়ার্ক স্কোর', 'অতিরিক্ত পয়েন্ট', 'মোট স্কোর', 'মন্তব্য'];
         const data = [];
 
         this.state.evaluations.forEach(evalItem => {
@@ -3181,6 +3311,7 @@ class SmartGroupEvaluator {
                             student.name,
                             score.taskScore || 0,
                             score.teamworkScore || 0,
+                            additionalMarks,
                             total,
                             score.comments || ''
                         ]);
@@ -3212,9 +3343,66 @@ class SmartGroupEvaluator {
             .map(row => row.map(field => `"${field}"`).join(','))
             .join('\n');
     }
+
+    async generatePerformanceReport() {
+        const headers = ['গ্রুপ', 'টাস্ক', 'গড় স্কোর', 'সর্বোচ্চ স্কোর', 'ন্যূনতম স্কোর', 'মোট মূল্যায়ন'];
+        const data = [];
+
+        this.state.groups.forEach(group => {
+            const groupEvaluations = this.state.evaluations.filter(e => e.groupId === group.id);
+            
+            this.state.tasks.forEach(task => {
+                const taskEvaluations = groupEvaluations.filter(e => e.taskId === task.id);
+                
+                if (taskEvaluations.length > 0) {
+                    let totalScore = 0;
+                    let maxScore = 0;
+                    let minScore = Infinity;
+                    let evaluationCount = 0;
+
+                    taskEvaluations.forEach(evalItem => {
+                        if (evalItem.scores) {
+                            Object.values(evalItem.scores).forEach(score => {
+                                let additionalMarks = 0;
+                                if (score.optionMarks) {
+                                    Object.values(score.optionMarks).forEach(opt => {
+                                        if (opt.selected) {
+                                            const optDef = this.evaluationOptions.find(o => o.id === opt.optionId);
+                                            if (optDef) additionalMarks += optDef.marks;
+                                        }
+                                    });
+                                }
+                                
+                                const studentTotal = (score.taskScore || 0) + (score.teamworkScore || 0) + additionalMarks;
+                                totalScore += studentTotal;
+                                maxScore = Math.max(maxScore, studentTotal);
+                                minScore = Math.min(minScore, studentTotal);
+                                evaluationCount++;
+                            });
+                        }
+                    });
+
+                    const avgScore = evaluationCount > 0 ? (totalScore / evaluationCount).toFixed(2) : 0;
+                    
+                    data.push([
+                        group.name,
+                        task.name,
+                        avgScore,
+                        maxScore,
+                        minScore === Infinity ? 0 : minScore,
+                        evaluationCount
+                    ]);
+                }
+            });
+        });
+
+        return [headers, ...data]
+            .map(row => row.map(field => `"${field}"`).join(','))
+            .join('\n');
+    }
 }
 
 // Initialize application
 document.addEventListener('DOMContentLoaded', () => {
     window.smartEvaluator = new SmartGroupEvaluator();
-});
+})
