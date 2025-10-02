@@ -36,9 +36,6 @@
         };
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-
     <link rel="stylesheet" href="style2.css">
 
     <!-- Firebase -->
@@ -48,27 +45,31 @@
 </head>
 <body class="bg-gray-50 dark:bg-darkBg text-gray-800 dark:text-gray-200 transition-colors duration-300">
  <!-- Toast Notification -->
-<div id="toast" class="fixed bottom-6 right-6 z-50 hidden transition-all duration-500 transform translate-y-4 opacity-0">
-    <div id="toastBox" class="bg-green-500 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-3 min-w-[280px] max-w-[380px]">
-        <i id="toastIcon" class="fas fa-check-circle text-xl"></i>
-        <span id="toastMessage" class="font-medium">Operation successful</span>
-        <button onclick="hideToast()" class="ml-auto text-white hover:text-gray-200 focus:outline-none">✖</button>
-    </div>
-  </div>
+ <div id="toast" 
+ class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 hidden transition-all duration-500 transform translate-y-4 opacity-0">
+<div id="toastBox" 
+   class="bg-green-500 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-3 min-w-[280px] max-w-[380px]">
+  <i id="toastIcon" class="fas fa-check-circle text-xl"></i>
+  <span id="toastMessage" class="font-medium">Operation successful</span>
+  <button onclick="hideToast()" class="ml-auto text-white hover:text-gray-200 focus:outline-none">✖</button>
+</div>
+</div>
+
+  
   
 
     <!-- Authentication Modal -->
     <div id="authModal" class="modal">
         <div class="modal-content">
             <h3 class="text-lg font-semibold mb-4 text-center">লগইন করুন</h3>
-            <form id="loginForm" onsubmit="return false">
+            <div id="loginForm">
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-2">ইমেইল</label>
-                    <input id="loginEmail" type="email" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="আপনার ইমেইল লিখুন" autocomplete="username"/>
+                    <input id="loginEmail" type="email" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="আপনার ইমেইল লিখুন" />
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-2">পাসওয়ার্ড</label>
-                    <input id="loginPassword" type="password" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="আপনার পাসওয়ার্ড লিখুন" autocomplete="current-password"/>
+                    <input id="loginPassword" type="password" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="আপনার পাসওয়ার্ড লিখুন" />
                 </div>
                 <button id="loginBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors">লগইন</button>
                 <div class="my-4 text-center relative">
@@ -82,16 +83,16 @@
                     অ্যাডমিন অ্যাকাউন্ট নেই?
                     <button id="showRegister" class="text-blue-600 hover:underline">রেজিস্টার করুন</button>
                 </p>
-            </form>
+            </div>
 
-            <form id="registerForm" class="hidden">
+            <div id="registerForm" class="hidden">
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-2">ইমেইল</label>
-                    <input id="registerEmail" type="email" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="আপনার ইমেইল লিখুন"   autocomplete="username"/>
+                    <input id="registerEmail" type="email" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="আপনার ইমেইল লিখুন" />
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-2">পাসওয়ার্ড</label>
-                    <input id="registerPassword" type="password" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="পাসওয়ার্ড লিখুন (ন্যূনতম ৬ অক্ষর)" autocomplete="current-password"/>
+                    <input id="registerPassword" type="password" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="পাসওয়ার্ড লিখুন (ন্যূনতম ৬ অক্ষর)" />
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-2">অ্যাডমিন টাইপ</label>
@@ -105,7 +106,7 @@
                     ইতিমধ্যে অ্যাকাউন্ট আছে?
                     <button id="showLogin" class="text-blue-600 hover:underline">লগইন করুন</button>
                 </p>
-            </form>
+            </div>
         </div>
     </div>
 
@@ -148,16 +149,15 @@
     <div id="adminModal" class="modal hidden">
         <div class="modal-content max-w-md">
             <h3 id="adminModalTitle" class="text-lg font-semibold mb-4">নতুন অ্যাডমিন</h3>
-
-            <form id="adminModalContent" onsubmit="return false">
+            <div id="adminModalContent">
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium mb-2">ইমেইল</label>
-                        <input id="adminEmail" type="email" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700" placeholder="অ্যাডমিনের ইমেইল" autocomplete="username">
+                        <input id="adminEmail" type="email" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700" placeholder="অ্যাডমিনের ইমেইল">
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-2">পাসওয়ার্ড</label>
-                        <input id="adminPassword" type="password" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700" placeholder="পাসওয়ার্ড (ন্যূনতম ৬ অক্ষর)" autocomplete="current-password">
+                        <input id="adminPassword" type="password" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700" placeholder="পাসওয়ার্ড (ন্যূনতম ৬ অক্ষর)">
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-2">অ্যাডমিন টাইপ</label>
@@ -184,7 +184,7 @@
                         </div>
                     </div>
                 </div>
-            </form>
+            </div>
             <div class="modal-footer">
                 <button id="cancelAdmin" class="px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded-lg">বাতিল</button>
                 <button id="saveAdmin" class="px-4 py-2 bg-blue-600 text-white rounded-lg">সংরক্ষণ করুন</button>
@@ -215,33 +215,28 @@
     <!-- App Container -->
     <div id="appContainer" class="hidden">
         <!-- Header -->
-      <!-- Header section এ যোগ করুন -->
-<header class="bg-white dark:bg-gray-800 shadow-sm">
-    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-        <div class="flex items-center space-x-4">
-            <h1 class="text-xl font-bold text-gray-800 dark:text-white">Smart Group Evaluator</h1>
-        </div>
-        <div class="flex items-center space-x-4">
-            <!-- User info will be shown when logged in -->
-            <div id="userInfo" class="text-sm text-gray-600 dark:text-gray-300"></div>
-            
-            <!-- Login button for public users -->
-            <button id="headerLoginBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors hidden">
-                লগইন
-            </button>
-            
-            <!-- Logout button for logged in users -->
-            <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors hidden">
-                লগআউট
-            </button>
-        </div>
-    </div>
+        <header class="bg-white dark:bg-darkCard shadow-sm border-b border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between p-4">
+                <div class="flex items-center space-x-4">
+                    <button id="mobileMenuBtn" class="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 id="pageTitle" class="text-xl font-bold">ড্যাশবোর্ড</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="themeToggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <i class="fas fa-moon text-gray-800 dark:text-yellow-400"></i>
+                    </button>
+                    <div id="userInfo" class="text-right">
+                        <div class="text-xs text-gray-500">সাধারণ ব্যবহারকারী</div>
+                    </div>
+                    <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors hidden">
+                        লগআউট
+                    </button>
+                </div>
+            </div>
+        </header>
 
- 
-<button id="loginHeaderBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors hidden">
-    লগইন
-</button>
-</header>
         <!-- Main Layout -->
         <div class="app-container">
             <!-- Sidebar -->
@@ -254,7 +249,7 @@
                         <i class="fas fa-layer-group mr-3"></i>গ্রুপ ব্যবস্থাপনা
                     </button>
                     <button class="nav-btn private-tab" data-page="members">
-                        <i class="fas fa-user-plus mr-3 privet-only"></i>সদস্য যোগ করুন
+                        <i class="fas fa-user-plus mr-3"></i>সদস্য যোগ করুন
                     </button>
                     <button class="nav-btn private-tab" data-page="group-members">
                         <i class="fas fa-users mr-3"></i>গ্রুপ সদস্য
@@ -280,7 +275,7 @@
                     <button class="nav-btn" data-page="export">
                         <i class="fas fa-file-export mr-3"></i>এক্সপোর্ট
                     </button>
-                    <div id="adminManagementSection" >
+                    <div id="adminManagementSection" class="hidden">
                         <button class="nav-btn private-tab" data-page="admin-management">
                             <i class="fas fa-user-shield mr-3"></i>অ্যাডমিন ব্যবস্থাপনা
                         </button>
@@ -336,7 +331,7 @@
                       </div>
 
                     <!-- Groups Management -->
-                    <div id="page-groups" class="page hidden privet-only">
+                    <div id="page-groups" class="page hidden">
                         <div class="mb-6">
                             <h3 class="text-lg font-semibold mb-4">গ্রুপ তৈরি করুন</h3>
                             <div class="flex gap-2">
@@ -456,7 +451,7 @@
                     </div>
 
                     <!-- All Students -->
-                    <div id="page-all-students" class="page  hidden">
+                    <div id="page-all-students" class="page hidden">
                         <div class="mb-6">
                             <h3 class="text-lg font-semibold mb-4">সকল শিক্ষার্থী</h3>
                             <div class="flex flex-col md:flex-row gap-4 mb-4">
@@ -532,7 +527,7 @@
                     </div>
 
                     <!-- Evaluation -->
-                    <div id="page-evaluation" class="page hidden ">
+                    <div id="page-evaluation" class="page hidden">
                         <div class="mb-6">
                             <h3 class="text-lg font-semibold mb-4">মূল্যায়ন শুরু করুন</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -557,7 +552,7 @@
                                             <th class="border border-gray-300 dark:border-gray-600 p-2">গ্রুপ</th>
                                             <th class="border border-gray-300 dark:border-gray-600 p-2">তারিখ</th>
                                             <th class="border border-gray-300 dark:border-gray-600 p-2">মোট স্কোর</th>
-                                            <th class="border border-gray-300 dark:border-gray-600 p-2">কার্যক্রম</th>
+                                            <th class="border border-gray-300 dark:border-gray-600 p-2">গ্রুপ গড় মার্কস</th>
                                         </tr>
                                     </thead>
                                     <tbody id="evaluationListTable"></tbody>
@@ -606,6 +601,9 @@
                                 </div>
                                 <div class="mt-4">
                                     <button id="processImportBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors hidden">ইম্পোর্ট প্রসেস করুন</button>
+                                    <button id="processImportBtn" class="btn btn-primary" disabled>
+                                        ইম্পোর্ট প্রসেস করুন
+                                    </button>
                                 </div>
                             </div>
                             <div>
@@ -664,11 +662,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     
     <!-- Main Application -->
-    <!-- <script src="app.js"></script> -->
-    <!-- <script src="./OPT2.JS"></script> -->
-    <!-- <script src="./OPT3.JS"></script> -->
-
-    <script src="./optimiseMain2.js"></script>
-
+    <script src="app3.js"></script>
 </body>
 </html>

@@ -1,4 +1,3 @@
-<!-- index2.html -->
 <!DOCTYPE html>
 <html lang="bn">
 <head>
@@ -36,7 +35,416 @@
         };
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        /* Custom CSS for improved design */
+        .glass-card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .rank-1-card {
+            background: linear-gradient(135deg, #FFD700, #FFEC8B);
+            border: 2px solid #FFD700;
+        }
+        
+        .rank-2-card {
+            background: linear-gradient(135deg, #C0C0C0, #E8E8E8);
+            border: 2px solid #C0C0C0;
+        }
+        
+        .rank-3-card {
+            background: linear-gradient(135deg, #CD7F32, #E9B076);
+            border: 2px solid #CD7F32;
+        }
+        
+        .rank-title {
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .rank-1-title {
+            color: #B8860B;
+        }
+        
+        .rank-2-title {
+            color: #808080;
+        }
+        
+        .rank-3-title {
+            color: #8B4513;
+        }
+        
+        .student-card-bg-1 { background: linear-gradient(135deg, #E3F2FD, #BBDEFB); }
+        .student-card-bg-2 { background: linear-gradient(135deg, #E8F5E9, #C8E6C9); }
+        .student-card-bg-3 { background: linear-gradient(135deg, #FFF3E0, #FFE0B2); }
+        .student-card-bg-4 { background: linear-gradient(135deg, #F3E5F5, #E1BEE7); }
+        .student-card-bg-5 { background: linear-gradient(135deg, #E0F2F1, #B2DFDB); }
+        .student-card-bg-6 { background: linear-gradient(135deg, #FFF8E1, #FFECB3); }
+        .student-card-bg-7 { background: linear-gradient(135deg, #E8EAF6, #C5CAE9); }
+        .student-card-bg-8 { background: linear-gradient(135deg, #FCE4EC, #F8BBD0); }
+        
+        .member-role-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 5px;
+        }
+        
+        .team-leader { background-color: #FFEBCD; color: #8B4513; }
+        .time-keeper { background-color: #E6E6FA; color: #4B0082; }
+        .reporter { background-color: #F0FFF0; color: #006400; }
+        .resource-manager { background-color: #FFF0F5; color: #8B008B; }
+        .peace-maker { background-color: #F5F5DC; color: #8B4513; }
+        
+        .progress-bar {
+            height: 8px;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .score-meter {
+            height: 8px;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .score-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .score-excellent { background-color: #10B981; }
+        .score-good { background-color: #F59E0B; }
+        .score-average { background-color: #F59E0B; }
+        .score-poor { background-color: #EF4444; }
+        
+        .rank-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 0.875rem;
+        }
+        
+        .rank-1 { background-color: #FFD700; color: #000; }
+        .rank-2 { background-color: #C0C0C0; color: #000; }
+        .rank-3 { background-color: #CD7F32; color: #FFF; }
+        .rank-other { background-color: #E5E7EB; color: #4B5563; }
+        
+        /* Toast Notification Styles */
+        #toast {
+            position: fixed;
+            z-index: 100;
+            transition: all 0.5s ease;
+        }
+        
+        .toast-success {
+            background-color: #10B981;
+            color: white;
+        }
+        
+        .toast-error {
+            background-color: #EF4444;
+            color: white;
+        }
+        
+        .toast-warning {
+            background-color: #F59E0B;
+            color: white;
+        }
+        
+        .toast-info {
+            background-color: #3B82F6;
+            color: white;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+        }
+        
+        .dark .modal-content {
+            background-color: #1e293b;
+            color: #e2e8f0;
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        /* Policy Section Styles */
+        .policy-section {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+        
+        .dark .policy-section {
+            border-color: #374151;
+        }
+        
+        .policy-header {
+            padding: 1rem;
+            background-color: #f9fafb;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .dark .policy-header {
+            background-color: #374151;
+        }
+        
+        .policy-content {
+            padding: 0 1rem;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+        
+        .policy-content.open {
+            padding: 1rem;
+            max-height: 500px;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            width: 250px;
+            background-color: white;
+            transition: transform 0.3s ease;
+            z-index: 40;
+        }
+        
+        .dark .sidebar {
+            background-color: #1e293b;
+        }
+        
+        .nav-btn {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-radius: 0.375rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+        }
+        
+        .nav-btn:hover {
+            background-color: #f3f4f6;
+        }
+        
+        .dark .nav-btn:hover {
+            background-color: #374151;
+        }
+        
+        .nav-btn.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .modal-content {
+                width: 95%;
+                padding: 1rem;
+            }
+            
+            #toast {
+                left: 1rem;
+                right: 1rem;
+                bottom: 1rem;
+                top: auto;
+            }
+        }
+        
+        @media (min-width: 769px) {
+            .sidebar {
+                position: sticky;
+                top: 0;
+                height: 100vh;
+                overflow-y: auto;
+            }
+            
+            .main-content {
+                margin-left: 250px;
+                width: calc(100% - 250px);
+            }
+            
+            #toast {
+                bottom: 1.5rem;
+                right: 1.5rem;
+                left: auto;
+                top: auto;
+            }
+        }
+        
+        /* Header Styles */
+        .header {
+            background-color: white;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            position: sticky;
+            top: 0;
+            z-index: 30;
+        }
+        
+        .dark .header {
+            background-color: #1e293b;
+        }
+        
+        /* Student Card Styles */
+        .student-card {
+            border-radius: 0.75rem;
+            padding: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .student-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        /* Tab Styles for Student Details */
+        .tab-buttons {
+            display: flex;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .dark .tab-buttons {
+            border-color: #374151;
+        }
+        
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .tab-button.active {
+            border-bottom-color: #3b82f6;
+            color: #3b82f6;
+            font-weight: 600;
+        }
+        
+        .tab-pane {
+            display: none;
+            padding: 1.5rem 0;
+        }
+        
+        .tab-pane.active {
+            display: block;
+        }
+        
+        /* Evaluation Table Styles */
+        .evaluation-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .evaluation-table th,
+        .evaluation-table td {
+            border: 1px solid #e5e7eb;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        
+        .dark .evaluation-table th,
+        .dark .evaluation-table td {
+            border-color: #374151;
+        }
+        
+        .evaluation-table th {
+            background-color: #f9fafb;
+            font-weight: 600;
+        }
+        
+        .dark .evaluation-table th {
+            background-color: #374151;
+        }
+        
+        /* Loading Animation */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-spinner {
+            animation: spin 1s linear infinite;
+        }
+    </style>
 
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -44,19 +452,18 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 </head>
 <body class="bg-gray-50 dark:bg-darkBg text-gray-800 dark:text-gray-200 transition-colors duration-300">
- <!-- Toast Notification -->
-<div id="toast" class="fixed bottom-6 right-6 z-50 hidden transition-all duration-500 transform translate-y-4 opacity-0">
-    <div id="toastBox" class="bg-green-500 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-3 min-w-[280px] max-w-[380px]">
-        <i id="toastIcon" class="fas fa-check-circle text-xl"></i>
-        <span id="toastMessage" class="font-medium">Operation successful</span>
-        <button onclick="hideToast()" class="ml-auto text-white hover:text-gray-200 focus:outline-none">✖</button>
+    <!-- Toast Notification -->
+    <div id="toast" class="hidden transition-all duration-500 transform translate-y-4 opacity-0">
+        <div id="toastBox" class="px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-3 min-w-[280px] max-w-[380px]">
+            <i id="toastIcon" class="fas text-xl"></i>
+            <span id="toastMessage" class="font-medium">Operation successful</span>
+            <button onclick="smartEvaluator.hideToast()" class="ml-auto hover:opacity-70 focus:outline-none">✖</button>
+        </div>
     </div>
-  </div>
-  
 
     <!-- Authentication Modal -->
     <div id="authModal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content max-w-md">
             <h3 class="text-lg font-semibold mb-4 text-center">লগইন করুন</h3>
             <div id="loginForm">
                 <div class="mb-4">
@@ -126,6 +533,35 @@
             <div class="modal-footer">
                 <button id="cancelEdit" class="px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded-lg">বাতিল</button>
                 <button id="saveEdit" class="px-4 py-2 bg-blue-600 text-white rounded-lg">সংরক্ষণ করুন</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Details Modal -->
+    <div id="studentDetailsModal" class="modal hidden">
+        <div class="modal-content max-w-4xl max-h-[90vh]">
+            <h3 id="studentDetailsTitle" class="text-lg font-semibold mb-4">শিক্ষার্থী বিস্তারিত ফলাফল</h3>
+            
+            <div class="tab-buttons">
+                <button class="tab-button active" data-tab="summary">সারসংক্ষেপ</button>
+                <button class="tab-button" data-tab="detailed">বিস্তারিত ফলাফল</button>
+                <button class="tab-button" data-tab="analytics">বিশ্লেষণ</button>
+            </div>
+            
+            <div id="tab-summary" class="tab-pane active">
+                <div id="studentSummaryContent"></div>
+            </div>
+            
+            <div id="tab-detailed" class="tab-pane">
+                <div id="studentDetailedContent"></div>
+            </div>
+            
+            <div id="tab-analytics" class="tab-pane">
+                <div id="studentAnalyticsContent"></div>
+            </div>
+            
+            <div class="modal-footer">
+                <button id="closeStudentDetails" class="px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded-lg">বন্ধ করুন</button>
             </div>
         </div>
     </div>
@@ -203,7 +639,7 @@
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
         <div class="bg-white dark:bg-darkCard rounded-lg p-6 flex flex-col items-center">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+            <div class="loading-spinner rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
             <p class="text-gray-600 dark:text-gray-400">লোড হচ্ছে...</p>
         </div>
     </div>
@@ -211,13 +647,16 @@
     <!-- App Container -->
     <div id="appContainer" class="hidden">
         <!-- Header -->
-        <header class="bg-white dark:bg-darkCard shadow-sm border-b border-gray-200 dark:border-gray-700">
+        <header class="header">
             <div class="flex items-center justify-between p-4">
                 <div class="flex items-center space-x-4">
                     <button id="mobileMenuBtn" class="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
                         <i class="fas fa-bars"></i>
                     </button>
-                    <h1 id="pageTitle" class="text-xl font-bold">ড্যাশবোর্ড</h1>
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-users text-blue-600 text-xl"></i>
+                        <h1 id="pageTitle" class="text-xl font-bold">ড্যাশবোর্ড</h1>
+                    </div>
                 </div>
                 <div class="flex items-center space-x-4">
                     <button id="themeToggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
@@ -234,9 +673,15 @@
         </header>
 
         <!-- Main Layout -->
-        <div class="app-container">
+        <div class="flex">
             <!-- Sidebar -->
-            <div class="sidebar">
+            <div id="sidebar" class="sidebar">
+                <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-graduation-cap text-blue-600"></i>
+                        <span class="font-bold">Smart Evaluator</span>
+                    </div>
+                </div>
                 <nav class="p-4 space-y-2">
                     <button class="nav-btn active" data-page="dashboard">
                         <i class="fas fa-tachometer-alt mr-3"></i>ড্যাশবোর্ড
@@ -280,8 +725,8 @@
             </div>
 
             <!-- Main Content -->
-            <div class="main-content">
-                <div class="page-content">
+            <div class="main-content flex-1 min-h-screen">
+                <div class="page-content p-4">
                     <!-- Dashboard -->
                     <div id="page-dashboard" class="page space-y-6">
                         <!-- Stats Summary -->
@@ -290,52 +735,42 @@
                         </div>
                       
                         <!-- একাডেমিক গ্রুপ -->
-                        <div class="card">
-                          <div class="card-header">
-                            <h3 class="card-title">একাডেমিক গ্রুপ</h3>
+                        <div class="bg-white dark:bg-darkCard rounded-xl p-6 shadow-sm">
+                          <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold">একাডেমিক গ্রুপ</h3>
                           </div>
-                          <div class="card-body">
-                            <div id="academicGroupStatsList" class="space-y-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3  gap-6 auto-rows-[minmax(100px,auto)]"></div>
-                          </div>
+                          <div id="academicGroupStatsList" class="space-y-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 auto-rows-[minmax(100px,auto)]"></div>
                         </div>
                       
                         <!-- শীর্ষ গ্রুপসমূহ -->
-                        <div class="top-groups-section">
-                          <div class="card">
-                            <div class="card-header">
-                              <h3 class="card-title">শীর্ষ গ্রুপসমূহ</h3>
-                            </div>
-                            <div class="card-body">
-                              <div id="topGroupsContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <!-- Top groups cards will go here -->
-                              </div>
-                            </div>
+                        <div class="bg-white dark:bg-darkCard rounded-xl p-6 shadow-sm">
+                          <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold">শীর্ষ গ্রুপসমূহ</h3>
+                          </div>
+                          <div id="topGroupsContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- Top groups cards will go here -->
                           </div>
                         </div>
                       
                         <!-- গ্রুপ র‌্যাঙ্কিং -->
-                        <div class="groups-ranking-section">
-                          <div class="card">
-                            <div class="card-header">
-                              <h3 class="card-title">গ্রুপ র‌্যাঙ্কিং</h3>
-                            </div>
-                            <div class="card-body">
-                              <div id="groupsRankingList" class="space-y-3"></div>
-                            </div>
+                        <div class="bg-white dark:bg-darkCard rounded-xl p-6 shadow-sm">
+                          <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold">গ্রুপ র‌্যাঙ্কিং</h3>
                           </div>
+                          <div id="groupsRankingList" class="space-y-3"></div>
                         </div>
-                      </div>
+                    </div>
 
                     <!-- Groups Management -->
                     <div id="page-groups" class="page hidden">
-                        <div class="mb-6">
+                        <div class="bg-white dark:bg-darkCard rounded-xl p-6 shadow-sm mb-6">
                             <h3 class="text-lg font-semibold mb-4">গ্রুপ তৈরি করুন</h3>
-                            <div class="flex gap-2">
+                            <div class="flex flex-col md:flex-row gap-2">
                                 <input id="groupNameInput" type="text" placeholder="গ্রুপের নাম লিখুন" class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700" maxlength="50" />
-                                <button id="addGroupBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">গ্রুপ যোগ করুন</button>
+                                <button id="addGroupBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors mt-2 md:mt-0">গ্রুপ যোগ করুন</button>
                             </div>
                         </div>
-                        <div>
+                        <div class="bg-white dark:bg-darkCard rounded-xl p-6 shadow-sm">
                             <h3 class="text-lg font-semibold mb-4">গ্রুপ তালিকা</h3>
                             <div id="groupsList" class="space-y-3"></div>
                         </div>
@@ -435,7 +870,7 @@
 
                     <!-- Group Members -->
                     <div id="page-group-members" class="page hidden">
-                        <div class="mb-6">
+                        <div class="bg-white dark:bg-darkCard rounded-xl p-6 shadow-sm">
                             <h3 class="text-lg font-semibold mb-4">গ্রুপ সদস্য ব্যবস্থাপনা ও ফিল্টার</h3>
                             <div class="flex gap-4 mb-4">
                                 <select id="groupMembersGroupSelect" class="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700">
@@ -448,7 +883,7 @@
 
                     <!-- All Students -->
                     <div id="page-all-students" class="page hidden">
-                        <div class="mb-6">
+                        <div class="bg-white dark:bg-darkCard rounded-xl p-6 shadow-sm">
                             <h3 class="text-lg font-semibold mb-4">সকল শিক্ষার্থী</h3>
                             <div class="flex flex-col md:flex-row gap-4 mb-4">
                                 <select id="cardsFilterGroup" class="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700">
@@ -462,7 +897,7 @@
 
                     <!-- Student Ranking -->
                     <div id="page-student-ranking" class="page hidden">
-                        <div class="mb-6">
+                        <div class="bg-white dark:bg-darkCard rounded-xl p-6 shadow-sm">
                             <div class="flex justify-between items-center mb-4">
                                 <h3 class="text-lg font-semibold">শিক্ষার্থী র‌্যাঙ্কিং</h3>
                                 <button id="refreshRanking" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
@@ -475,11 +910,11 @@
 
                     <!-- Group Analysis -->
                     <div id="page-group-analysis" class="page hidden">
-                        <div class="mb-6">
+                        <div class="bg-white dark:bg-darkCard rounded-xl p-6 shadow-sm">
                             <div class="flex flex-col md:flex-row gap-4 mb-4">
                                 <select id="analysisGroupSelect" multiple class="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 dark:bg-gray-700 h-32">
                                 </select>
-                                <button id="updateAnalysisBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors whitespace-nowrap">
+                                <button id="updateAnalysisBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors whitespace-nowrap mt-2 md:mt-0">
                                     বিশ্লেষণ আপডেট করুন
                                 </button>
                             </div>
@@ -494,7 +929,7 @@
 
                     <!-- Tasks Management -->
                     <div id="page-tasks" class="page hidden">
-                        <div class="mb-6">
+                        <div class="bg-white dark:bg-darkCard rounded-xl p-6 shadow-sm mb-6">
                             <h3 class="text-lg font-semibold mb-4">নতুন টাস্ক তৈরি করুন</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <div>
@@ -516,7 +951,7 @@
                             </div>
                             <button id="addTaskBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">টাস্ক যোগ করুন</button>
                         </div>
-                        <div>
+                        <div class="bg-white dark:bg-darkCard rounded-xl p-6 shadow-sm">
                             <h3 class="text-lg font-semibold mb-4">টাস্ক তালিকা</h3>
                             <div id="tasksList" class="space-y-4"></div>
                         </div>
@@ -524,7 +959,7 @@
 
                     <!-- Evaluation -->
                     <div id="page-evaluation" class="page hidden">
-                        <div class="mb-6">
+                        <div class="bg-white dark:bg-darkCard rounded-xl p-6 shadow-sm mb-6">
                             <h3 class="text-lg font-semibold mb-4">মূল্যায়ন শুরু করুন</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <div>
@@ -538,7 +973,7 @@
                             </div>
                             <button id="startEvaluationBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">মূল্যায়ন শুরু করুন</button>
                         </div>
-                        <div class="mb-6">
+                        <div class="bg-white dark:bg-darkCard rounded-xl p-6 shadow-sm mb-6">
                             <h3 class="text-lg font-semibold mb-4">মূল্যায়ন তালিকা</h3>
                             <div class="overflow-x-auto">
                                 <table class="w-full border-collapse border border-gray-300 dark:border-gray-600">
@@ -571,19 +1006,19 @@
                         <div class="max-w-2xl mx-auto">
                             <h3 class="text-lg font-semibold mb-6">ডেটা এক্সপোর্ট</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                                <button id="exportAllData" class="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-lg transition-colors flex flex-col items-center">
+                                <button id="exportAllData" class="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-lg transition-colors flex flex-col items-center card-hover">
                                     <i class="fas fa-file-archive text-2xl mb-2"></i>
                                     <span>সমস্ত ডেটা (ZIP)</span>
                                 </button>
-                                <button id="exportStudentsCSV" class="bg-green-600 hover:bg-green-700 text-white p-4 rounded-lg transition-colors flex flex-col items-center">
+                                <button id="exportStudentsCSV" class="bg-green-600 hover:bg-green-700 text-white p-4 rounded-lg transition-colors flex flex-col items-center card-hover">
                                     <i class="fas fa-user-graduate text-2xl mb-2"></i>
                                     <span>শিক্ষার্থী CSV</span>
                                 </button>
-                                <button id="exportGroupsCSV" class="bg-purple-600 hover:bg-purple-700 text-white p-4 rounded-lg transition-colors flex flex-col items-center">
+                                <button id="exportGroupsCSV" class="bg-purple-600 hover:bg-purple-700 text-white p-4 rounded-lg transition-colors flex flex-col items-center card-hover">
                                     <i class="fas fa-layer-group text-2xl mb-2"></i>
                                     <span>গ্রুপ CSV</span>
                                 </button>
-                                <button id="exportEvaluationsCSV" class="bg-orange-600 hover:bg-orange-700 text-white p-4 rounded-lg transition-colors flex flex-col items-center">
+                                <button id="exportEvaluationsCSV" class="bg-orange-600 hover:bg-orange-700 text-white p-4 rounded-lg transition-colors flex flex-col items-center card-hover">
                                     <i class="fas fa-clipboard-check text-2xl mb-2"></i>
                                     <span>মূল্যায়ন CSV</span>
                                 </button>
@@ -610,7 +1045,7 @@
 
                     <!-- Admin Management -->
                     <div id="page-admin-management" class="page hidden">
-                        <div class="mb-6">
+                        <div class="bg-white dark:bg-darkCard rounded-xl p-6 shadow-sm">
                             <div class="flex justify-between items-center mb-4">
                                 <h3 class="text-lg font-semibold">অ্যাডমিন ব্যবস্থাপনা</h3>
                                 <button id="addAdminBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
@@ -655,8 +1090,68 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     
     <!-- Main Application -->
-    <script src="app2.js"></script>
+    <script src="./opt.js"></script>
 
-    <!-- <script src="./app2.js"></script> -->
+    <script>
+        // Additional JavaScript for improved UI interactions
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab functionality for student details
+            document.addEventListener('click', function(e) {
+                if (e.target && e.target.classList.contains('tab-button')) {
+                    const tabName = e.target.getAttribute('data-tab');
+                    // Switch tab
+                    document.querySelectorAll('.tab-button').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    document.querySelectorAll('.tab-pane').forEach(pane => {
+                        pane.classList.remove('active');
+                    });
+                    
+                    e.target.classList.add('active');
+                    document.getElementById(`tab-${tabName}`).classList.add('active');
+                    
+                    // If analytics tab is selected, render analytics
+                    if (tabName === 'analytics' && window.smartEvaluator && window.smartEvaluator.currentStudentDetails) {
+                        window.smartEvaluator.renderStudentAnalytics(window.smartEvaluator.currentStudentDetails.id);
+                    }
+                }
+            });
+            
+            // Policy section toggle
+            document.addEventListener('click', function(e) {
+                if (e.target && e.target.closest('.policy-header')) {
+                    const header = e.target.closest('.policy-header');
+                    const content = header.nextElementSibling;
+                    const icon = header.querySelector('i');
+                    
+                    if (content.classList.contains('open')) {
+                        content.classList.remove('open');
+                        icon.classList.remove('rotate-180');
+                    } else {
+                        content.classList.add('open');
+                        icon.classList.add('rotate-180');
+                    }
+                }
+            });
+            
+            // Mobile menu toggle
+            document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+                document.getElementById('sidebar').classList.toggle('open');
+            });
+            
+            // Close mobile menu when clicking outside
+            document.addEventListener('click', function(e) {
+                const sidebar = document.getElementById('sidebar');
+                const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+                
+                if (window.innerWidth < 769 && 
+                    !sidebar.contains(e.target) && 
+                    !mobileMenuBtn.contains(e.target) && 
+                    sidebar.classList.contains('open')) {
+                    sidebar.classList.remove('open');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

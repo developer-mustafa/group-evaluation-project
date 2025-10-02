@@ -1,4 +1,4 @@
-// app2.js - COMPLETE FIXED VERSION WITH ALL FEATURES
+// optimiseMain.js - COMPLETELY FIXED AUTHENTICATION & ROLE-BASED ACCESS
 class CacheManager {
     constructor() {
         this.CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
@@ -66,6 +66,7 @@ class SmartGroupEvaluator {
     constructor() {
         this.cache = new CacheManager();
         this.currentUser = null;
+        this.currentUserData = null;
         this.isPublicMode = true;
         this.currentChart = null;
         this.isInitialized = false;
@@ -153,18 +154,25 @@ class SmartGroupEvaluator {
 
     async init() {
         this.setupDOMReferences();
-        await this.initializeFirebase();
         this.setupEventListeners();
-        this.setupAuthStateListener();
         this.applySavedTheme();
+        
+        // Initialize Firebase and check auth state
+        await this.initializeFirebase();
+        
         this.isInitialized = true;
+        console.log('Smart Evaluator initialized successfully');
     }
 
     async initializeFirebase() {
         try {
-            // Test Firebase connection
+            // Test Firebase connection with public read
             await db.collection('groups').limit(1).get();
-            console.log('Firebase connected successfully');
+            console.log('Firebase connected successfully - Public read works');
+            
+            // Set up auth state listener
+            this.setupAuthStateListener();
+            
         } catch (error) {
             console.error('Firebase connection failed:', error);
             this.showToast('ডেটাবেস সংযোগ ব্যর্থ', 'error');
@@ -184,6 +192,7 @@ class SmartGroupEvaluator {
             registerBtn: document.getElementById("registerBtn"),
             googleSignInBtn: document.getElementById("googleSignInBtn"),
             logoutBtn: document.getElementById("logoutBtn"),
+            headerLoginBtn: document.getElementById("headerLoginBtn"),
             themeToggle: document.getElementById("themeToggle"),
             mobileMenuBtn: document.getElementById("mobileMenuBtn"),
             sidebar: document.querySelector(".sidebar"),
@@ -295,6 +304,7 @@ class SmartGroupEvaluator {
         this.addListener(this.dom.loginBtn, 'click', () => this.handleLogin());
         this.addListener(this.dom.registerBtn, 'click', () => this.handleRegister());
         this.addListener(this.dom.googleSignInBtn, 'click', () => this.handleGoogleSignIn());
+        this.addListener(this.dom.headerLoginBtn, 'click', () => this.showAuthModal());
 
         // Logout events
         this.addListener(this.dom.logoutBtn, 'click', () => this.showLogoutModal());
@@ -414,77 +424,165 @@ class SmartGroupEvaluator {
     }
 
     // ===============================
-    // AUTHENTICATION - FIXED AUTO LOGIN/LOGOUT
-    // ===============================
-    setupAuthStateListener() {
-        auth.onAuthStateChanged(async (user) => {
-            console.log('Auth State Changed:', user);
-            this.currentUser = user;
-            
-            if (user) {
-                console.log('User automatically logged in:', user.email);
-                await this.handleAutoLogin(user);
-            } else {
-                console.log('User automatically logged out');
-                await this.handleAutoLogout();
-            }
-        });
-    }
+// AUTHENTICATION - COMPLETELY FIXED
+// ===============================
 
-    async handleAutoLogin(user) {
+setupAuthStateListener() {
+    auth.onAuthStateChanged(async (user) => {
+        console.log('Auth State Changed:', user);
+        
+        if (user) {
+            // User logged in
+            console.log('User logged in:', user.email);
+            await this.handleSuccessfulLogin(user);
+        } else {
+            // User logged out
+            console.log('User logged out - public mode');
+            await this.handlePublicMode();
+        }
+    });
+}
+
+async handlePublicMode() {
+    try {
+        this.isPublicMode = true;
+        this.currentUser = null;
+        this.currentUserData = null;
+        
+        // Update UI for public user
+        this.updateUserInterface(null);
+        
+        // Load only public data
+        await this.loadPublicData();
+        
+        // Enable only public navigation
+        this.enableAllNavigation(false);
+        
+        // Ensure we're on a public page
+        this.ensurePublicPage();
+        
+        console.log('Public mode activated - only public pages visible');
+        
+    } catch (error) {
+        console.error("Public mode handling error:", error);
+    }
+}
+
+async handleSuccessfulLogin(user) {
+    try {
         this.isPublicMode = false;
+        this.currentUser = user;
         
-        // Update UI immediately
-        this.updateAuthUI(false);
+        // Get user admin data
+        const userData = await this.getUserAdminData(user);
+        this.currentUserData = userData;
         
+        console.log('User data loaded:', userData);
+        
+        // Update UI for logged in user
+        this.updateUserInterface(userData);
+        
+        // Hide auth modal and show app
+        this.dom.authModal.classList.add('hidden');
+        this.dom.appContainer.classList.remove('hidden');
+        
+        // Load ALL data for authenticated user
+        await this.loadInitialData();
+        
+        // Enable role-based navigation - ALL private pages for logged in users
+        this.enableRoleBasedNavigation(userData);
+        
+        this.showToast(`লগইন সফল! ${user.email}`, 'success');
+        
+    } catch (error) {
+        console.error("Login handling error:", error);
+        this.showToast('লগইন সম্পন্ন কিন্তু ডেটা লোড করতে সমস্যা', 'warning');
+    }
+}
+    async handlePublicMode() {
         try {
-            const userData = await this.getUserAdminData(user);
-            this.updateUserInterface(userData);
+            this.isPublicMode = true;
+            this.currentUser = null;
+            this.currentUserData = null;
             
-            // Load all data for authenticated user
-            await this.loadInitialData();
+            // Update UI for public user
+            this.updateUserInterface(null);
             
-            // Update dashboard with fresh data
-            if (document.getElementById('page-dashboard') && !document.getElementById('page-dashboard').classList.contains('hidden')) {
-                await this.loadDashboard();
-            }
+            // Load only public data
+            await this.loadPublicData();
             
-            this.showToast(`স্বয়ংক্রিয় লগইন সফল! ${user.email}`, 'success');
+            // Enable only public navigation
+            this.enableAllNavigation(false);
+            
+            // Ensure we're on a public page
+            this.ensurePublicPage();
+            
+            console.log('Public mode activated');
             
         } catch (error) {
-            console.error("Auto login handling error:", error);
-            this.showToast('স্বয়ংক্রিয় লগইন সম্পন্ন কিন্তু ডেটা লোড করতে সমস্যা', 'warning');
+            console.error("Public mode handling error:", error);
         }
     }
 
-    async handleAutoLogout() {
-        this.isPublicMode = true;
-        this.currentUser = null;
-        
-        // Update UI immediately
-        this.updateAuthUI(true);
-        
-        // Clear all cached data
-        this.cache.clearAll();
-        
-        // Reset UI state
-        this.updateUserInterface(null);
-        
-        // Load public data
-        await this.loadPublicData();
-        
-        this.showToast('স্বয়ংক্রিয় লগআউট সম্পন্ন', 'info');
+    async handleSuccessfulLogin(user) {
+        try {
+            this.isPublicMode = false;
+            this.currentUser = user;
+            
+            // Get user admin data
+            const userData = await this.getUserAdminData(user);
+            this.currentUserData = userData;
+            
+            // Update UI for logged in user
+            this.updateUserInterface(userData);
+            
+            // Hide auth modal and show app
+            this.dom.authModal.classList.add('hidden');
+            this.dom.appContainer.classList.remove('hidden');
+            
+            // Load ALL data for authenticated user
+            await this.loadInitialData();
+            
+            // Enable role-based navigation
+            this.enableRoleBasedNavigation(userData);
+            
+            this.showToast(`লগইন সফল! ${user.email}`, 'success');
+            
+        } catch (error) {
+            console.error("Login handling error:", error);
+            this.showToast('লগইন সম্পন্ন কিন্তু ডেটা লোড করতে সমস্যা', 'warning');
+        }
     }
 
-    updateAuthUI(showAuthModal) {
-        if (showAuthModal) {
-            // Show auth modal, hide app
-            if (this.dom.authModal) this.dom.authModal.classList.remove('hidden');
-            if (this.dom.appContainer) this.dom.appContainer.classList.add('hidden');
-        } else {
-            // Hide auth modal, show app
-            if (this.dom.authModal) this.dom.authModal.classList.add('hidden');
-            if (this.dom.appContainer) this.dom.appContainer.classList.remove('hidden');
+    async handleLogout() {
+        try {
+            // First sign out from Firebase
+            await auth.signOut();
+            
+            this.isPublicMode = true;
+            this.currentUser = null;
+            this.currentUserData = null;
+            
+            // Update UI for public user
+            this.updateUserInterface(null);
+            
+            // Clear all cached data
+            this.cache.clearAll();
+            
+            // Hide modals and show auth modal
+            this.dom.logoutModal.classList.add('hidden');
+            this.dom.appContainer.classList.add('hidden');
+            
+            // Load only public data
+            await this.loadPublicData();
+            
+            // Enable only public navigation
+            this.enableAllNavigation(false);
+            
+            this.showToast('লগআউট সম্পন্ন', 'info');
+        } catch (error) {
+            console.error("Logout handling error:", error);
+            this.showToast('লগআউট করতে সমস্যা', 'error');
         }
     }
 
@@ -570,21 +668,6 @@ class SmartGroupEvaluator {
         this.showLoading();
         try {
             const result = await auth.signInWithPopup(googleProvider);
-            const user = result.user;
-            
-            const adminDoc = await db.collection("admins").doc(user.uid).get();
-            if (!adminDoc.exists) {
-                await db.collection("admins").doc(user.uid).set({
-                    email: user.email,
-                    type: "admin",
-                    permissions: {
-                        read: true,
-                        write: true,
-                        delete: false
-                    },
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                });
-            }
             this.showToast('Google লগইন সফল!', 'success');
         } catch (error) {
             this.handleAuthError(error, 'google');
@@ -628,51 +711,222 @@ class SmartGroupEvaluator {
         this.showToast(errorMessage, "error");
     }
 
-    async handleLogout() {
-        try {
-            await auth.signOut();
-            this.hideLogoutModal();
-        } catch (error) {
-            console.error("Logout error:", error);
-            this.showToast("লগআউট করতে সমস্যা: " + error.message, "error");
-        }
-    }
-
     async getUserAdminData(user) {
         const cacheKey = `admin_${user.uid}`;
         const cached = this.cache.get(cacheKey);
         if (cached) return cached;
 
         try {
-            const byUid = await db.collection("admins").doc(user.uid).get();
-            if (byUid.exists) {
-                const data = byUid.data();
+            const adminDoc = await db.collection("admins").doc(user.uid).get();
+            if (adminDoc.exists) {
+                const data = adminDoc.data();
                 this.cache.set(cacheKey, data);
                 return data;
             }
-
-            const byEmailSnap = await db.collection("admins").where("email", "==", user.email).limit(1).get();
-            if (!byEmailSnap.empty) {
-                const data = byEmailSnap.docs[0].data();
-                this.cache.set(cacheKey, data);
-                return data;
-            }
-
-            // Return basic user data if not in admin collection
-            return {
+            
+            // If not in admins collection, create default admin data
+            const defaultData = {
                 email: user.email,
-                type: "user",
-                permissions: { read: true, write: false, delete: false }
+                type: "admin",
+                permissions: {
+                    read: true,
+                    write: true,
+                    delete: false
+                }
             };
+            
+            await db.collection("admins").doc(user.uid).set({
+                ...defaultData,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            });
+            
+            this.cache.set(cacheKey, defaultData);
+            return defaultData;
         } catch (error) {
             console.error("Error fetching admin data:", error);
-            // Return basic access on error
-            return {
-                email: user.email,
-                type: "user",
-                permissions: { read: true, write: false, delete: false }
-            };
+            return null;
         }
+    }
+
+    // ===============================
+// ROLE-BASED ACCESS CONTROL - FIXED
+// ===============================
+
+enableRoleBasedNavigation(userData) {
+    console.log('Enabling navigation for user type:', userData?.type);
+    
+    this.dom.navBtns.forEach(btn => {
+        const pageId = btn.getAttribute("data-page");
+        const isPublicPage = this.PUBLIC_PAGES.includes(pageId);
+        const isPrivatePage = this.PRIVATE_PAGES.includes(pageId);
+        
+        if (isPublicPage) {
+            // সবাই পাবলিক পেইজ দেখতে পারবে
+            this.enableNavButton(btn, true);
+        } else if (isPrivatePage) {
+            // প্রাইভেট পেইজ - শুধু লগইন করা ইউজারদের দেখাবে
+            if (userData) {
+                // সকল লগইন করা ইউজার প্রাইভেট পেইজ দেখতে পারবে
+                const hasAccess = this.checkPageAccess(pageId, userData);
+                this.enableNavButton(btn, hasAccess);
+                console.log(`Page ${pageId}: ${hasAccess ? 'Enabled' : 'Disabled'} for ${userData.type}`);
+            } else {
+                this.enableNavButton(btn, false);
+            }
+        } else {
+            this.enableNavButton(btn, false);
+        }
+    });
+}
+
+checkPageAccess(pageId, userData) {
+    if (!userData) return false;
+
+    // সুপার অ্যাডমিন সবকিছু এক্সেস পাবে
+    if (userData.type === 'super-admin') {
+        return true;
+    }
+    
+    // অ্যাডমিন - শুধু admin-management বাদে সব পাবে
+    if (userData.type === 'admin') {
+        const adminRestrictedPages = ['admin-management'];
+        return !adminRestrictedPages.includes(pageId);
+    }
+    
+    // সাধারণ ইউজার (user type) - সকল প্রাইভেট পেইজ এক্সেস পাবে
+    // শুধু admin-management এক্সেস পাবে না
+    const userRestrictedPages = ['admin-management'];
+    return !userRestrictedPages.includes(pageId);
+}
+
+enableAllNavigation(allEnabled) {
+    this.dom.navBtns.forEach(btn => {
+        const pageId = btn.getAttribute("data-page");
+        const isPublicPage = this.PUBLIC_PAGES.includes(pageId);
+        
+        if (allEnabled) {
+            // লগইন করা ইউজারদের জন্য সব পাবলিক পেইজ + রোল অনুযায়ী প্রাইভেট পেইজ
+            if (this.currentUser && this.currentUserData) {
+                this.enableRoleBasedNavigation(this.currentUserData);
+            } else {
+                // যদি user data না থাকে, তবুও পাবলিক পেইজ এনাবল করবে
+                this.enableNavButton(btn, isPublicPage);
+            }
+        } else {
+            // লগইন না করা ইউজার - শুধু পাবলিক পেইজ
+            this.enableNavButton(btn, isPublicPage);
+        }
+    });
+}
+
+    checkPageAccess(pageId, userData) {
+        if (!userData) return false;
+
+        // Super admin has access to everything
+        if (userData.type === 'super-admin') {
+            return true;
+        }
+        
+        // Admin has access to most pages except super-admin features
+        if (userData.type === 'admin') {
+            const adminRestrictedPages = ['admin-management'];
+            return !adminRestrictedPages.includes(pageId);
+        }
+        
+        // Regular user has limited access to private pages
+        const userAllowedPrivatePages = ['evaluation'];
+        return userAllowedPrivatePages.includes(pageId);
+    }
+
+    enableNavButton(btn, enabled) {
+        if (enabled) {
+            btn.style.opacity = "1";
+            btn.style.pointerEvents = "auto";
+            btn.disabled = false;
+            btn.classList.remove('disabled-nav');
+        } else {
+            btn.style.opacity = "0.5";
+            btn.style.pointerEvents = "none";
+            btn.disabled = true;
+            btn.classList.add('disabled-nav');
+        }
+    }
+
+    enableAllNavigation(allEnabled) {
+        this.dom.navBtns.forEach(btn => {
+            const pageId = btn.getAttribute("data-page");
+            const isPublicPage = this.PUBLIC_PAGES.includes(pageId);
+            
+            if (allEnabled) {
+                // For logged in users, enable based on role
+                if (this.currentUser && this.currentUserData) {
+                    this.enableRoleBasedNavigation(this.currentUserData);
+                } else {
+                    this.enableNavButton(btn, true);
+                }
+            } else {
+                // For public users, only enable public pages
+                this.enableNavButton(btn, isPublicPage);
+            }
+        });
+    }
+
+    updateUserInterface(userData) {
+        if (!this.dom.userInfo || !this.dom.logoutBtn || !this.dom.headerLoginBtn) return;
+
+        if (userData && this.currentUser) {
+            // User is logged in
+            this.dom.userInfo.innerHTML = `
+                <div class="font-medium">${userData.email}</div>
+                <div class="text-xs ${userData.type === "super-admin" ? "text-purple-600" : "text-blue-600"}">
+                    ${userData.type === "super-admin" ? "সুপার অ্যাডমিন" : 
+                      userData.type === "admin" ? "অ্যাডমিন" : "ব্যবহারকারী"}
+                </div>
+            `;
+            
+            // Show logout button, hide login button
+            this.dom.logoutBtn.classList.remove('hidden');
+            this.dom.headerLoginBtn.classList.add('hidden');
+            this.dom.userInfo.classList.remove('hidden');
+            
+            // Show admin features if user is admin
+            if (userData.type === 'super-admin' || userData.type === 'admin') {
+                this.enableAdminFeatures(true);
+            }
+            
+        } else {
+            // User is logged out
+            this.dom.userInfo.innerHTML = `<div class="text-xs text-gray-500">সাধারণ ব্যবহারকারী</div>`;
+            
+            // Show login button, hide logout button
+            this.dom.logoutBtn.classList.add('hidden');
+            this.dom.headerLoginBtn.classList.remove('hidden');
+            this.dom.userInfo.classList.add('hidden');
+            
+            // Hide admin features
+            this.enableAdminFeatures(false);
+        }
+    }
+
+    enableAdminFeatures(isAdmin) {
+        // Show/hide admin management section
+        if (this.dom.adminManagementSection) {
+            this.dom.adminManagementSection.style.display = isAdmin ? 'block' : 'none';
+        }
+        
+        // Enable/disable admin actions in UI
+        const adminActions = document.querySelectorAll('.admin-action');
+        adminActions.forEach(el => {
+            if (isAdmin) {
+                el.removeAttribute('disabled');
+                el.style.opacity = '1';
+                el.style.pointerEvents = 'auto';
+            } else {
+                el.setAttribute('disabled', 'true');
+                el.style.opacity = '0.5';
+                el.style.pointerEvents = 'none';
+            }
+        });
     }
 
     // ===============================
@@ -681,18 +935,34 @@ class SmartGroupEvaluator {
     async loadPublicData() {
         this.showLoading();
         try {
+            // Load only public data
             await Promise.all([
                 this.loadGroups(),
                 this.loadStudents(),
                 this.loadTasks(),
                 this.loadEvaluations()
             ]);
+            
             this.populateSelects();
             this.renderPolicySections();
             
-            // Update dashboard if it's active
-            if (document.getElementById('page-dashboard') && !document.getElementById('page-dashboard').classList.contains('hidden')) {
-                await this.loadDashboard();
+            // Load current page data
+            const currentPage = this.getActivePage();
+            if (currentPage && this.PUBLIC_PAGES.includes(currentPage)) {
+                switch(currentPage) {
+                    case 'dashboard':
+                        await this.loadDashboard();
+                        break;
+                    case 'all-students':
+                        this.renderStudentCards();
+                        break;
+                    case 'student-ranking':
+                        this.renderStudentRanking();
+                        break;
+                    case 'group-analysis':
+                        this.renderGroupAnalysis();
+                        break;
+                }
             }
             
         } catch (error) {
@@ -701,6 +971,171 @@ class SmartGroupEvaluator {
         } finally {
             this.hideLoading();
         }
+    }
+
+    async loadInitialData() {
+        this.showLoading();
+        try {
+            await Promise.all([
+                this.loadGroups(),
+                this.loadStudents(),
+                this.loadTasks(),
+                this.loadEvaluations(),
+                this.loadAdmins()
+            ]);
+            this.populateSelects();
+            this.renderPolicySections();
+        } catch (error) {
+            console.error("Initial data load error:", error);
+            this.showToast("ডেটা লোড করতে সমস্যা", "error");
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    // ===============================
+    // NAVIGATION & UI MANAGEMENT
+    // ===============================
+    async handleNavigation(event) {
+        const btn = event.currentTarget;
+        const pageId = btn.getAttribute("data-page");
+        
+        console.log('Navigation attempt to:', pageId, 'User:', this.currentUser?.email);
+        
+        // Check if navigation is enabled
+        if (btn.disabled || btn.classList.contains('disabled-nav')) {
+            this.showToast("এই পেজ এক্সেস করার অনুমতি নেই", "error");
+            return;
+        }
+    
+        // Check authentication for private pages
+        if (!this.currentUser && this.PRIVATE_PAGES.includes(pageId)) {
+            this.showToast("এই পেজ দেখতে লগইন প্রয়োজন", "error");
+            this.showAuthModal();
+            return;
+        }
+        
+        // Check role-based access for logged in users
+        if (this.currentUser && this.currentUserData) {
+            const hasAccess = this.checkPageAccess(pageId, this.currentUserData);
+            if (!hasAccess) {
+                this.showToast("এই পেজ এক্সেস করার অনুমতি নেই", "error");
+                return;
+            }
+        }
+    
+        // Update navigation
+        this.dom.navBtns.forEach(navBtn => {
+            navBtn.classList.remove("active");
+        });
+        btn.classList.add("active");
+    
+        // Show page
+        this.showPage(pageId);
+    
+        // Load page-specific data
+        try {
+            await this.loadPageData(pageId);
+        } catch (error) {
+            console.error(`Error loading page ${pageId}:`, error);
+            this.showToast(`পেজ লোড করতে সমস্যা: ${pageId}`, 'error');
+        }
+    }
+    
+    async loadPageData(pageId) {
+        switch(pageId) {
+            case 'dashboard':
+                await this.loadDashboard();
+                break;
+            case 'groups':
+                this.renderGroups();
+                break;
+            case 'members':
+                this.renderStudentsList();
+                break;
+            case 'group-members':
+                this.renderGroupMembers();
+                break;
+            case 'all-students':
+                this.renderStudentCards();
+                break;
+            case 'student-ranking':
+                this.renderStudentRanking();
+                break;
+            case 'group-analysis':
+                this.renderGroupAnalysis();
+                break;
+            case 'tasks':
+                this.renderTasks();
+                break;
+            case 'evaluation':
+                this.renderEvaluationList();
+                break;
+            case 'group-policy':
+                this.renderPolicySections();
+                break;
+            case 'export':
+                // Export page doesn't need additional loading
+                break;
+            case 'admin-management':
+                // শুধু অ্যাডমিনরা অ্যাডমিন ম্যানেজমেন্ট এক্সেস করতে পারবে
+                if (this.currentUserData && 
+                    (this.currentUserData.type === 'super-admin' || this.currentUserData.type === 'admin')) {
+                    await this.loadAdmins();
+                }
+                break;
+        }
+    }
+  
+    showPage(pageId) {
+        // Hide all pages
+        this.dom.pages.forEach(page => page.classList.add('hidden'));
+        
+        // Show selected page
+        const selectedPage = document.getElementById(`page-${pageId}`);
+        if (selectedPage) {
+            selectedPage.classList.remove('hidden');
+        }
+        
+        // Update active navigation
+        this.dom.navBtns.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.getAttribute('data-page') === pageId) {
+                btn.classList.add('active');
+            }
+        });
+        
+        // Update page title
+        if (this.dom.pageTitle) {
+            const activeBtn = document.querySelector(`[data-page="${pageId}"]`);
+            if (activeBtn) {
+                this.dom.pageTitle.textContent = activeBtn.textContent.trim();
+            }
+        }
+    }
+
+    getActivePage() {
+        let activePage = 'dashboard'; // default
+        this.dom.navBtns.forEach(btn => {
+            if (btn.classList.contains('active')) {
+                activePage = btn.getAttribute('data-page');
+            }
+        });
+        return activePage;
+    }
+
+    ensurePublicPage() {
+        const currentPage = this.getActivePage();
+        
+        // If current page is private and user is not logged in, redirect to dashboard
+        if (this.PRIVATE_PAGES.includes(currentPage) && !this.currentUser) {
+            this.showPage('dashboard');
+        }
+    }
+
+    showAuthModal() {
+        this.dom.authModal.classList.remove('hidden');
+        this.toggleAuthForms(false); // Show login form by default
     }
 
     // ===============================
@@ -716,7 +1151,7 @@ class SmartGroupEvaluator {
         toastMessage.textContent = message;
         
         // Remove existing classes and add new ones
-        toast.className = 'toast fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 transition-all duration-300';
+        toast.className = 'fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 transition-all duration-300';
         
         switch(type) {
             case 'success':
@@ -838,29 +1273,74 @@ class SmartGroupEvaluator {
         }
     }
 
-    // ===============================
-    // DATA MANAGEMENT
-    // ===============================
-    async loadInitialData() {
-        this.showLoading();
-        try {
-            await Promise.all([
-                this.loadGroups(),
-                this.loadStudents(),
-                this.loadTasks(),
-                this.loadEvaluations(),
-                this.loadAdmins()
-            ]);
-            this.populateSelects();
-            this.renderPolicySections();
-        } catch (error) {
-            console.error("Initial data load error:", error);
-            this.showToast("ডেটা লোড করতে সমস্যা", "error");
-        } finally {
-            this.hideLoading();
+    toggleAuthForms(showRegister = true) {
+        if (this.dom.loginForm && this.dom.registerForm) {
+            if (showRegister) {
+                this.dom.loginForm.classList.add('hidden');
+                this.dom.registerForm.classList.remove('hidden');
+            } else {
+                this.dom.loginForm.classList.remove('hidden');
+                this.dom.registerForm.classList.add('hidden');
+            }
         }
     }
 
+    toggleTheme() {
+        const isDark = document.documentElement.classList.contains('dark');
+        if (isDark) {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        }
+    }
+
+    applySavedTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    }
+
+    toggleMobileMenu() {
+        if (this.dom.sidebar) {
+            this.dom.sidebar.classList.toggle('hidden');
+        }
+    }
+
+    showLoading(message = "লোড হচ্ছে...") {
+        if (this.dom.loadingOverlay) {
+            this.dom.loadingOverlay.classList.remove("hidden");
+            const messageEl = this.dom.loadingOverlay.querySelector('p');
+            if (messageEl) messageEl.textContent = message;
+        }
+    }
+
+    hideLoading() {
+        if (this.dom.loadingOverlay) {
+            this.dom.loadingOverlay.classList.add("hidden");
+        }
+    }
+
+    togglePolicySection(index) {
+        const content = document.getElementById(`policyContent-${index}`);
+        const icon = document.getElementById(`policyIcon-${index}`);
+        
+        if (content.classList.contains('open')) {
+            content.classList.remove('open');
+            icon.classList.remove('rotate-180');
+        } else {
+            content.classList.add('open');
+            icon.classList.add('rotate-180');
+        }
+    }
+
+    // ===============================
+    // DATA MANAGEMENT
+    // ===============================
     populateSelects() {
         // Populate student group select
         if (this.dom.studentGroupInput) {
@@ -983,7 +1463,7 @@ class SmartGroupEvaluator {
         
         try {
             const userData = await this.getUserAdminData(this.currentUser);
-            if (userData && userData.type === 'super-admin') {
+            if (userData && (userData.type === 'super-admin' || userData.type === 'admin')) {
                 const cacheKey = 'admins_data';
                 const cached = this.cache.get(cacheKey);
                 
@@ -1398,178 +1878,6 @@ class SmartGroupEvaluator {
     validateEmail(email) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
-    }
-
-    // ===============================
-    // UI MANAGEMENT
-    // ===============================
-    async handleNavigation(event) {
-        const btn = event.currentTarget;
-        const pageId = btn.getAttribute("data-page");
-
-        // Check authentication for private pages
-        if (!this.currentUser && this.PRIVATE_PAGES.includes(pageId)) {
-            this.showToast("এই পেজ দেখতে লগইন প্রয়োজন", "error");
-            return;
-        }
-
-        // Update navigation
-        this.dom.navBtns.forEach(navBtn => {
-            navBtn.classList.remove("active");
-        });
-        btn.classList.add("active");
-
-        // Show page
-        this.dom.pages.forEach(page => page.classList.add("hidden"));
-        const selectedPage = document.getElementById(`page-${pageId}`);
-        if (selectedPage) {
-            selectedPage.classList.remove("hidden");
-            if (this.dom.pageTitle) this.dom.pageTitle.textContent = btn.textContent.trim();
-
-            // Load page-specific data
-            switch(pageId) {
-                case 'dashboard':
-                    await this.loadDashboard();
-                    break;
-                case 'groups':
-                    this.renderGroups();
-                    break;
-                case 'members':
-                    this.renderStudentsList();
-                    break;
-                case 'group-members':
-                    this.renderGroupMembers();
-                    break;
-                case 'all-students':
-                    this.renderStudentCards();
-                    break;
-                case 'student-ranking':
-                    this.renderStudentRanking();
-                    break;
-                case 'group-analysis':
-                    this.renderGroupAnalysis();
-                    break;
-                case 'tasks':
-                    this.renderTasks();
-                    break;
-                case 'evaluation':
-                    this.renderEvaluationList();
-                    break;
-                case 'group-policy':
-                    this.renderPolicySections();
-                    break;
-                case 'export':
-                    // Export page doesn't need additional loading
-                    break;
-                case 'admin-management':
-                    await this.loadAdmins();
-                    break;
-            }
-        }
-    }
-
-    updateUserInterface(userData) {
-        if (!this.dom.userInfo || !this.dom.logoutBtn) return;
-
-        if (userData && this.currentUser) {
-            // User is logged in
-            this.dom.userInfo.innerHTML = `
-                <div class="font-medium">${userData.email}</div>
-                <div class="text-xs ${userData.type === "super-admin" ? "text-purple-600" : "text-gray-500"}">
-                    ${userData.type === "super-admin" ? "সুপার অ্যাডমিন" : userData.type === "admin" ? "অ্যাডমিন" : "ব্যবহারকারী"}
-                </div>
-            `;
-            
-            // Show logout button
-            this.dom.logoutBtn.classList.remove('hidden');
-            
-            // Add user-logged-in class to body for CSS
-            document.body.classList.add('user-logged-in');
-            
-            // Show admin section if super admin
-            if (userData.type === "super-admin") {
-                if (this.dom.adminManagementSection) this.dom.adminManagementSection.classList.remove("hidden");
-            } else {
-                if (this.dom.adminManagementSection) this.dom.adminManagementSection.classList.add("hidden");
-            }
-        } else {
-            // User is logged out
-            this.dom.userInfo.innerHTML = `<div class="text-xs text-gray-500">সাধারণ ব্যবহারকারী</div>`;
-            
-            // Hide logout button
-            this.dom.logoutBtn.classList.add('hidden');
-            
-            // Remove user-logged-in class
-            document.body.classList.remove('user-logged-in');
-            
-            // Hide admin section
-            if (this.dom.adminManagementSection) this.dom.adminManagementSection.classList.add("hidden");
-        }
-    }
-
-    toggleAuthForms(showRegister = true) {
-        if (this.dom.loginForm && this.dom.registerForm) {
-            if (showRegister) {
-                this.dom.loginForm.classList.add('hidden');
-                this.dom.registerForm.classList.remove('hidden');
-            } else {
-                this.dom.loginForm.classList.remove('hidden');
-                this.dom.registerForm.classList.add('hidden');
-            }
-        }
-    }
-
-    toggleTheme() {
-        const isDark = document.documentElement.classList.contains('dark');
-        if (isDark) {
-            document.documentElement.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
-        } else {
-            document.documentElement.classList.add('dark');
-            localStorage.setItem('theme', 'dark');
-        }
-    }
-
-    applySavedTheme() {
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-    }
-
-    toggleMobileMenu() {
-        if (this.dom.sidebar) {
-            this.dom.sidebar.classList.toggle('hidden');
-        }
-    }
-
-    showLoading(message = "লোড হচ্ছে...") {
-        if (this.dom.loadingOverlay) {
-            this.dom.loadingOverlay.classList.remove("hidden");
-            const messageEl = this.dom.loadingOverlay.querySelector('p');
-            if (messageEl) messageEl.textContent = message;
-        }
-    }
-
-    hideLoading() {
-        if (this.dom.loadingOverlay) {
-            this.dom.loadingOverlay.classList.add("hidden");
-        }
-    }
-
-    togglePolicySection(index) {
-        const content = document.getElementById(`policyContent-${index}`);
-        const icon = document.getElementById(`policyIcon-${index}`);
-        
-        if (content.classList.contains('open')) {
-            content.classList.remove('open');
-            icon.classList.remove('rotate-180');
-        } else {
-            content.classList.add('open');
-            icon.classList.add('rotate-180');
-        }
     }
 
     // ===============================
@@ -3406,4 +3714,4 @@ class SmartGroupEvaluator {
 // Initialize application
 document.addEventListener('DOMContentLoaded', () => {
     window.smartEvaluator = new SmartGroupEvaluator();
-})
+});
